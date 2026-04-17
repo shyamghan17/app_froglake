@@ -1,0 +1,13 @@
+{
+    "name": "FindGoogleLeads",
+    "alias": "Find Google Leads",
+    "description": "Depending on CRM",
+    "priority": 1310,
+    "version": 5.0,
+    "monthly_price": 0,
+    "yearly_price": 0,
+    "package_name": "find-google-leads",
+    "parent_module": [
+        "Lead"
+    ]
+}   

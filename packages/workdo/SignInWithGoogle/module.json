@@ -1,0 +1,11 @@
+{
+    "name": "SignInWithGoogle",
+    "alias": "Sign-In With Google",
+    "description": "",
+    "priority": 896,
+    "version": 5.0,
+    "monthly_price": 0,
+    "yearly_price": 0,
+    "package_name": "sign-in-with-google",
+    "for_admin": true
+}

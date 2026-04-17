@@ -1,0 +1,25 @@
+{
+    "name": "workdo/activity-log",
+    "description": "Description for activity-log package",
+    "type": "library",
+    "license": "MIT",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Workdo\\ActivityLog\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "WorkDo",
+            "email": "support@workdo.io"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Workdo\\ActivityLog\\Providers\\ActivityLogServiceProvider"
+            ]
+        }
+    }
+}

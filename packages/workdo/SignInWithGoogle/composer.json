@@ -1,0 +1,25 @@
+{
+    "name": "workdo/sign-in-with-google",
+    "description": "Description for sign-in-with-google package",
+    "type": "library",
+    "license": "MIT",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Workdo\\SignInWithGoogle\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "WorkDo",
+            "email": "support@workdo.io"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Workdo\\SignInWithGoogle\\Providers\\SignInWithGoogleServiceProvider"
+            ]
+        }
+    }
+}
