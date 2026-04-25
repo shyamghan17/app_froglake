@@ -1,0 +1,32 @@
+{
+    "name": "workdo/esewa",
+    "description": "Description for esewa package",
+    "type": "library",
+    "license": "MIT",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Workdo\\Esewa\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "WorkDo",
+            "email": "support@workdo.io"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Workdo\\Esewa\\Providers\\EsewaServiceProvider",
+                "Workdo\\Esewa\\Providers\\ViewComposer",
+                "Workdo\\Esewa\\Providers\\InvoicePayment",
+                "Workdo\\Esewa\\Providers\\RetainerPayment",
+                "Workdo\\Esewa\\Providers\\CoursePayment",
+                "Workdo\\Esewa\\Providers\\ContentPayment",
+                "Workdo\\Esewa\\Providers\\BankAccountPayments"
+
+            ]
+        }
+    }
+}
