@@ -139,10 +139,20 @@ class LeadApiController extends Controller
             if (Auth::user()->can('create-leads')) {
                 $validator = Validator::make($request->all(), [
                     'name'    => 'required',
+                    'company_name' => 'nullable|string|max:255',
                     'email'   => 'required|email',
                     'subject' => 'required',
                     'phone'   => 'nullable|string|regex:/^\+\d{1,3}\d{9,13}$/',
                     'date'    => 'required|date',
+                    'website' => 'nullable|string|max:255',
+                    'category' => 'nullable|string|max:255',
+                    'address' => 'nullable|string|max:255',
+                    'district' => 'nullable|string|max:255',
+                    'province' => 'nullable|string|max:255',
+                    'remarks' => 'nullable|string|max:5000',
+                    'is_live' => 'nullable|boolean',
+                    'company_pan' => 'nullable|string|max:255',
+                    'lead_status' => 'nullable|string|max:255',
                 ]);
 
                 if ($validator->fails()) {
@@ -170,6 +180,7 @@ class LeadApiController extends Controller
 
                     $lead              = new Lead();
                     $lead->name        = $request->name;
+                    $lead->company_name = $request->company_name;
                     $lead->email       = $request->email;
                     $lead->subject     = $request->subject;
                     $lead->user_id     = $request->user_id;
@@ -177,6 +188,15 @@ class LeadApiController extends Controller
                     $lead->stage_id    = $stage->id;
                     $lead->phone       = $request->phone;
                     $lead->date        = $request->date;
+                    $lead->website     = $request->website;
+                    $lead->category       = $request->category;
+                    $lead->address        = $request->address;
+                    $lead->district       = $request->district;
+                    $lead->province       = $request->province;
+                    $lead->remarks        = $request->remarks;
+                    $lead->is_live        = $request->boolean('is_live');
+                    $lead->company_pan    = $request->company_pan;
+                    $lead->lead_status    = $request->lead_status;
                     $lead->creator_id  = Auth::id();
                     $lead->created_by  = creatorId();
                     $lead->save();
@@ -221,6 +241,7 @@ class LeadApiController extends Controller
                 $validator = Validator::make($request->all(), [
                     'lead_id'     => 'required|integer|exists:leads,id',
                     'name'        => 'required|max:100',
+                    'company_name' => 'nullable|string|max:255',
                     'email'       => 'required|email',
                     'subject'     => 'required|max:200',
                     'date'        => 'required|date',
@@ -231,6 +252,15 @@ class LeadApiController extends Controller
                     'products'    => 'nullable|max:100',
                     'notes'       => 'nullable|max:1000',
                     'phone'       => 'nullable|string|regex:/^\+\d{1,3}\d{9,13}$/',
+                    'website'     => 'nullable|string|max:255',
+                    'category' => 'nullable|string|max:255',
+                    'address' => 'nullable|string|max:255',
+                    'district' => 'nullable|string|max:255',
+                    'province' => 'nullable|string|max:255',
+                    'remarks' => 'nullable|string|max:5000',
+                    'is_live' => 'nullable|boolean',
+                    'company_pan' => 'nullable|string|max:255',
+                    'lead_status' => 'nullable|string|max:255',
                 ]);
 
                 if ($validator->fails()) {
@@ -244,6 +274,7 @@ class LeadApiController extends Controller
                 }
 
                 $lead->name        = $request->name;
+                $lead->company_name = $request->company_name ?? $lead->company_name;
                 $lead->email       = $request->email;
                 $lead->subject     = $request->subject;
                 $lead->user_id     = $request->user_id;
@@ -255,6 +286,15 @@ class LeadApiController extends Controller
                 $lead->products    = $request->products ?? $lead->products;
                 $lead->notes       = $request->notes ?? $lead->notes;
                 $lead->labels      = $request->input('labels', $lead->labels);
+                $lead->website     = $request->website ?? $lead->website;
+                $lead->category       = $request->category ?? $lead->category;
+                $lead->address        = $request->address ?? $lead->address;
+                $lead->district       = $request->district ?? $lead->district;
+                $lead->province       = $request->province ?? $lead->province;
+                $lead->remarks        = $request->remarks ?? $lead->remarks;
+                $lead->is_live        = $request->has('is_live') ? $request->boolean('is_live') : $lead->is_live;
+                $lead->company_pan    = $request->company_pan ?? $lead->company_pan;
+                $lead->lead_status    = $request->lead_status ?? $lead->lead_status;
                 $lead->save();
 
                 return $this->successResponse('', 'Lead updated successfully');
@@ -278,10 +318,16 @@ class LeadApiController extends Controller
                 return $this->validationErrorResponse($validator->errors());
             }
 
-            $lead = Lead::find($request->lead_id);
+            $lead = Lead::where('created_by', creatorId())->where('id', $request->lead_id)->first();
+            if (!$lead) {
+                return $this->errorResponse('Lead not found');
+            }
 
             if ($lead->stage_id != $request->stage_id) {
-                $newStage = LeadStage::find($request->stage_id);
+                $newStage = LeadStage::where('created_by', creatorId())->where('id', $request->stage_id)->first();
+                if (!$newStage) {
+                    return $this->errorResponse('Stage not found');
+                }
 
                 LeadActivityLog::create([
                     'user_id'  => Auth::user()->id,
@@ -295,7 +341,7 @@ class LeadApiController extends Controller
                 ]);
             }
 
-            Lead::where('id', $request->lead_id)->update(['order' => $request->order, 'stage_id' => $request->stage_id]);
+            Lead::where('created_by', creatorId())->where('id', $request->lead_id)->update(['order' => $request->order, 'stage_id' => $request->stage_id]);
 
             return $this->successResponse('', 'Lead moved successfully');
         } catch (\Exception $e) {
@@ -320,6 +366,9 @@ class LeadApiController extends Controller
         try {
 
             $lead = Lead::where('created_by', '=', creatorId())->where('pipeline_id', $pipelineId)->where('id', $leadId)->first();
+            if (!$lead) {
+                return $this->errorResponse('Lead not found');
+            }
 
             $stageCnt = LeadStage::where('pipeline_id', '=', $lead->pipeline_id)->where('created_by', '=', $lead->created_by)->get();
             $i        = 0;
@@ -329,7 +378,8 @@ class LeadApiController extends Controller
                     break;
                 }
             }
-            $precentage = number_format(($i * 100) / count($stageCnt));
+            $stageCount = count($stageCnt);
+            $precentage = $stageCount > 0 ? number_format(($i * 100) / $stageCount) : 0;
 
             $data = [
                 'id'             => $lead->id,

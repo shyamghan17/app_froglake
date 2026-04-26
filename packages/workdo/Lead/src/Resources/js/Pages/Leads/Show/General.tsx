@@ -99,8 +99,48 @@ export default function General({ lead }: GeneralProps) {
                         <p className="text-sm font-medium text-gray-900">{lead.email || '-'}</p>
                     </div>
                     <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Company Name')}</label>
+                        <p className="text-sm font-medium text-gray-900">{lead.company_name || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
                         <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Phone')}</label>
                         <p className="text-sm font-medium text-gray-900">{lead.phone || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Website')}</label>
+                        <p className="text-sm font-medium text-gray-900">{lead.website || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Category')}</label>
+                        <p className="text-sm font-medium text-gray-900">{lead.category || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Lead Status')}</label>
+                        <p className="text-sm font-medium text-gray-900">{lead.lead_status || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Province')}</label>
+                        <p className="text-sm font-medium text-gray-900">{lead.province || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('District')}</label>
+                        <p className="text-sm font-medium text-gray-900">{lead.district || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Company PAN')}</label>
+                        <p className="text-sm font-medium text-gray-900">{lead.company_pan || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Is Live')}</label>
+                        <p className="text-sm font-medium text-gray-900">{lead.is_live ? t('Yes') : t('No')}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Address')}</label>
+                        <p className="text-sm font-medium text-gray-900 whitespace-pre-wrap break-words">{lead.address || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Remarks')}</label>
+                        <p className="text-sm font-medium text-gray-900 whitespace-pre-wrap break-words">{lead.remarks || '-'}</p>
                     </div>
                     <div className="space-y-1">
                         <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Follow Up Date')}</label>

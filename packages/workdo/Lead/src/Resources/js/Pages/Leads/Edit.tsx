@@ -15,6 +15,8 @@ import { usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { formatDate } from '@/utils/helpers';
 import { useFormFields } from '@/hooks/useFormFields';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function EditLead({ lead, sources: propSources, products: propProducts, onSuccess }: EditLeadProps & { sources?: any, products?: any }) {
     const { users, pipelines, products } = usePage<any>().props;
@@ -72,7 +74,7 @@ export default function EditLead({ lead, sources: propSources, products: propPro
     };
 
     return (
-        <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
                 <DialogTitle>{t('Edit Lead')}</DialogTitle>
             </DialogHeader>
@@ -95,6 +97,20 @@ export default function EditLead({ lead, sources: propSources, products: propPro
                     </div>
 
                     <div>
+                        <Label htmlFor="company_name">{t('Company Name')}</Label>
+                        <Input
+                            id="company_name"
+                            type="text"
+                            value={data.company_name || ''}
+                            onChange={(e) => setData('company_name', e.target.value)}
+                            placeholder={t('Enter Company Name')}
+                        />
+                        <InputError message={errors.company_name} />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                    <div>
                         <Label htmlFor="email">{t('Email')}</Label>
                         <Input
                             id="email"
@@ -108,22 +124,154 @@ export default function EditLead({ lead, sources: propSources, products: propPro
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="flex gap-2 items-end">
-                        <div className="flex-1">
-                            <Label htmlFor="subject">{t('Subject')}</Label>
-                            <Input
-                                id="subject"
-                                type="text"
-                                value={data.subject}
-                                onChange={(e) => setData('subject', e.target.value)}
-                                placeholder={t('Enter Subject')}
-                                required
-                            />
-                            <InputError message={errors.subject} />
-                        </div>
-                        {subjectAI.map(field => <div key={field.id}>{field.component}</div>)}
+                    <div>
+                        <PhoneInputComponent
+                            label={t('Phone No')}
+                            value={data.phone}
+                            onChange={(value) => setData('phone', value || '')}
+                            error={errors.phone}
+                        />
                     </div>
 
+                    <div>
+                        <Label htmlFor="website">{t('Website')}</Label>
+                        <Input
+                            id="website"
+                            type="text"
+                            value={data.website || ''}
+                            onChange={(e) => setData('website', e.target.value)}
+                            placeholder={t('Enter Website')}
+                        />
+                        <InputError message={errors.website} />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="company_pan">{t('Company PAN')}</Label>
+                        <Input
+                            id="company_pan"
+                            type="text"
+                            value={data.company_pan || ''}
+                            onChange={(e) => setData('company_pan', e.target.value)}
+                            placeholder={t('Enter Company PAN')}
+                        />
+                        <InputError message={errors.company_pan} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="is_live">{t('Is Live')}</Label>
+                        <div className="flex items-center gap-2">
+                            <Switch
+                                id="is_live"
+                                checked={!!data.is_live}
+                                onCheckedChange={(checked) => setData('is_live', checked)}
+                            />
+                        </div>
+                        <InputError message={errors.is_live} />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="category">{t('Category')}</Label>
+                        <Input
+                            id="category"
+                            type="text"
+                            value={data.category || ''}
+                            onChange={(e) => setData('category', e.target.value)}
+                            placeholder={t('Enter Category')}
+                        />
+                        <InputError message={errors.category} />
+                    </div>
+                    <div>
+                        <Label htmlFor="lead_status">{t('Lead Status')}</Label>
+                        <Input
+                            id="lead_status"
+                            type="text"
+                            value={data.lead_status || ''}
+                            onChange={(e) => setData('lead_status', e.target.value)}
+                            placeholder={t('Enter Lead Status')}
+                        />
+                        <InputError message={errors.lead_status} />
+                    </div>
+                </div>
+
+                <div className="flex gap-2 items-end">
+                    <div className="flex-1">
+                        <Label htmlFor="subject">{t('Subject')}</Label>
+                        <Input
+                            id="subject"
+                            type="text"
+                            value={data.subject}
+                            onChange={(e) => setData('subject', e.target.value)}
+                            placeholder={t('Enter Subject')}
+                            required
+                        />
+                        <InputError message={errors.subject} />
+                    </div>
+                    {subjectAI.map(field => <div key={field.id}>{field.component}</div>)}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="province">{t('Province')}</Label>
+                        <Input
+                            id="province"
+                            type="text"
+                            value={data.province || ''}
+                            onChange={(e) => setData('province', e.target.value)}
+                            placeholder={t('Enter Province')}
+                        />
+                        <InputError message={errors.province} />
+                    </div>
+                    <div>
+                        <Label htmlFor="district">{t('District')}</Label>
+                        <Input
+                            id="district"
+                            type="text"
+                            value={data.district || ''}
+                            onChange={(e) => setData('district', e.target.value)}
+                            placeholder={t('Enter District')}
+                        />
+                        <InputError message={errors.district} />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="address">{t('Address')}</Label>
+                        <Textarea
+                            id="address"
+                            value={data.address || ''}
+                            onChange={(e) => setData('address', e.target.value)}
+                            placeholder={t('Enter Address')}
+                            rows={2}
+                        />
+                        <InputError message={errors.address} />
+                    </div>
+                    <div>
+                        <Label htmlFor="remarks">{t('Remarks')}</Label>
+                        <Textarea
+                            id="remarks"
+                            value={data.remarks || ''}
+                            onChange={(e) => setData('remarks', e.target.value)}
+                            placeholder={t('Enter Remarks')}
+                            rows={3}
+                        />
+                        <InputError message={errors.remarks} />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <Label>{t('Follow Up Date')}</Label>
+                        <DatePicker
+                            value={data.date}
+                            onChange={(date) => setData('date', formatDate(date))}
+                            placeholder={t('Select Follow Up Date')}
+                        />
+                        <InputError message={errors.date} />
+                    </div>
                     <div>
                         <Label htmlFor="user_id" requried>{t('User')}</Label>
                         <Select value={data.user_id?.toString() || ''} onValueChange={(value) => setData('user_id', value)}>
@@ -139,27 +287,6 @@ export default function EditLead({ lead, sources: propSources, products: propPro
                             </SelectContent>
                         </Select>
                         <InputError message={errors.user_id} />
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <PhoneInputComponent
-                            label={t('Phone No')}
-                            value={data.phone}
-                            onChange={(value) => setData('phone', value || '')}
-                            error={errors.phone}
-                        />
-                    </div>
-
-                    <div>
-                        <Label>{t('Follow Up Date')}</Label>
-                        <DatePicker
-                            value={data.date}
-                            onChange={(date) => setData('date', formatDate(date))}
-                            placeholder={t('Select Follow Up Date')}
-                        />
-                        <InputError message={errors.date} />
                     </div>
                 </div>
 

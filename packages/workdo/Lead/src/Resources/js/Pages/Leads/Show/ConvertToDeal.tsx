@@ -38,7 +38,7 @@ export default function ConvertToDeal({ lead, deal }: ConvertToDealProps) {
         price: '0',
         client_check: 'new',
         clients: '',
-        client_name: lead.name,
+        client_name: lead.company_name || lead.name,
         client_email: lead.email,
         client_password: '',
         is_transfer: ['products', 'sources', 'files', 'discussion', 'notes', 'calls', 'emails']
@@ -183,6 +183,7 @@ export default function ConvertToDeal({ lead, deal }: ConvertToDealProps) {
                                     <Label htmlFor="client_name">{t('Client Name')}</Label>
                                     <Input
                                         id="client_name"
+                                        value={formData.client_name}
                                         onChange={(e) => setFormData(prev => ({ ...prev, client_name: e.target.value }))}
                                         placeholder={t('Enter Client Name')}
                                         required

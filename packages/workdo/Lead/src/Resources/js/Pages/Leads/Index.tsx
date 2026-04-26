@@ -33,16 +33,20 @@ import { usePageButtons } from '@/hooks/usePageButtons';
 
 export default function Index() {
     const { t } = useTranslation();
-    const { leads, auth, users, pipelines, stages, labels, sources, products } = usePage<LeadsIndexProps>().props;
+    const { leads, auth, users, pipelines, stages, labels, sources, products, filterCategories, filterLeadStatuses, currentPipelineId } = usePage<LeadsIndexProps>().props;
     const urlParams = new URLSearchParams(window.location.search);
+    const defaultPipelineId = (urlParams.get('pipeline_id') || (currentPipelineId ? currentPipelineId.toString() : '') || (pipelines?.[0]?.id?.toString() || ''));
 
     const [filters, setFilters] = useState<LeadFilters>({
         name: urlParams.get('name') || '',
         email: urlParams.get('email') || '',
         subject: urlParams.get('subject') || '',
         is_active: urlParams.get('is_active') || '',
+        category: urlParams.get('category') || '',
+        lead_status: urlParams.get('lead_status') || '',
+        is_live: urlParams.get('is_live') || '',
         user_id: urlParams.get('user_id') || '',
-        pipeline_id: urlParams.get('pipeline_id') || (pipelines?.[0]?.id?.toString() || ''),
+        pipeline_id: defaultPipelineId,
         stage_id: urlParams.get('stage_id') || '',
     });
 
@@ -96,6 +100,9 @@ export default function Index() {
             email: '',
             subject: '',
             is_active: '',
+            category: '',
+            lead_status: '',
+            is_live: '',
             user_id: '',
             pipeline_id: '',
             stage_id: '',
@@ -366,7 +373,18 @@ export default function Index() {
         {
             key: 'name',
             header: t('Name'),
-            sortable: true
+            sortable: true,
+            className: "min-w-[200px]",
+            render: (_: any, lead: Lead) => (
+                <span className="font-medium text-gray-900">{lead.name}</span>
+            )
+        },
+        {
+            key: 'company_name',
+            header: t('Company Name'),
+            sortable: false,
+            className: "min-w-[200px]",
+            render: (value: any) => value || '-'
         },
         {
             key: 'subject',
@@ -385,6 +403,34 @@ export default function Index() {
                     </Badge>
                 );
             }
+        },
+        {
+            key: 'category',
+            header: t('Category'),
+            sortable: false,
+            render: (value: any) => {
+                if (!value) return '-';
+                return <Badge variant="secondary">{value}</Badge>;
+            }
+        },
+        {
+            key: 'lead_status',
+            header: t('Lead Status'),
+            sortable: false,
+            render: (value: any) => {
+                if (!value) return '-';
+                return <Badge variant="outline">{value}</Badge>;
+            }
+        },
+        {
+            key: 'is_live',
+            header: t('Is Live'),
+            sortable: false,
+            render: (value: any) => (
+                <Badge variant={value ? "default" : "secondary"}>
+                    {value ? t('Yes') : t('No')}
+                </Badge>
+            )
         },
         {
             key: 'tasks',
@@ -666,7 +712,7 @@ export default function Index() {
                                         onToggle={() => setShowFilters(!showFilters)}
                                     />
                                     {(() => {
-                                        const activeFilters = [filters.is_active, filters.user_id, filters.stage_id].filter(f => f !== '' && f !== null && f !== undefined).length;
+                                        const activeFilters = [filters.is_active, filters.category, filters.lead_status, filters.is_live, filters.user_id, filters.stage_id].filter(f => f !== '' && f !== null && f !== undefined).length;
                                         return activeFilters > 0 && (
                                             <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
                                                 {activeFilters}
@@ -681,6 +727,48 @@ export default function Index() {
                     {showFilters && (
                         <CardContent className="p-6 bg-blue-50/30 border-b">
                             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('Category')}</label>
+                                    <Select value={filters.category} onValueChange={(value) => setFilters({...filters, category: value})}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={t('Filter by Category')} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {(filterCategories || []).map((item: string) => (
+                                                <SelectItem key={item} value={item}>
+                                                    {item}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('Lead Status')}</label>
+                                    <Select value={filters.lead_status} onValueChange={(value) => setFilters({...filters, lead_status: value})}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={t('Filter by Lead Status')} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {(filterLeadStatuses || []).map((item: string) => (
+                                                <SelectItem key={item} value={item}>
+                                                    {item}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('Is Live')}</label>
+                                    <Select value={filters.is_live} onValueChange={(value) => setFilters({...filters, is_live: value})}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={t('Filter by Is Live')} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="1">{t('Yes')}</SelectItem>
+                                            <SelectItem value="0">{t('No')}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">{t('User')}</label>
                                     <Select value={filters.user_id} onValueChange={(value) => setFilters({...filters, user_id: value})}>
@@ -734,7 +822,7 @@ export default function Index() {
                                         icon={UsersIcon}
                                         title={t('No Leads found')}
                                         description={t('Get started by creating your first Lead.')}
-                                        hasFilters={!!(filters.name || filters.email || filters.subject || filters.is_active || filters.user_id || filters.pipeline_id || filters.stage_id)}
+                                        hasFilters={!!(filters.name || filters.email || filters.subject || filters.is_active || filters.category || filters.lead_status || filters.is_live || filters.user_id || filters.pipeline_id || filters.stage_id)}
                                         onClearFilters={clearFilters}
                                         createPermission="create-leads"
                                         onCreateClick={() => openModal('add')}
