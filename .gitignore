@@ -12,12 +12,14 @@
 # Dependencies
 /vendor/
 /node_modules/
-
 # Build artifacts
 /public/hot
 !/public/build/
 !/public/build/**
 
+#docs
+/docs/
+ 
 # Laravel cache / runtime files
 /bootstrap/cache/*.php
 /storage/*.key
@@ -48,3 +50,4 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 /.phpunit.result.cache
+.env
