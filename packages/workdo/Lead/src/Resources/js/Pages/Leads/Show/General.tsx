@@ -8,9 +8,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { InputError } from '@/components/ui/input-error';
 import { Textarea } from '@/components/ui/textarea';
-import { router } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
+import { useForm, usePage } from '@inertiajs/react';
+import { Plus, Mail, Phone, Calendar, User, GitBranch, Layers, CheckSquare, Globe, Package } from 'lucide-react';
 import { useFormFields } from '@/hooks/useFormFields';
 
 interface GeneralProps {
@@ -19,28 +20,51 @@ interface GeneralProps {
 
 export default function General({ lead }: GeneralProps) {
     const { t } = useTranslation();
+    const { productItems, sourceItems } = usePage<any>().props;
+    const productItemsList: { id: number; name: string }[] = productItems || [];
+    const sourceItemsList: { id: number; name: string }[] = sourceItems || [];
     const [emailModalOpen, setEmailModalOpen] = useState(false);
     const [discussionModalOpen, setDiscussionModalOpen] = useState(false);
-    const [emailForm, setEmailForm] = useState({ to: '', subject: '', description: '' });
-    const [discussionForm, setDiscussionForm] = useState({ message: '' });
     const [emailEditorKey, setEmailEditorKey] = useState(0);
+
+    const { data: emailForm, setData: setEmailData, post: postEmail, processing: emailProcessing, errors: emailErrors, reset: resetEmail } = useForm({
+        to: '',
+        subject: '',
+        description: '',
+    });
+
+    const { data: notesForm, setData: setNotesData, put: putNotes, processing: notesProcessing, errors: notesErrors } = useForm({
+        name: lead.name,
+        email: lead.email,
+        subject: lead.subject,
+        user_id: lead.user_id,
+        phone: lead.phone || '',
+        date: lead.date || '',
+        pipeline_id: lead.pipeline_id,
+        stage_id: lead.stage_id,
+        notes: lead.notes || '',
+    });
+
+    const { data: discussionForm, setData: setDiscussionData, post: postDiscussion, processing: discussionProcessing, errors: discussionErrors, reset: resetDiscussion } = useForm({
+        message: '',
+    });
 
     const customFields = useFormFields('getCustomFields', { ...lead, module: 'Lead', sub_module: 'Lead', id: lead.id }, () => {}, {}, 'view', t);
 
     const emailSubjectAI = useFormFields('aiField', emailForm, (field, value) => {
-        setEmailForm(prev => ({ ...prev, [field]: value }));
+        setEmailData(field as any, value);
     }, {}, 'create', 'subject', 'Subject', 'lead', 'lead_email');
 
     const emailDescriptionAI = useFormFields('aiField', emailForm, (field, value) => {
-        setEmailForm(prev => ({ ...prev, [field]: value }));
+        setEmailData(field as any, value);
         setEmailEditorKey(prev => prev + 1);
     }, {}, 'create', 'description', 'Description', 'lead', 'lead_email');
 
     const handleEmailSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.post(route('lead.leads.store-email', lead.id), emailForm, {
+        postEmail(route('lead.leads.store-email', lead.id), {
             onSuccess: () => {
-                setEmailForm({ to: '', subject: '', description: '' });
+                resetEmail();
                 setEmailModalOpen(false);
             }
         });
@@ -48,9 +72,9 @@ export default function General({ lead }: GeneralProps) {
 
     const handleDiscussionSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.post(route('lead.leads.store-discussion', lead.id), discussionForm, {
+        postDiscussion(route('lead.leads.store-discussion', lead.id), {
             onSuccess: () => {
-                setDiscussionForm({ message: '' });
+                resetDiscussion();
                 setDiscussionModalOpen(false);
             }
         });
@@ -58,129 +82,134 @@ export default function General({ lead }: GeneralProps) {
 
     return (
         <div className="space-y-8">
-            {/* Header Section */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-3xl font-bold text-gray-900">{lead.name}</h1>
-                        <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                            {lead.stage?.name || 'No Stage'}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                    <div className="text-2xl font-bold text-gray-900">{lead.email ? '1' : '0'}</div>
-                    <div className="text-sm text-gray-500">{t('Email')}</div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                        <Mail className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <div>
+                        <p className="text-2xl font-bold text-gray-900">{lead.emails?.length ?? 0}</p>
+                        <p className="text-xs text-gray-500">{t('Emails')}</p>
+                    </div>
                 </div>
-                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                    <div className="text-2xl font-bold text-blue-600">{lead.sources?.length || 0}</div>
-                    <div className="text-sm text-gray-500">{t('Sources')}</div>
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+                        <Globe className="h-5 w-5 text-green-500" />
+                    </div>
+                    <div>
+                        <p className="text-2xl font-bold text-gray-900">{sourceItemsList.length}</p>
+                        <p className="text-xs text-gray-500">{t('Sources')}</p>
+                    </div>
                 </div>
-                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                    <div className="text-2xl font-bold text-green-600">{lead.products?.length || 0}</div>
-                    <div className="text-sm text-gray-500">{t('Products')}</div>
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0">
+                        <Package className="h-5 w-5 text-orange-500" />
+                    </div>
+                    <div>
+                        <p className="text-2xl font-bold text-gray-900">{productItemsList.length}</p>
+                        <p className="text-xs text-gray-500">{t('Products')}</p>
+                    </div>
                 </div>
-                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                    <div className="text-2xl font-bold text-indigo-600">{lead.tasks?.length || 0}</div>
-                    <div className="text-sm text-gray-500">{t('Tasks')}</div>
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
+                        <CheckSquare className="h-5 w-5 text-violet-500" />
+                    </div>
+                    <div>
+                        <p className="text-2xl font-bold text-gray-900">{lead.tasks?.length ?? 0}</p>
+                        <p className="text-xs text-gray-500">{t('Tasks')}</p>
+                    </div>
                 </div>
             </div>
+            
+            {/* Header + Details — Combined Card */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
 
-            {/* Details Section */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">{t('Lead Information')}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Email')}</label>
-                        <p className="text-sm font-medium text-gray-900">{lead.email || '-'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Company Name')}</label>
-                        <p className="text-sm font-medium text-gray-900">{lead.company_name || '-'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Phone')}</label>
-                        <p className="text-sm font-medium text-gray-900">{lead.phone || '-'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Website')}</label>
-                        <p className="text-sm font-medium text-gray-900">{lead.website || '-'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Category')}</label>
-                        <p className="text-sm font-medium text-gray-900">{lead.category || '-'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Lead Status')}</label>
-                        <p className="text-sm font-medium text-gray-900">{lead.lead_status || '-'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Province')}</label>
-                        <p className="text-sm font-medium text-gray-900">{lead.province || '-'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('District')}</label>
-                        <p className="text-sm font-medium text-gray-900">{lead.district || '-'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Company PAN')}</label>
-                        <p className="text-sm font-medium text-gray-900">{lead.company_pan || '-'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Is Live')}</label>
-                        <p className="text-sm font-medium text-gray-900">{lead.is_live ? t('Yes') : t('No')}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Address')}</label>
-                        <p className="text-sm font-medium text-gray-900 whitespace-pre-wrap break-words">{lead.address || '-'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Remarks')}</label>
-                        <p className="text-sm font-medium text-gray-900 whitespace-pre-wrap break-words">{lead.remarks || '-'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Follow Up Date')}</label>
-                        <p className="text-sm font-medium text-gray-900">{lead.date ? formatDate(lead.date) : '-'}</p>
-                    </div>
-                    {lead.user && (
-                        <div className="space-y-1">
-                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Assigned To')}</label>
-                            <p className="text-sm font-medium text-gray-900">{lead.user.name}</p>
+                {/* Header */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-5 border-b border-blue-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h1 className="text-lg font-bold text-gray-900">{lead.name}</h1>
+                            {lead.subject && (
+                                <p className="text-sm text-gray-500 mt-1">{lead.subject}</p>
+                            )}
                         </div>
-                    )}
-                    <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Pipeline')}</label>
-                        <p className="text-sm font-medium text-gray-900">{lead.pipeline?.name || '-'}</p>
                     </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('Stage')}</label>
-                        <p className="text-sm font-medium text-gray-900">{lead.stage?.name || '-'}</p>
-                    </div>
-                    {customFields.map((field, index) => (
-                        <div key={index} className="space-y-1">
-                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{field.label}</label>
-                            <div className="text-sm font-medium text-gray-900">
-                                {field.component}
+                </div>
+
+                {/* Details Grid */}
+                <div className="px-6 py-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
+                        <div className="flex items-start gap-3">
+                            <div className="mt-0.5 h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                <Mail className="h-4 w-4 text-blue-500" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">{t('Email')}</p>
+                                <p className="text-sm font-medium text-gray-800">{lead.email || '-'}</p>
                             </div>
                         </div>
-                    ))}
+
+                        <div className="flex items-start gap-3">
+                            <div className="mt-0.5 h-8 w-8 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+                                <Phone className="h-4 w-4 text-green-500" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">{t('Phone')}</p>
+                                <p className="text-sm font-medium text-gray-800">{lead.phone || '-'}</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-3">
+                            <div className="mt-0.5 h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0">
+                                <Calendar className="h-4 w-4 text-orange-500" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">{t('Follow Up Date')}</p>
+                                <p className={`text-sm font-medium ${
+                                    lead.date && new Date(lead.date) < new Date() ? 'text-red-500' : 'text-gray-800'
+                                }`}>
+                                    {lead.date ? formatDate(lead.date) : '-'}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-3">
+                            <div className="mt-0.5 h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                                <GitBranch className="h-4 w-4 text-indigo-500" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">{t('Pipeline')}</p>
+                                <p className="text-sm font-medium text-gray-800">{lead.pipeline?.name || '-'}</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-3">
+                            <div className="mt-0.5 h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                <Layers className="h-4 w-4 text-blue-500" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">{t('Stage')}</p>
+                                <p className="text-sm font-medium text-gray-800">{lead.stage?.name || '-'}</p>
+                            </div>
+                        </div>
+
+                        {customFields.map((field, index) => (
+                            <div key={index} className="flex items-start gap-3">
+                                <div className="mt-0.5 h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-xs font-bold text-gray-400">#</span>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">{field.label}</p>
+                                    <div className="text-sm font-medium text-gray-800">{field.component}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            {/* Subject Section */}
-            {lead.subject && (
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('Subject')}</h3>
-                    <div
-                        className="prose prose-sm max-w-none text-gray-700"
-                        dangerouslySetInnerHTML={{ __html: lead.subject }}
-                    />
-                </div>
-            )}
+            
 
             {/* Description Section */}
             {lead.description && (
@@ -198,15 +227,20 @@ export default function General({ lead }: GeneralProps) {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('Notes')}</h3>
                 <div className="bg-gray-50 p-4 rounded-lg">
                     <RichTextEditor
-                        content={lead.notes || ''}
-                        onChange={(content) => {
-                            router.put(route('lead.leads.update', lead.id), {
-                                notes: content
-                            });
-                        }}
+                        content={notesForm.notes}
+                        onChange={(content) => setNotesData('notes', content)}
                         placeholder={t('Add notes...')}
                         className="min-h-[300px]"
                     />
+                </div>
+                <div className="flex justify-end mt-4">
+                    <Button
+                        type="button"
+                        disabled={notesProcessing}
+                        onClick={() => putNotes(route('lead.leads.update', lead.id), { preserveState: false })}
+                    >
+                        {notesProcessing ? t('Saving...') : t('Save')}
+                    </Button>
                 </div>
             </div>
 
@@ -293,30 +327,15 @@ export default function General({ lead }: GeneralProps) {
                     </div>
                     <div className="space-y-3 max-h-[400px] overflow-y-auto">
                         {lead.discussions && lead.discussions.length > 0 ? (
-                            lead.discussions.map((discussion: any, index: number) => {
-                                return (
-                                    <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <div className="flex items-center gap-2">
-                                                <div className="bg-gray-100 p-1 rounded-full">
-                                                    <svg className="h-3 w-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                                    </svg>
-                                                </div>
-                                                <div>
-                                                    <p className="font-medium text-sm text-gray-900">{discussion.creator?.name || 'Unknown User'}</p>
-                                                    <p className="text-xs text-gray-500">{formatDateTime(discussion.created_at)}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="bg-white rounded-lg p-3 border border-gray-100">
-                                            <div className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">
-                                                {discussion.comment}
-                                            </div>
-                                        </div>
+                            lead.discussions.map((discussion: any, index: number) => (
+                                <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="font-medium text-sm text-gray-900">{discussion.creator?.name || t('Unknown')}</span>
+                                        <span className="text-xs text-gray-400 ml-auto">{formatDateTime(discussion.created_at)}</span>
                                     </div>
-                                );
-                            })
+                                    <p className="text-sm leading-relaxed whitespace-pre-wrap text-gray-700">{discussion.comment}</p>
+                                </div>
+                            ))
                         ) : (
                             <p className="text-gray-500 text-sm text-center py-4">{t('No discussions found')}</p>
                         )}
@@ -325,40 +344,40 @@ export default function General({ lead }: GeneralProps) {
             </div>
 
             {/* Email Modal */}
-            <Dialog open={emailModalOpen} onOpenChange={setEmailModalOpen}>
+            <Dialog open={emailModalOpen} onOpenChange={(open) => { setEmailModalOpen(open); if (!open) resetEmail(); }}>
                 <DialogContent className="max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>{t('Send Email')}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleEmailSubmit} className="space-y-4">
                         <div>
-                            <Label htmlFor="to">{t('To')}</Label>
+                            <Label htmlFor="to" required>{t('To')}</Label>
                             <Input
                                 id="to"
                                 type="email"
                                 value={emailForm.to}
-                                onChange={(e) => setEmailForm({...emailForm, to: e.target.value})}
+                                onChange={(e) => setEmailData('to', e.target.value)}
                                 placeholder={t('Enter email address')}
-                                required
                             />
+                            <InputError message={emailErrors.to} />
                         </div>
                         <div className="flex gap-2 items-end">
                             <div className="flex-1">
-                                <Label htmlFor="subject">{t('Subject')}</Label>
+                                <Label htmlFor="subject" required>{t('Subject')}</Label>
                                 <Input
                                     id="subject"
                                     type="text"
                                     value={emailForm.subject}
-                                    onChange={(e) => setEmailForm({...emailForm, subject: e.target.value})}
+                                    onChange={(e) => setEmailData('subject', e.target.value)}
                                     placeholder={t('Enter subject')}
-                                    required
                                 />
+                                <InputError message={emailErrors.subject} />
                             </div>
                             {emailSubjectAI.map(field => <div key={field.id}>{field.component}</div>)}
                         </div>
                         <div>
                             <div className="flex items-center justify-between mb-2">
-                                <Label htmlFor="description">{t('Description')}</Label>
+                                <Label htmlFor="description" required>{t('Description')}</Label>
                                 <div className="flex gap-2">
                                     {emailDescriptionAI.map(field => <div key={field.id}>{field.component}</div>)}
                                 </div>
@@ -366,40 +385,45 @@ export default function General({ lead }: GeneralProps) {
                             <RichTextEditor
                                 key={`email-editor-${emailEditorKey}`}
                                 content={emailForm.description}
-                                onChange={(content) => setEmailForm({...emailForm, description: content})}
+                                onChange={(content) => setEmailData('description', content)}
                                 placeholder={t('Enter email content')}
                                 className="mt-1"
                             />
+                            <InputError message={emailErrors.description} />
                         </div>
                         <div className="flex justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => setEmailModalOpen(false)}>{t('Cancel')}</Button>
-                            <Button type="submit">{t('Send Email')}</Button>
+                            <Button type="button" variant="outline" onClick={() => { setEmailModalOpen(false); resetEmail(); }}>{t('Cancel')}</Button>
+                            <Button type="submit" disabled={emailProcessing}>
+                                {emailProcessing ? t('Sending...') : t('Send Email')}
+                            </Button>
                         </div>
                     </form>
                 </DialogContent>
             </Dialog>
 
             {/* Discussion Modal */}
-            <Dialog open={discussionModalOpen} onOpenChange={setDiscussionModalOpen}>
+            <Dialog open={discussionModalOpen} onOpenChange={(open) => { setDiscussionModalOpen(open); if (!open) resetDiscussion(); }}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle>{t('Add Message')}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleDiscussionSubmit} className="space-y-4">
                         <div>
-                            <Label htmlFor="message">{t('Message')}</Label>
+                            <Label htmlFor="message" required>{t('Message')}</Label>
                             <Textarea
                                 id="message"
                                 value={discussionForm.message}
-                                onChange={(e) => setDiscussionForm({...discussionForm, message: e.target.value})}
+                                onChange={(e) => setDiscussionData('message', e.target.value)}
                                 placeholder={t('Enter your message')}
-                                rows={4}
-                                required
+                                rows={3}
                             />
+                            <InputError message={discussionErrors.message} />
                         </div>
                         <div className="flex justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => setDiscussionModalOpen(false)}>{t('Cancel')}</Button>
-                            <Button type="submit">{t('Save')}</Button>
+                            <Button type="button" variant="outline" onClick={() => { setDiscussionModalOpen(false); resetDiscussion(); }}>{t('Cancel')}</Button>
+                            <Button type="submit" disabled={discussionProcessing}>
+                                {discussionProcessing ? t('Saving...') : t('Save')}
+                            </Button>
                         </div>
                     </form>
                 </DialogContent>

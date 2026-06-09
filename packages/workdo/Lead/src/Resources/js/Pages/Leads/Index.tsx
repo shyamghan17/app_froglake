@@ -25,29 +25,32 @@ import Create from './Create';
 import EditLead from './Edit';
 import View from './View';
 import LabelView from './LabelView';
+import ConvertToDeal from './Show/ConvertToDeal';
 import NoRecordsFound from '@/components/no-records-found';
 import { Lead, LeadsIndexProps, LeadFilters, LeadModalState } from './types';
 import { formatDate, formatTime, formatDateTime, formatCurrency, getImagePath } from '@/utils/helpers';
 import { usePageButtons } from '@/hooks/usePageButtons';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 
 
 export default function Index() {
     const { t } = useTranslation();
-    const { leads, auth, users, pipelines, stages, labels, sources, products, filterCategories, filterLeadStatuses, currentPipelineId } = usePage<LeadsIndexProps>().props;
+    const { leads, auth, users, pipelines, stages, labels, sources, products, currentPipelineId } = usePage<LeadsIndexProps>().props;
     const urlParams = new URLSearchParams(window.location.search);
-    const defaultPipelineId = (urlParams.get('pipeline_id') || (currentPipelineId ? currentPipelineId.toString() : '') || (pipelines?.[0]?.id?.toString() || ''));
 
     const [filters, setFilters] = useState<LeadFilters>({
         name: urlParams.get('name') || '',
         email: urlParams.get('email') || '',
         subject: urlParams.get('subject') || '',
         is_active: urlParams.get('is_active') || '',
-        category: urlParams.get('category') || '',
-        lead_status: urlParams.get('lead_status') || '',
-        is_live: urlParams.get('is_live') || '',
         user_id: urlParams.get('user_id') || '',
-        pipeline_id: defaultPipelineId,
+        pipeline_id: urlParams.get('pipeline_id') || (currentPipelineId?.toString() || ''),
         stage_id: urlParams.get('stage_id') || '',
+        date_range: (() => {
+            const fromDate = urlParams.get('date_from');
+            const toDate = urlParams.get('date_to');
+            return (fromDate && toDate) ? `${fromDate} - ${toDate}` : '';
+        })(),
     });
 
     const [perPage] = useState(urlParams.get('per_page') || '10');
@@ -78,7 +81,20 @@ export default function Index() {
     });
 
     const handleFilter = () => {
-        router.get(route('lead.leads.index'), {...filters, per_page: perPage, sort: sortField, direction: sortDirection, view: viewMode}, {
+        const filterParams: any = {
+            ...filters,
+            per_page: perPage,
+            sort: sortField,
+            direction: sortDirection,
+            view: viewMode
+        };
+        if (filters.date_range) {
+            const [fromDate, toDate] = filters.date_range.split(' - ');
+            filterParams.date_from = fromDate;
+            filterParams.date_to = toDate;
+        }
+        delete filterParams.date_range;
+        router.get(route('lead.leads.index'), filterParams, {
             preserveState: true,
             replace: true
         });
@@ -100,12 +116,10 @@ export default function Index() {
             email: '',
             subject: '',
             is_active: '',
-            category: '',
-            lead_status: '',
-            is_live: '',
             user_id: '',
             pipeline_id: '',
             stage_id: '',
+            date_range: '',
         });
         router.get(route('lead.leads.index'), {per_page: perPage, view: viewMode});
     };
@@ -141,8 +155,15 @@ export default function Index() {
         });
     };
 
+    const stageColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1'];
+
+    const getStageColor = (stageId: number | string) => {
+        const index = stages?.findIndex(s => s.id.toString() === stageId?.toString()) ?? -1;
+        return index >= 0 ? stageColors[index % stageColors.length] : '#6b7280';
+    };
+
     const getKanbanData = () => {
-        const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1'];
+        const colors = stageColors;
 
         // Filter stages by pipeline if selected
         const filteredStages = filters.pipeline_id && filters.pipeline_id !== ''
@@ -226,7 +247,8 @@ export default function Index() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 {auth.user?.permissions?.includes('view-leads') && (
-                                    <DropdownMenuItem onClick={() => router.get(route('lead.leads.show', lead.id))}>                                        <Eye className="h-3 w-3 mr-2" />
+                                    <DropdownMenuItem onClick={() => router.get(route('lead.leads.show', lead.id))}>                                        
+                                        <Eye className="h-3 w-3 mr-2" />
                                         {t('View')}
                                     </DropdownMenuItem>
                                 )}
@@ -237,7 +259,7 @@ export default function Index() {
                                     </DropdownMenuItem>
                                 )}
                                 {auth.user?.permissions?.includes('delete-leads') && (
-                                    <DropdownMenuItem onClick={() => openDeleteDialog(lead.id)} className="text-red-600">
+                                    <DropdownMenuItem onClick={() => openDeleteDialog(lead.id)} className="text-red-600 hover:!text-red-600 focus:text-red-600">
                                         <Trash2 className="h-3 w-3 mr-2" />
                                         {t('Delete')}
                                     </DropdownMenuItem>
@@ -373,18 +395,7 @@ export default function Index() {
         {
             key: 'name',
             header: t('Name'),
-            sortable: true,
-            className: "min-w-[200px]",
-            render: (_: any, lead: Lead) => (
-                <span className="font-medium text-gray-900">{lead.name}</span>
-            )
-        },
-        {
-            key: 'company_name',
-            header: t('Company Name'),
-            sortable: false,
-            className: "min-w-[200px]",
-            render: (value: any) => value || '-'
+            sortable: true
         },
         {
             key: 'subject',
@@ -392,46 +403,65 @@ export default function Index() {
             sortable: true
         },
         {
-            key: 'stage',
-            header: t('Stage'),
+            key: 'users',
+            header: t('Users'),
             sortable: false,
-            render: (value: any, row: any) => {
-                const stageName = row.stage?.name || stages?.find(item => item.id.toString() === row.stage_id?.toString())?.name;
-                return (
-                    <Badge variant="secondary">
-                        {stageName || 'No Stage'}
-                    </Badge>
-                );
-            }
-        },
-        {
-            key: 'category',
-            header: t('Category'),
-            sortable: false,
-            render: (value: any) => {
-                if (!value) return '-';
-                return <Badge variant="secondary">{value}</Badge>;
-            }
-        },
-        {
-            key: 'lead_status',
-            header: t('Lead Status'),
-            sortable: false,
-            render: (value: any) => {
-                if (!value) return '-';
-                return <Badge variant="outline">{value}</Badge>;
-            }
-        },
-        {
-            key: 'is_live',
-            header: t('Is Live'),
-            sortable: false,
-            render: (value: any) => (
-                <Badge variant={value ? "default" : "secondary"}>
-                    {value ? t('Yes') : t('No')}
-                </Badge>
+            render: (value: any, row: any) => (
+                <div className="flex items-center">
+                    <TooltipProvider>
+                        <div className="flex -space-x-1">
+                            {row.user_leads?.length > 0 ? row.user_leads.slice(0, 3).map((userLead: any, index: number) => (
+                                <Tooltip key={userLead.user.id}>
+                                    <TooltipTrigger>
+                                        <Avatar className="h-8 w-8 border-2 border-white">
+                                            {userLead.user.avatar ? (
+                                                <img
+                                                    src={getImagePath(userLead.user.avatar)}
+                                                    alt={userLead.user.name}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            ) : (
+                                                <AvatarFallback className="text-xs bg-primary/10">
+                                                    {userLead.user.name.charAt(0).toUpperCase()}
+                                                </AvatarFallback>
+                                            )}
+                                        </Avatar>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{userLead.user.name}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            )) : (
+                                <Avatar className="h-8 w-8 border-2 border-white">
+                                    <AvatarFallback className="text-xs bg-gray-200">
+                                        <UsersIcon className="h-3 w-3" />
+                                    </AvatarFallback>
+                                </Avatar>
+                            )}
+                            {row.user_leads?.length > 3 && (
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <Avatar className="h-8 w-8 border-2 border-white">
+                                            <AvatarFallback className="text-xs bg-gray-100">
+                                                +{row.user_leads.length - 3}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <div className="space-y-1">
+                                            {row.user_leads.slice(3).map((userLead: any) => (
+                                                <p key={userLead.user.id}>{userLead.user.name}</p>
+                                            ))}
+                                        </div>
+                                    </TooltipContent>
+                                </Tooltip>
+                            )}
+                        </div>
+                    </TooltipProvider>
+                </div>
             )
         },
+        
         {
             key: 'tasks',
             header: t('Tasks'),
@@ -464,63 +494,18 @@ export default function Index() {
             }
         },
         {
-            key: 'users',
-            header: t('Users'),
+            key: 'stage',
+            header: t('Stage'),
             sortable: false,
-            render: (value: any, row: any) => (
-                <div className="flex items-center">
-                    <TooltipProvider>
-                        <div className="flex -space-x-1">
-                            {row.user_leads?.length > 0 ? row.user_leads.slice(0, 3).map((userLead: any, index: number) => (
-                                <Tooltip key={userLead.user.id}>
-                                    <TooltipTrigger>
-                                        <Avatar className="h-7 w-7 border-2 border-white">
-                                            {userLead.user.avatar ? (
-                                                <img
-                                                    src={getImagePath(userLead.user.avatar)}
-                                                    alt={userLead.user.name}
-                                                    className="h-full w-full object-cover"
-                                                />
-                                            ) : (
-                                                <AvatarFallback className="text-xs bg-primary/10">
-                                                    {userLead.user.name.charAt(0).toUpperCase()}
-                                                </AvatarFallback>
-                                            )}
-                                        </Avatar>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>{userLead.user.name}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            )) : (
-                                <Avatar className="h-7 w-7 border-2 border-white">
-                                    <AvatarFallback className="text-xs bg-gray-200">
-                                        <UsersIcon className="h-3 w-3" />
-                                    </AvatarFallback>
-                                </Avatar>
-                            )}
-                            {row.user_leads?.length > 3 && (
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <Avatar className="h-7 w-7 border-2 border-white">
-                                            <AvatarFallback className="text-xs bg-gray-100">
-                                                +{row.user_leads.length - 3}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <div className="space-y-1">
-                                            {row.user_leads.slice(3).map((userLead: any) => (
-                                                <p key={userLead.user.id}>{userLead.user.name}</p>
-                                            ))}
-                                        </div>
-                                    </TooltipContent>
-                                </Tooltip>
-                            )}
-                        </div>
-                    </TooltipProvider>
-                </div>
-            )
+            render: (value: any, row: any) => {
+                const stageName = row.stage?.name || stages?.find(item => item.id.toString() === row.stage_id?.toString())?.name;
+                const color = getStageColor(row.stage_id);
+                return (
+                    <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full" style={{ backgroundColor: `${color}20`, color }}>
+                        {stageName || 'No Stage'}
+                    </span>
+                );
+            }
         },
         ...(auth.user?.permissions?.some((p: string) => ['view-leads','edit-leads', 'delete-leads'].includes(p)) ? [{
             key: 'actions',
@@ -528,17 +513,14 @@ export default function Index() {
             render: (_: any, lead: Lead) => (
                 <div className="flex gap-1">
                     <TooltipProvider>
-                        {auth.user?.permissions?.includes('view-leads') && (
-                            <Tooltip delayDuration={0}>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" onClick={() => router.get(route('lead.leads.show', lead.id))} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
-                                        <Eye className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{t('View')}</p>
-                                </TooltipContent>
-                            </Tooltip>
+                        
+                        {auth.user?.permissions?.includes('edit-leads') && (
+                            <ConvertToDeal
+                                lead={lead}
+                                deal={lead.is_converted ? { id: lead.is_converted, is_active: true } : undefined}
+                                buttonVariant="ghost"
+                                buttonClassName={lead.is_converted ? "h-8 w-8 p-0 text-gray-400 hover:text-gray-500" : "h-8 w-8 p-0 text-yellow-600 hover:text-yellow-700"}
+                            />
                         )}
                         {auth.user?.permissions?.includes('edit-leads') && (
                             <Tooltip delayDuration={0}>
@@ -549,6 +531,18 @@ export default function Index() {
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>{t('Label')}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
+                        {auth.user?.permissions?.includes('view-leads') && (
+                            <Tooltip delayDuration={0}>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="sm" onClick={() => router.get(route('lead.leads.show', lead.id))} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
+                                        <Eye className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{t('View')}</p>
                                 </TooltipContent>
                             </Tooltip>
                         )}
@@ -597,7 +591,7 @@ export default function Index() {
             pageActions={
                 <div className="flex items-center gap-2">
                     <TooltipProvider>
-                                <Select value={filters.pipeline_id || pipelines?.[0]?.id?.toString() || 'all'} onValueChange={(value) => {
+                                <Select value={filters.pipeline_id || currentPipelineId?.toString() || ''} onValueChange={(value) => {
                                     const pipelineId = value === 'all' ? '' : value;
                                     setFilters({...filters, pipeline_id: pipelineId});
 
@@ -613,7 +607,8 @@ export default function Index() {
                                         });
                                     }
 
-                                    router.get(route('lead.leads.index'), {...filters, pipeline_id: pipelineId, per_page: perPage, sort: sortField, direction: sortDirection, view: viewMode}, {
+                                    setFilters(prev => ({...prev, pipeline_id: pipelineId, stage_id: ''}));
+                                    router.get(route('lead.leads.index'), {...filters, pipeline_id: pipelineId, stage_id: '', per_page: perPage, sort: sortField, direction: sortDirection, view: viewMode}, {
                                         preserveState: true,
                                         replace: true
                                     });
@@ -698,7 +693,7 @@ export default function Index() {
                                     value={filters.name}
                                     onChange={(value) => setFilters({...filters, name: value})}
                                     onSearch={handleFilter}
-                                    placeholder={t('Search Leads...')}
+                                    placeholder={t('Search Name and Subject...')}
                                 />
                             </div>
                             <div className="flex items-center gap-3">
@@ -712,7 +707,7 @@ export default function Index() {
                                         onToggle={() => setShowFilters(!showFilters)}
                                     />
                                     {(() => {
-                                        const activeFilters = [filters.is_active, filters.category, filters.lead_status, filters.is_live, filters.user_id, filters.stage_id].filter(f => f !== '' && f !== null && f !== undefined).length;
+                                        const activeFilters = [filters.is_active, filters.user_id, filters.stage_id, filters.date_range].filter(f => f !== '' && f !== null && f !== undefined).length;
                                         return activeFilters > 0 && (
                                             <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
                                                 {activeFilters}
@@ -727,48 +722,6 @@ export default function Index() {
                     {showFilters && (
                         <CardContent className="p-6 bg-blue-50/30 border-b">
                             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('Category')}</label>
-                                    <Select value={filters.category} onValueChange={(value) => setFilters({...filters, category: value})}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder={t('Filter by Category')} />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {(filterCategories || []).map((item: string) => (
-                                                <SelectItem key={item} value={item}>
-                                                    {item}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('Lead Status')}</label>
-                                    <Select value={filters.lead_status} onValueChange={(value) => setFilters({...filters, lead_status: value})}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder={t('Filter by Lead Status')} />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {(filterLeadStatuses || []).map((item: string) => (
-                                                <SelectItem key={item} value={item}>
-                                                    {item}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('Is Live')}</label>
-                                    <Select value={filters.is_live} onValueChange={(value) => setFilters({...filters, is_live: value})}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder={t('Filter by Is Live')} />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="1">{t('Yes')}</SelectItem>
-                                            <SelectItem value="0">{t('No')}</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">{t('User')}</label>
                                     <Select value={filters.user_id} onValueChange={(value) => setFilters({...filters, user_id: value})}>
@@ -791,13 +744,23 @@ export default function Index() {
                                             <SelectValue placeholder={t('Filter by Stage')} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {stages?.map((item: any) => (
+                                            {stages?.filter((item: any) =>
+                                                !filters.pipeline_id || item.pipeline_id?.toString() === filters.pipeline_id
+                                            ).map((item: any) => (
                                                 <SelectItem key={item.id} value={item.id.toString()}>
                                                     {item.name}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('Follow Up Date Range')}</label>
+                                    <DateRangePicker
+                                        value={filters.date_range}
+                                        onChange={(value) => setFilters({...filters, date_range: value})}
+                                        placeholder={t('Select date range')}
+                                    />
                                 </div>
                                 <div className="flex items-end gap-2">
                                     <Button onClick={handleFilter} size="sm">{t('Apply')}</Button>
@@ -822,7 +785,7 @@ export default function Index() {
                                         icon={UsersIcon}
                                         title={t('No Leads found')}
                                         description={t('Get started by creating your first Lead.')}
-                                        hasFilters={!!(filters.name || filters.email || filters.subject || filters.is_active || filters.category || filters.lead_status || filters.is_live || filters.user_id || filters.pipeline_id || filters.stage_id)}
+                                        hasFilters={!!(filters.name || filters.email || filters.subject || filters.is_active || filters.user_id || filters.stage_id)}
                                         onClearFilters={clearFilters}
                                         createPermission="create-leads"
                                         onCreateClick={() => openModal('add')}

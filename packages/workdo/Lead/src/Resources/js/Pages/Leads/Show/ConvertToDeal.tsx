@@ -3,10 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Link } from '@inertiajs/react';
-import { ArrowRightLeft } from 'lucide-react';
+import { RefreshCw, CheckCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -26,19 +27,21 @@ interface ConvertToDealProps {
         id: number;
         is_active: boolean;
     };
+    buttonClassName?: string;
 }
 
-export default function ConvertToDeal({ lead, deal }: ConvertToDealProps) {
+export default function ConvertToDeal({ lead, deal, buttonClassName }: ConvertToDealProps) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [clients, setClients] = useState<Client[]>([]);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [processing, setProcessing] = useState(false);
     const [formData, setFormData] = useState({
         name: lead.subject || lead.name,
         price: '0',
         client_check: 'new',
         clients: '',
-        client_name: lead.company_name || lead.name,
+        client_name: lead.name,
         client_email: lead.email,
         client_password: '',
         is_transfer: ['products', 'sources', 'files', 'discussion', 'notes', 'calls', 'emails']
@@ -60,13 +63,16 @@ export default function ConvertToDeal({ lead, deal }: ConvertToDealProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setProcessing(true);
         router.post(route('lead.leads.convert-to-deal', lead.id), formData, {
             onSuccess: () => {
                 setOpen(false);
                 setErrors({});
+                setProcessing(false);
             },
             onError: (errors) => {
                 setErrors(errors);
+                setProcessing(false);
             }
         });
     };
@@ -83,16 +89,16 @@ export default function ConvertToDeal({ lead, deal }: ConvertToDealProps) {
     if (deal) {
         return (
             <TooltipProvider>
-                <Tooltip>
+                <Tooltip delayDuration={0}>
                     <TooltipTrigger asChild>
-                        <Link href={deal.is_active ? route('lead.deals.show', deal.id) : '#'}>
-                            <Button size="sm">
-                                <ArrowRightLeft className="h-4 w-4" />
+                        <Link href={route('lead.deals.show', deal.id)}>
+                            <Button size="sm" variant={buttonClassName ? 'ghost' : 'default'} className={buttonClassName}>
+                                <CheckCircle className="h-4 w-4" />
                             </Button>
                         </Link>
                     </TooltipTrigger>
                     <TooltipContent>
-                        <p>{t('Already Converted To Deal')}</p>
+                        <span className="font-normal">{t('Already Converted To Deal')}</span>
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>
@@ -102,16 +108,16 @@ export default function ConvertToDeal({ lead, deal }: ConvertToDealProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <TooltipProvider>
-                <Tooltip>
+                <Tooltip delayDuration={0}>
                     <TooltipTrigger asChild>
                         <DialogTrigger asChild>
-                            <Button size="sm">
-                                <ArrowRightLeft className="h-4 w-4" />
+                            <Button size="sm" variant={buttonClassName ? 'ghost' : 'default'} className={buttonClassName}>
+                                <RefreshCw className="h-4 w-4" />
                             </Button>
                         </DialogTrigger>
                     </TooltipTrigger>
                     <TooltipContent>
-                        <p>{t('Convert to Deal')}</p>
+                        <span className="font-normal">{t('Convert to Deal')}</span>
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>
@@ -133,15 +139,12 @@ export default function ConvertToDeal({ lead, deal }: ConvertToDealProps) {
                             <InputError message={errors.name} />
                         </div>
                         <div>
-                            <Label htmlFor="price">{t('Price')}</Label>
-                            <Input
-                                id="price"
-                                type="number"
-                                min="0"
+                            <CurrencyInput
+                                label={t('Price')}
                                 value={formData.price}
-                                onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                                onChange={(value) => setFormData(prev => ({ ...prev, price: value }))}
+                                error={errors.price}
                             />
-                            <InputError message={errors.price} />
                         </div>
                     </div>
 
@@ -183,7 +186,6 @@ export default function ConvertToDeal({ lead, deal }: ConvertToDealProps) {
                                     <Label htmlFor="client_name">{t('Client Name')}</Label>
                                     <Input
                                         id="client_name"
-                                        value={formData.client_name}
                                         onChange={(e) => setFormData(prev => ({ ...prev, client_name: e.target.value }))}
                                         placeholder={t('Enter Client Name')}
                                         required
@@ -246,7 +248,7 @@ export default function ConvertToDeal({ lead, deal }: ConvertToDealProps) {
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                             {t('Cancel')}
                         </Button>
-                        <Button type="submit">{t('Convert')}</Button>
+                        <Button type="submit" disabled={processing}>{processing ? t('Converting...') : t('Convert')}</Button>
                     </div>
                 </form>
             </DialogContent>
