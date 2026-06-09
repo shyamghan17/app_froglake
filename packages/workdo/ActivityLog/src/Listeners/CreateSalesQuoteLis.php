@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\Sales\Events\CreateSalesQuote;
 
 class CreateSalesQuoteLis
 {
-    public function handle($event)
+    public function handle(CreateSalesQuote $event)
     {
         if (Module_is_active('ActivityLog')) {
             $salesQuote = $event->quote;
@@ -15,7 +16,7 @@ class CreateSalesQuoteLis
             $activity = new AllActivityLog();
             $activity['module'] = 'Sales';
             $activity['sub_module'] = 'Quote';
-            $activity['description'] = __('Sales Quote created by the ');                          
+            $activity['description'] = __('Sales Quote created by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $salesQuote->created_by;
             $activity->save();

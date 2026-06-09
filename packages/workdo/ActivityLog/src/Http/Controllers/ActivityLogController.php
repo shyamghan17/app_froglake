@@ -5,6 +5,7 @@ namespace Workdo\ActivityLog\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Plan;
 use App\Models\User;
 use Inertia\Inertia;
 
@@ -22,6 +23,10 @@ class ActivityLogController extends Controller
                 ->pluck('module')
                 ->toArray();
             
+            // Filter modules based on user's purchased add-ons
+            $userAvailableModules = Plan::getUserSubscriptionModules();
+            $modules = array_values(array_intersect($modules, $userAvailableModules));
+            
             $staffs = User::where('created_by', $creatorId)
                 ->orWhere('id', $creatorId)
                 ->get();
@@ -37,15 +42,14 @@ class ActivityLogController extends Controller
                     }
                 })
                 ->when(request('module'), fn($q) => $q->where('module', request('module')))
-
-                ->when(request('description'), fn($q) => $q->where('description', 'like', '%' . request('description') . '%'))
-                ->when(request('search'), fn($q) => $q->where(function($query) {
-                    $query->where('description', 'like', '%' . request('search') . '%')
-                          ->orWhere('module', 'like', '%' . request('search') . '%')
-                          ->orWhereHas('user', function($userQuery) {
-                              $userQuery->where('name', 'like', '%' . request('search') . '%');
-                          });
-                }))
+                ->when(request('search'), function($q) {
+                    $search = request('search');
+                    $q->where(function($query) use ($search) {
+                        $query->where('module', 'like', '%' . $search . '%')
+                              ->orWhere('sub_module', 'like', '%' . $search . '%')
+                              ->orWhere('description', 'like', '%' . $search . '%');
+                    });
+                })
                 ->when(request('user_id'), fn($q) => $q->where('creator_id', request('user_id')))
                 ->when(request('sort'), fn($q) => $q->orderBy(request('sort'), request('direction', 'asc')), fn($q) => $q->latest())
                 ->paginate(request('per_page', 10))

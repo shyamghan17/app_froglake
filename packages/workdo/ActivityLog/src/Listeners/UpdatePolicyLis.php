@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\InsuranceManagement\Events\UpdatePolicy;
 
 class UpdatePolicyLis
 {
-    public function handle($event)
+    public function handle(UpdatePolicy $event)
     {
         if (Module_is_active('ActivityLog')) {
             $policy = $event->policy;
@@ -15,7 +16,7 @@ class UpdatePolicyLis
             $activity = new AllActivityLog();
             $activity['module'] = 'InnovationCenter';
             $activity['sub_module'] = 'Policy';
-            $activity['description'] = __('Policy updated by the ');                          
+            $activity['description'] = __('Policy updated by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $policy->created_by;
             $activity->save();

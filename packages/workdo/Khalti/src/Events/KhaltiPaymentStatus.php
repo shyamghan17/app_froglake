@@ -2,35 +2,17 @@
 
 namespace Workdo\Khalti\Events;
 
-use Illuminate\Queue\SerializesModels;
+use App\Models\Plan;
+use App\Models\Order;
+use Illuminate\Foundation\Events\Dispatchable;
 
 class KhaltiPaymentStatus
 {
-    use SerializesModels;
+    use Dispatchable;
 
-    /**
-     * Create a new event instance.
-     *
-     * @return void
-     */
-    public $data;
-    public $type;
-    public $payment;
-
-    public function __construct($data,$type,$payment)
-    {
-        $this->data = $data;
-        $this->type = $type;
-        $this->payment = $payment;
-    }
-
-    /**
-     * Get the channels the event should be broadcast on.
-     *
-     * @return array
-     */
-    public function broadcastOn()
-    {
-        return [];
-    }
+    public function __construct(
+        public Plan $plan,
+        public string $type,
+        public Order $order
+    ) {}
 }

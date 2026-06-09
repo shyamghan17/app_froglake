@@ -2,12 +2,13 @@
 
 namespace Workdo\ActivityLog\Listeners;
 
+use App\Events\UpdateSalesInvoice;
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
 
 class UpdateSalesInvoiceLis
 {
-    public function handle($event)
+    public function handle(UpdateSalesInvoice $event)
     {
         if (Module_is_active('ActivityLog')) {
             $salesInvoice = $event->salesInvoice;
@@ -15,7 +16,7 @@ class UpdateSalesInvoiceLis
             $activity = new AllActivityLog();
             $activity['module'] = 'Sales';
             $activity['sub_module'] = 'Invoice';
-            $activity['description'] = __('Sales Invoice updated by the ');                          
+            $activity['description'] = __('Sales Invoice updated by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $salesInvoice->created_by;
             $activity->save();

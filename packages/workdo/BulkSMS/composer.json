@@ -1,0 +1,25 @@
+{
+    "name": "workdo/bulk-sms",
+    "description": "Description for bulk-sms package",
+    "type": "library",
+    "license": "MIT",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Workdo\\BulkSMS\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "WorkDo",
+            "email": "support@workdo.io"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Workdo\\BulkSMS\\Providers\\BulkSMSServiceProvider"
+            ]
+        }
+    }
+}

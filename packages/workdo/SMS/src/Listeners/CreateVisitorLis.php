@@ -2,44 +2,29 @@
 
 namespace Workdo\SMS\Listeners;
 
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Workdo\SMS\Entities\SendMsg;
+use App\Models\User;
 use Workdo\VisitorManagement\Events\CreateVisitor;
-use Illuminate\Support\Facades\Auth;
+use Workdo\SMS\Services\SendSMS;
 
 class CreateVisitorLis
 {
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
     public function __construct()
     {
         //
     }
 
-    /**
-     * Handle the event.
-     *
-     * @param  object  $event
-     * @return void
-     */
     public function handle(CreateVisitor $event)
     {
         $visitor = $event->visitor;
-
-        if (module_is_active('SMS') && !empty(company_setting('SMS New Visitor')) && company_setting('SMS New Visitor')  == true) {
-         if(!empty($visitor->phone)){
-
-             $uArr = [
-                 'name' => $visitor->first_name . $visitor->last_name,
-             ];
-             $to =$visitor->phone;
-             SendMsg::SendMsgs($to,$uArr , 'New Visitor');
-         }
-
+        if (Module_is_active('SMS') && company_setting('SMS New Visitor') == 'on') {
+            $mobile = $visitor->phone ?? null;
+            if ($mobile) {
+                $uArr = [
+                    'company_name' => User::find($visitor->created_by)->name ?? '',
+                    'name' => $visitor->name ?? '',
+                ];
+                SendSMS::SendMsgs($uArr, 'New Visitor', $mobile);
+            }
         }
     }
 }

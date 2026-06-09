@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\CleaningManagement\Events\UpdateCleaningBooking;
 
 class UpdateCleaningBookingLis
 {
-    public function handle($event)
+    public function handle(UpdateCleaningBooking $event)
     {
         if (Module_is_active('ActivityLog')) {
             $cleaningBooking = $event->booking;
@@ -15,7 +16,7 @@ class UpdateCleaningBookingLis
             $activity = new AllActivityLog();
             $activity['module'] = 'CleaningManagement';
             $activity['sub_module'] = 'Cleaning Booking';
-            $activity['description'] = __('Cleaning Booking updated by the ');                          
+            $activity['description'] = __('Cleaning Booking updated by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $cleaningBooking->created_by;
             $activity->save();

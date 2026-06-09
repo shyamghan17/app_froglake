@@ -2,40 +2,26 @@
 
 namespace Workdo\SMS\Listeners;
 
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Models\User;
 use Workdo\Account\Events\CreateVendor;
-use Workdo\SMS\Entities\SendMsg;
-
+use Workdo\SMS\Services\SendSMS;
 
 class CreateVendorLis
 {
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
     public function __construct()
     {
         //
     }
 
-    /**
-     * Handle the event.
-     *
-     * @param  object  $event
-     * @return void
-     */
     public function handle(CreateVendor $event)
     {
-       if(module_is_active('SMS') && !empty(company_setting('SMS New Vendor')) && company_setting('SMS New Vendor')  == true)
-        {
-            $request = $event->request;
-            if(!empty($request->contact)){
-                $uArr = [];
+        if (Module_is_active('SMS') && company_setting('SMS New Vendor') == 'on' && isset($event->vendor->user_id)) {
+            $user = User::find($event->vendor->user_id);
+            $uArr = [
+                'company_name' => $user->name,
+            ];
 
-                SendMsg::SendMsgs($request->contact, $uArr , 'New Vendor');
-            }
+            SendSMS::SendMsgs($uArr, 'New Vendor', $user->mobile_no);
         }
     }
 }

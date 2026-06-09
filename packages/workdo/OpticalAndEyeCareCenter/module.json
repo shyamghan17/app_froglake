@@ -1,0 +1,10 @@
+{
+    "name": "OpticalAndEyeCareCenter",
+    "alias": "Optical & Eye Care Center",
+    "description": "",
+    "priority": 706,
+    "version": 5.0,
+    "monthly_price": 0,
+    "yearly_price": 0,
+    "package_name": "optical-and-eye-care-center"
+}

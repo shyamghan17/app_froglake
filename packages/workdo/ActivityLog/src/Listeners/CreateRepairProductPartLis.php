@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\RepairManagementSystem\Events\CreateRepairProductPart;
 
 class CreateRepairProductPartLis
 {
-    public function handle($event)
+    public function handle(CreateRepairProductPart $event)
     {
         if (Module_is_active('ActivityLog')) {
             $repairProductPart = $event->repairPart;
@@ -15,7 +16,7 @@ class CreateRepairProductPartLis
             $activity = new AllActivityLog();
             $activity['module'] = 'RepairManagementSystem';
             $activity['sub_module'] = 'ProductPart';
-            $activity['description'] = __('Repair Product Part created by the ');                          
+            $activity['description'] = __('Repair Product Part created by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $repairProductPart->created_by;
             $activity->save();

@@ -2,25 +2,24 @@
 
 namespace Workdo\SMS\Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Eloquent\Model;
 
 class SMSDatabaseSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
     public function run()
     {
         Model::unguard();
 
         $this->call(PermissionTableSeeder::class);
+        $this->call(MarketplaceSettingSeeder::class);
         $this->call(NotificationsTableSeeder::class);
-        if(module_is_active('LandingPage'))
+
+        if(config('app.run_demo_seeder'))
         {
-            $this->call(MarketPlaceSeederTableSeeder::class);
-        };
+            // Add here your demo data seeders
+            $userId = User::where('email', 'company@example.com')->first()->id;
+        }
     }
 }

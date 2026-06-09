@@ -1,57 +1,42 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
-
 use Illuminate\Support\Facades\Route;
+use Workdo\Khalti\Http\Controllers\KhaltiSettingsController;
 use Workdo\Khalti\Http\Controllers\KhaltiController;
 
-Route::group(['middleware' => ['web', 'auth', 'verified','PlanModuleCheck:Khalti']], function () {
-    Route::prefix('khalti')->group(function () {
-        Route::post('/setting/store', [KhaltiController::class, 'setting'])->name('khalti.setting.store');
-    });
+Route::middleware('web')->group(function () {
+    // Settings
+    Route::post('/settings/khalti', [KhaltiSettingsController::class, 'update'])->name('khalti.settings.update')->middleware(['auth', 'verified', 'PlanModuleCheck:Khalti']);
+
+    // Plan Payments
+    Route::post('/payment/khalti/plan', [KhaltiController::class, 'planPayWithKhalti'])->name('khalti.plan.pay')->middleware(['auth', 'verified']);
+    Route::get('/payment/khalti/plan/status', [KhaltiController::class, 'planGetKhaltiStatus'])->name('khalti.plan.status');
+
+    // Booking Payments
+    Route::post('/payment/khalti/booking/{userSlug}', [KhaltiController::class, 'bookingPayWithKhalti'])->name('khalti.booking.payment.pay');
+    Route::get('/payment/khalti/booking/{userSlug}/status', [KhaltiController::class, 'bookingGetKhaltiStatus'])->name('khalti.booking.payment.status');
+
+    // Beauty Spa Payments
+    Route::post('/payment/khalti/beauty-spa/{userSlug}', [KhaltiController::class, 'beautySpaPayWithKhalti'])->name('khalti.beauty-spa.payment.pay');
+    Route::get('/payment/khalti/beauty-spa/{userSlug}/status', [KhaltiController::class, 'beautySpaGetKhaltiStatus'])->name('khalti.beauty-spa.payment.status');
+
+    // LMS Payments
+    Route::post('/payment/khalti/lms/{userSlug}', [KhaltiController::class, 'lmsPayWithKhalti'])->name('khalti.lms.payment.pay');
+    Route::get('/payment/khalti/lms/{userSlug}/status', [KhaltiController::class, 'lmsGetKhaltiStatus'])->name('khalti.lms.payment.status');
+
+    // Laundry Payments
+    Route::post('/payment/khalti/laundry/{userSlug}', [KhaltiController::class, 'laundryPayWithKhalti'])->name('khalti.laundry.payment.pay');
+    Route::get('/payment/khalti/laundry/{userSlug}/status', [KhaltiController::class, 'laundryGetKhaltiStatus'])->name('khalti.laundry.payment.status');
+
+    // Parking Payments
+    Route::post('/payment/khalti/parking/{userSlug}', [KhaltiController::class, 'parkingPayWithKhalti'])->name('khalti.parking.payment.pay');
+    Route::get('/payment/khalti/parking/{userSlug}/status', [KhaltiController::class, 'parkingGetKhaltiStatus'])->name('khalti.parking.payment.status');
+
+    // Events Payments
+    Route::post('/payment/khalti/events/{userSlug}', [KhaltiController::class, 'eventsPayWithKhalti'])->name('khalti.events-management.payment.pay');
+    Route::get('/payment/khalti/events/{userSlug}/status', [KhaltiController::class, 'eventsGetKhaltiStatus'])->name('khalti.events-management.payment.status');
+
+    // Holidayz Payments
+    Route::post('/payment/khalti/holidayz/{userSlug}', [KhaltiController::class, 'holidayzPayWithKhalti'])->name('khalti.holidayz.payment.pay');
+    Route::get('/payment/khalti/holidayz/{userSlug}/status', [KhaltiController::class, 'holidayzGetKhaltiStatus'])->name('khalti.holidayz.payment.status');
 });
-
-Route::group(['middleware' => 'web'], function () {
-    Route::post('plan-pay-with-khalti', [KhaltiController::class, 'planPayWithKhalti'])->name('plan.pay.with.khalti');
-    Route::post('plan-get-khalti-status', [KhaltiController::class, 'planGetKhaltiStatus'])->name('plan.get.khalti.status');
-
-    // beauty spa
-    Route::post('/beauty-spa-pay-with-khalti/{slug?}', [KhaltiController::class, 'BeautySpaPayWithKhalti'])->name('beauty.spa.pay.with.khalti');
-    Route::post('/beauty-spa/khalti/{slug?}', [KhaltiController::class, 'getBeautySpaPaymentStatus'])->name('beauty.spa.khalti.status');
-
-    Route::post('course-pay-with-khalti/{slug?}', [KhaltiController::class, 'coursePayWithKhalti'])->name('course.pay.with.khalti');
-
-    Route::post('/invoice-khalti', [KhaltiController::class, 'getInvoicePaymentStatus'])->name('invoice.khalti');
-
-
-    // tvstudio
-    Route::post('content-pay-with-khalti/{slug?}', [KhaltiController::class, 'contentPayWithKhalti'])->name('content.pay.with.khalti');
-
-    // facilites
-    // booking
-    Route::post('/facilities-pay-with-khalti/{slug?}', [KhaltiController::class, 'FacilitiesPayWithKhalti'])->name('facilities.pay.with.khalti');
-    Route::post('/facilities/khalti/{slug?}', [KhaltiController::class, 'getFacilitiesPaymentStatus'])->name('facilities.khalti.status');
-
-    // event booking
-    Route::post('/event-show-booking-pay-with-khalti/{slug?}', [KhaltiController::class, 'EventShowBookingPayWithKhalti'])->name('event.show.booking.pay.with.khalti');
-    Route::post('/event-show-booking/khalti/{slug?}', [KhaltiController::class, 'getEventShowBookingPaymentStatus'])->name('event.show.booking.khalti.status');
-
-    Route::prefix('hotel/{slug}')->group(function () {
-        Route::post('pay-with/kahlti', [KhaltiController::class, 'BookingPayWithKhalti'])->name('hotel.pay.with.khalti');
-        Route::post('get-khalti-payment-status', [KhaltiController::class, 'GetBookingPaymentStatus'])->name('booking.get.khalti.status');
-    });
-
-    // gym management
-    Route::post('/memberplan-pay-with-khalti', [KhaltiController::class, 'memberplanPayWithKhalti'])->name('memberplan.pay.with.khalti');
-
-});
-

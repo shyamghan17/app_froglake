@@ -2,40 +2,20 @@
 
 namespace Workdo\SMS\Listeners;
 
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Workdo\SMS\Entities\SendMsg;
 use Workdo\Training\Events\CreateTrainer;
+use Workdo\SMS\Services\SendSMS;
 
 class CreateTrainerLis
 {
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        //
-    }
-
-    /**
-     * Handle the event.
-     *
-     * @param  object  $event
-     * @return void
-     */
     public function handle(CreateTrainer $event)
     {
-        if(module_is_active('SMS') && !empty(company_setting('SMS New Trainer')) && company_setting('SMS New Trainer')  == true)
-        {
-            $request = $event->request;
+        if (Module_is_active('SMS') && company_setting('SMS New Trainer') == 'on') {
             $trainer = $event->trainer;
-            if(!empty($request->contact)){
+            if (isset($trainer->contact)) {
                 $uArr = [
-                    'branch_name' => $trainer->branches->name
+                    'user_name' => $trainer->name ?? '',
                 ];
-                SendMsg::SendMsgs($request->contact, $uArr , 'New Trainer');
+                SendSMS::SendMsgs($uArr, 'New Trainer', $trainer->contact, $trainer->created_by);
             }
         }
     }

@@ -18,8 +18,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Workdo\\Khalti\\Providers\\KhaltiServiceProvider",
-                "Workdo\\Khalti\\Providers\\BankAccountPayments"
+                "Workdo\\Khalti\\Providers\\KhaltiServiceProvider"
             ]
         }
     }

@@ -5,10 +5,11 @@ namespace Workdo\ActivityLog\Listeners;
 use App\Models\User;
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\Sales\Events\CreateSalesAccount;
 
 class CreateSalesAccountLis
 {
-    public function handle($event)
+    public function handle(CreateSalesAccount $event)
     {
         if (Module_is_active('ActivityLog')) {
             $salesAccount = $event->account;
@@ -21,7 +22,7 @@ class CreateSalesAccountLis
                 $activity['description']    = __('New Account Created for ') . $user->name . __(' by the ');
             } else {
                 $activity['description']    = __('New Account Created by the ');
-            }                          
+            }
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $salesAccount->created_by;
             $activity->save();

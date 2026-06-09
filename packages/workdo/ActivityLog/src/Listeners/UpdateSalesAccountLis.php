@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\Sales\Events\UpdateSalesAccount;
 
 class UpdateSalesAccountLis
 {
-    public function handle($event)
+    public function handle(UpdateSalesAccount $event)
     {
         if (Module_is_active('ActivityLog')) {
             $salesAccount = $event->account;
@@ -15,7 +16,7 @@ class UpdateSalesAccountLis
             $activity = new AllActivityLog();
             $activity['module'] = 'Sales';
             $activity['sub_module'] = 'Account';
-            $activity['description'] = __('Sales Account updated by the ');                          
+            $activity['description'] = __('Sales Account updated by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $salesAccount->created_by;
             $activity->save();

@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\VisitorManagement\Events\CreateVisitor;
 
 class CreateVisitorLis
 {
-    public function handle($event)
+    public function handle(CreateVisitor $event)
     {
         if (Module_is_active('ActivityLog')) {
             $visitor = $event->visitor;
@@ -15,7 +16,7 @@ class CreateVisitorLis
             $activity = new AllActivityLog();
             $activity['module'] = 'VisitorManagement';
             $activity['sub_module'] = 'Visitor';
-            $activity['description'] = __('Visitor created by the ');                          
+            $activity['description'] = __('Visitor created by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $visitor->created_by;
             $activity->save();

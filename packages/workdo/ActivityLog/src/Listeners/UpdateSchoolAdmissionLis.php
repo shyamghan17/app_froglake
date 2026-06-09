@@ -1,0 +1,25 @@
+<?php
+
+namespace Workdo\ActivityLog\Listeners;
+
+use Workdo\ActivityLog\Models\AllActivityLog;
+use Illuminate\Support\Facades\Auth;
+use Workdo\School\Events\UpdateAdmission;
+
+class UpdateSchoolAdmissionLis
+{
+    public function handle(UpdateAdmission $event)
+    {
+        if (Module_is_active('ActivityLog')) {
+            $admission = $event->admission;
+
+            $activity = new AllActivityLog();
+            $activity['module'] = 'School';
+            $activity['sub_module'] = 'Admission';
+            $activity['description'] = __('School Admission updated by the ');
+            $activity['creator_id'] = Auth::user()->id;
+            $activity['created_by'] = $admission->created_by;
+            $activity->save();
+        }
+    }
+}

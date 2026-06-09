@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\RepairManagementSystem\Events\CreateRepairOrderRequest;
 
 class CreateRepairOrderRequestLis
 {
-    public function handle($event)
+    public function handle(CreateRepairOrderRequest $event)
     {
         if (Module_is_active('ActivityLog')) {
             $repairOrderRequest = $event->repairOrderRequest;
@@ -15,7 +16,7 @@ class CreateRepairOrderRequestLis
             $activity = new AllActivityLog();
             $activity['module'] = 'RepairManagementSystem';
             $activity['sub_module'] = 'Request';
-            $activity['description'] = __('Repair Order Request created by the ');                          
+            $activity['description'] = __('Repair Order Request created by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $repairOrderRequest->created_by;
             $activity->save();

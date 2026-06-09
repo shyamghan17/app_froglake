@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\Lead\Events\DealUploadFile;
 
 class DealUploadFileLis
 {
-    public function handle($event)
+    public function handle(DealUploadFile $event)
     {
         if (Module_is_active('ActivityLog')) {
             $dealFile = $event->deal;
@@ -15,7 +16,7 @@ class DealUploadFileLis
             $activity = new AllActivityLog();
             $activity['module'] = 'Lead';
             $activity['sub_module'] = 'Deal';
-            $activity['description'] = __('Deal file uploaded by the ');                          
+            $activity['description'] = __('Deal file uploaded by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $dealFile->created_by;
             $activity->save();

@@ -18,14 +18,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Workdo\\Esewa\\Providers\\EsewaServiceProvider",
-                "Workdo\\Esewa\\Providers\\ViewComposer",
-                "Workdo\\Esewa\\Providers\\InvoicePayment",
-                "Workdo\\Esewa\\Providers\\RetainerPayment",
-                "Workdo\\Esewa\\Providers\\CoursePayment",
-                "Workdo\\Esewa\\Providers\\ContentPayment",
-                "Workdo\\Esewa\\Providers\\BankAccountPayments"
-
+                "Workdo\\Esewa\\Providers\\EsewaServiceProvider"
             ]
         }
     }

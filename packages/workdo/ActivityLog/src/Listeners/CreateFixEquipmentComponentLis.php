@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\FixEquipment\Events\CreateFixEquipmentComponent;
 
 class CreateFixEquipmentComponentLis
 {
-    public function handle($event)
+    public function handle(CreateFixEquipmentComponent $event)
     {
         if (Module_is_active('ActivityLog')) {
             $fixEquipmentComponent = $event->fixEquipmentComponent;
@@ -15,7 +16,7 @@ class CreateFixEquipmentComponentLis
             $activity = new AllActivityLog();
             $activity['module'] = 'FixEquipment';
             $activity['sub_module'] = 'Component';
-            $activity['description'] = __('Fix Equipment Component created by the ');                          
+            $activity['description'] = __('Fix Equipment Component created by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $fixEquipmentComponent->created_by;
             $activity->save();

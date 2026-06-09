@@ -1,0 +1,25 @@
+{
+    "name": "workdo/rotas",
+    "description": "Description for rotas package",
+    "type": "library",
+    "license": "MIT",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Workdo\\Rotas\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "WorkDo",
+            "email": "support@workdo.io"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Workdo\\Rotas\\Providers\\RotasServiceProvider"
+            ]
+        }
+    }
+}

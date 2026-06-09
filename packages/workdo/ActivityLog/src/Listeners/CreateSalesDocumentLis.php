@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\Sales\Events\CreateSalesDocument;
 
 class CreateSalesDocumentLis
 {
-    public function handle($event)
+    public function handle(CreateSalesDocument $event)
     {
         if (Module_is_active('ActivityLog')) {
             $salesDocument = $event->salesDocument;
@@ -15,7 +16,7 @@ class CreateSalesDocumentLis
             $activity = new AllActivityLog();
             $activity['module'] = 'Sales';
             $activity['sub_module'] = 'Document';
-            $activity['description'] = __('Sales Document created by the ');                          
+            $activity['description'] = __('Sales Document created by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $salesDocument->created_by;
             $activity->save();

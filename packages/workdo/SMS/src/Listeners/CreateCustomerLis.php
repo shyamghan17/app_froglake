@@ -2,41 +2,26 @@
 
 namespace Workdo\SMS\Listeners;
 
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Workdo\SMS\Entities\SendMsg;
+use App\Models\User;
 use Workdo\Account\Events\CreateCustomer;
-
-
+use Workdo\SMS\Services\SendSMS;
 
 class CreateCustomerLis
 {
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
     public function __construct()
     {
         //
     }
 
-    /**
-     * Handle the event.
-     *
-     * @param  object  $event
-     * @return void
-     */
     public function handle(CreateCustomer $event)
     {
-        if(module_is_active('SMS') && !empty(company_setting('SMS New Customer')) && company_setting('SMS New Customer')  == true)
-        {
-            $request = $event->request;
+        if (Module_is_active('SMS') && company_setting('SMS New Customer') == 'on' && isset($event->customer->user_id)) {
+            $user = User::find($event->customer->user_id);
+            $uArr = [
+                'company_name' => $user->name,
+            ];
 
-            if(!empty($request->contact)){
-                $uArr = [];
-                SendMsg::SendMsgs($request->contact, $uArr , 'New Customer');
-            }
+            SendSMS::SendMsgs($uArr, 'New Customer', $user->mobile_no);
         }
     }
 }

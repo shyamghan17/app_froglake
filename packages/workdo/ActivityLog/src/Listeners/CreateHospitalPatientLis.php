@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\HospitalManagement\Events\CreateHospitalPatient;
 
 class CreateHospitalPatientLis
 {
-    public function handle($event)
+    public function handle(CreateHospitalPatient $event)
     {
         if (Module_is_active('ActivityLog')) {
             $hospitalPatient = $event->hospitalpatient;
@@ -15,7 +16,7 @@ class CreateHospitalPatientLis
             $activity = new AllActivityLog();
             $activity['module'] = 'HospitalManagement';
             $activity['sub_module'] = 'Patient';
-            $activity['description'] = __('Hospital Patient created by the ');                          
+            $activity['description'] = __('Hospital Patient created by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $hospitalPatient->created_by;
             $activity->save();

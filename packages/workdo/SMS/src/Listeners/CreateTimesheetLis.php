@@ -2,41 +2,26 @@
 
 namespace Workdo\SMS\Listeners;
 
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Workdo\SMS\Entities\SendMsg;
 use Workdo\Timesheet\Events\CreateTimesheet;
-use App\Models\User;
+use Workdo\SMS\Services\SendSMS;
+
 class CreateTimesheetLis
 {
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
     public function __construct()
     {
         //
     }
 
-    /**
-     * Handle the event.
-     *
-     * @param  object  $event
-     * @return void
-     */
     public function handle(CreateTimesheet $event)
     {
         $timesheet = $event->timesheet;
-        $user = User::find($timesheet->created_by);
-        if (module_is_active('SMS')  && company_setting('sms_notification_is')=='on' && !empty(company_setting('SMS New Timesheet')) && company_setting('SMS New Timesheet')  == true) {
-            if(!empty($timesheet) && !empty($user) && !empty($user->mobile_no))
-            {
+        if (Module_is_active('SMS') && company_setting('SMS New Timesheet') == 'on') {
+            if ($timesheet->user && $timesheet->user->mobile_no) {
                 $uArr = [
-                    'user_name' => $user->name,
-                    'type' => $timesheet->type,
+                    'user_name' =>  $timesheet->user->name ?? '',
+                    'type' => $timesheet->type ?? 'Timesheet',
                 ];
-                SendMsg::SendMsgs($user->mobile_no , $uArr , 'New Timesheet');
+                SendSMS::SendMsgs($uArr, 'New Timesheet', $timesheet->user->mobile_no, $timesheet->created_by);
             }
         }
     }

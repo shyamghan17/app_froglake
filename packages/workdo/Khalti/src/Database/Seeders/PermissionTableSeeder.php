@@ -14,14 +14,14 @@ class PermissionTableSeeder extends Seeder
     {
         Model::unguard();
         Artisan::call('cache:clear');
-        $module = 'khalti';
 
         $permission = [
-            ['name' => 'khalti payment manage', 'module' => $module, 'label' => 'Manage Khalti Payment'],
+            ['name' => 'edit-khalti-settings', 'module' => 'khalti', 'label' => 'Edit Khalti Settings'],
+            ['name' => 'manage-khalti-settings', 'module' => 'khalti', 'label' => 'Manage Khalti Settings'],
         ];
 
-        $company_role = Role::where('name', 'company')->first();
         $superadmin_role = Role::where('name', 'superadmin')->first();
+        $company_role = Role::where('name', 'company')->first();
 
         foreach ($permission as $perm) {
             $permission_obj = Permission::firstOrCreate(
@@ -35,11 +35,13 @@ class PermissionTableSeeder extends Seeder
                 ]
             );
 
-            if ($company_role && !$company_role->hasPermissionTo($permission_obj)) {
-                $company_role->givePermissionTo($permission_obj);
-            }
+
             if ($superadmin_role && !$superadmin_role->hasPermissionTo($permission_obj)) {
                 $superadmin_role->givePermissionTo($permission_obj);
+            }
+
+            if ($company_role && !$company_role->hasPermissionTo($permission_obj)) {
+                $company_role->givePermissionTo($permission_obj);
             }
         }
     }

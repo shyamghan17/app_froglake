@@ -37,6 +37,7 @@ interface ActivityLogsIndexProps {
     };
     modules: string[];
     staffs: { id: number; name: string }[];
+    packages?: any[];
     auth: {
         user: {
             permissions: string[];
@@ -45,22 +46,23 @@ interface ActivityLogsIndexProps {
 }
 
 interface ActivityLogFilters {
-    module: string;
-    description: string;
-    user_id: string;
     search: string;
+    module: string;
+    user_id: string;
 }
 
 export default function Index() {
     const { t } = useTranslation();
-    const { activityLogs, modules, staffs, auth } = usePage<ActivityLogsIndexProps>().props;
+    const { activityLogs, modules: rawModules, staffs, packages = [], auth } = usePage<ActivityLogsIndexProps>().props;
+    
+    // Ensure modules is always an array
+    const modules = Array.isArray(rawModules) ? rawModules : [];
     const urlParams = new URLSearchParams(window.location.search);
 
     const [filters, setFilters] = useState<ActivityLogFilters>({
+        search: urlParams.get('search') || '',
         module: urlParams.get('module') || '',
-        description: urlParams.get('description') || '',
-        user_id: urlParams.get('user_id') || '',
-        search: urlParams.get('search') || ''
+        user_id: urlParams.get('user_id') || ''
     });
 
     const [perPage] = useState(urlParams.get('per_page') || '10');
@@ -75,8 +77,45 @@ export default function Index() {
         defaultMessage: t('Are you sure you want to delete this activity log?')
     });
 
-    const handleFilter = () => {
-        router.get(route('activity-logs.index'), {...filters, per_page: perPage, sort: sortField, direction: sortDirection}, {
+    const getModuleNameBySearchTerm = (searchTerm: string): string | null => {
+        const lowerSearch = searchTerm.toLowerCase();
+        
+        // First, try to find by package alias (display name)
+        for (const pkg of packages) {
+            if (pkg.alias && pkg.alias.toLowerCase().includes(lowerSearch)) {
+                return pkg.name; // Return the actual package name, not alias
+            }
+        }
+        
+        // Then search through available modules by actual module name
+        for (const module of modules) {
+            if (module.toLowerCase().includes(lowerSearch)) {
+                return module;
+            }
+        }
+        
+        return null;
+    };
+
+    const handleSearch = () => {
+        const params: Record<string, any> = { per_page: perPage };
+        
+        if (filters.search) {
+            const moduleMatch = getModuleNameBySearchTerm(filters.search);
+            if (moduleMatch) {
+                params.module = moduleMatch;
+            } else {
+                params.search = filters.search;
+            }
+        }
+        if (filters.module) params.module = filters.module;
+        if (filters.user_id) params.user_id = filters.user_id;
+        if (sortField) {
+            params.sort = sortField;
+            params.direction = sortDirection;
+        }
+
+        router.get(route('activity-logs.index'), params, {
             preserveState: true,
             replace: true
         });
@@ -86,14 +125,28 @@ export default function Index() {
         const direction = sortField === field && sortDirection === 'asc' ? 'desc' : 'asc';
         setSortField(field);
         setSortDirection(direction);
-        router.get(route('activity-logs.index'), {...filters, per_page: perPage, sort: field, direction}, {
+        
+        const params: Record<string, any> = { per_page: perPage, sort: field, direction };
+        
+        if (filters.search) {
+            const moduleMatch = getModuleNameBySearchTerm(filters.search);
+            if (moduleMatch) {
+                params.module = moduleMatch;
+            } else {
+                params.search = filters.search;
+            }
+        }
+        if (filters.module) params.module = filters.module;
+        if (filters.user_id) params.user_id = filters.user_id;
+
+        router.get(route('activity-logs.index'), params, {
             preserveState: true,
             replace: true
         });
     };
 
     const clearFilters = () => {
-        setFilters({ module: '', description: '', user_id: '', search: '' });
+        setFilters({ search: '', module: '', user_id: '' });
         router.get(route('activity-logs.index'), {per_page: perPage});
     };
 
@@ -182,8 +235,8 @@ export default function Index() {
                             <SearchInput
                                 value={filters.search}
                                 onChange={(value) => setFilters({...filters, search: value})}
-                                onSearch={handleFilter}
-                                placeholder={t('Search activities...')}
+                                onSearch={handleSearch}
+                                placeholder={t('Search modules, sub modules...')}
                             />
                         </div>
                         <div className="flex items-center gap-3">
@@ -239,7 +292,7 @@ export default function Index() {
                                 </Select>
                             </div>
                             <div className="flex items-end gap-2">
-                                <Button onClick={handleFilter} size="sm">{t('Apply')}</Button>
+                                <Button onClick={handleSearch} size="sm">{t('Apply')}</Button>
                                 <Button variant="outline" onClick={clearFilters} size="sm">{t('Clear')}</Button>
                             </div>
                         </div>
@@ -261,7 +314,7 @@ export default function Index() {
                                         icon={Activity}
                                         title={t('No activity logs found')}
                                         description={t('No activities have been recorded yet.')}
-                                        hasFilters={!!(filters.module || filters.description || filters.user_id || filters.search)}
+                                        hasFilters={!!(filters.module || filters.user_id || filters.search)}
                                         onClearFilters={clearFilters}
                                         className="h-auto"
                                     />

@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\Lead\Events\DealMoved;
 
 class DealMovedLis
 {
-    public function handle($event)
+    public function handle(DealMoved $event)
     {
         if (Module_is_active('ActivityLog')) {
             $deal = $event->deal;
@@ -15,7 +16,7 @@ class DealMovedLis
             $activity = new AllActivityLog();
             $activity['module'] = 'Lead';
             $activity['sub_module'] = 'Deal';
-            $activity['description'] = __('Deal moved by the ');                          
+            $activity['description'] = __('Deal moved by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $deal->created_by;
             $activity->save();

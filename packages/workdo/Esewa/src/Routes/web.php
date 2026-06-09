@@ -1,40 +1,46 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
-
 use Illuminate\Support\Facades\Route;
 use Workdo\Esewa\Http\Controllers\EsewaController;
+use Workdo\Esewa\Http\Controllers\EsewaSettingsController;
 
-Route::group(['middleware' => ['web', 'auth', 'verified', 'PlanModuleCheck:Esewa']], function () {
-    Route::prefix('esewa')->group(function () {
-        Route::post('esewa/settings/store', [EsewaController::class, 'setting'])->name('esewa.setting.store');
-    });
-});
+Route::middleware('web')->prefix('esewa')->name('esewa.')->group(function () {
+    // Settings
+    Route::post('settings', [EsewaSettingsController::class, 'update'])->middleware(['auth', 'verified', 'PlanModuleCheck:Esewa'])->name('settings.update');
 
-Route::group(['middleware' => ['web']], function () {
+    // Checkout
+    Route::get('checkout/{data}', [EsewaSettingsController::class, 'checkout'])->name('checkout');
 
-    // subscribe plan from company
-    Route::post('plan-pay-with/esewa', [EsewaController::class, 'planPayWithESewa'])->name('plan.pay.with.esewa');
-    Route::get('plan-get-esewa-status/', [EsewaController::class, 'planGetESewaStatus'])->name('plan.get.esewa.status');
+    // Plan Payments
+    Route::post('plan/payment', [EsewaController::class, 'planPayWithEsewa'])->middleware(['auth', 'verified'])->name('plan.pay');
+    Route::get('plan/status/{order_id}', [EsewaController::class, 'planGetEsewaStatus'])->middleware(['auth', 'verified'])->name('plan.status');
 
-    // invoice pay
-    Route::post('invoice-pay-with/esewa', [EsewaController::class, 'invoicePayWithESewa'])->name('invoice.pay.with.esewa');
-    Route::get('invoice-get-esewa-status/', [EsewaController::class, 'invoiceGetESewaStatus'])->name('invoice.esewa.status');
+    // Booking payments
+    Route::post('{userSlug?}/booking/payment', [EsewaController::class, 'bookingPayWithEsewa'])->name('booking.payment.pay');
+    Route::get('{userSlug?}/booking/status/{order_id}', [EsewaController::class, 'bookingGetEsewaStatus'])->name('booking.payment.status');
 
+    // Beauty Spa payments
+    Route::post('{userSlug?}/beauty-spa/payment', [EsewaController::class, 'beautySpaPayWithEsewa'])->name('beauty-spa.payment.pay');
+    Route::get('{userSlug?}/beauty-spa/status/{order_id}', [EsewaController::class, 'beautySpaGetEsewaStatus'])->name('beauty-spa.payment.status');
 
-    Route::post('course/esewa/{slug?}', [EsewaController::class, 'coursePayWithEsewa'])->name('course.pay.with.esewa');
-    Route::get('coursee-get-esewa-status/{slug?}', [EsewaController::class, 'getCoursePaymentStatus'])->name('course.esewa');
+    // LMS payments
+    Route::post('{userSlug?}/lms/payment', [EsewaController::class, 'lmsPayWithEsewa'])->name('lms.payment.pay');
+    Route::get('{userSlug?}/lms/status/{order_id}', [EsewaController::class, 'lmsGetEsewaStatus'])->name('lms.payment.status');
 
+    // Laundry payments
+    Route::post('{userSlug?}/laundry/payment', [EsewaController::class, 'laundryPayWithEsewa'])->name('laundry.payment.pay');
+    Route::get('{userSlug?}/laundry/status/{order_id}', [EsewaController::class, 'laundryGetEsewaStatus'])->name('laundry.payment.status');
 
-    Route::post('/esewa/{slug?}', [EsewaController::class, 'contentPayWithEsewa'])->name('content.pay.with.esewa');
-    Route::get('content-get-esewa-status/{slug?}', [EsewaController::class, 'getContentPaymentStatus'])->name('content.esewa');
-});
+    // Parking payments
+    Route::post('{userSlug}/parking/payment', [EsewaController::class, 'parkingPayWithEsewa'])->name('parking.payment.pay');
+    Route::get('{userSlug}/parking/status/{order_id}', [EsewaController::class, 'parkingGetEsewaStatus'])->name('parking.payment.status');
+
+    // Events payments
+    Route::post('{userSlug?}/events/payment', [EsewaController::class, 'eventsPayWithEsewa'])->name('events-management.payment.pay');
+    Route::get('{userSlug?}/events/status/{order_id}', [EsewaController::class, 'eventsGetEsewaStatus'])->name('events-management.payment.status');
+
+    // Holidayz payments
+    Route::post('{userSlug?}/holidayz/payment', [EsewaController::class, 'holidayzPayWithEsewa'])->name('holidayz.payment.pay');
+    Route::get('{userSlug?}/holidayz/status/{order_id}', [EsewaController::class, 'holidayzGetEsewaStatus'])->name('holidayz.payment.status');
+
+   });

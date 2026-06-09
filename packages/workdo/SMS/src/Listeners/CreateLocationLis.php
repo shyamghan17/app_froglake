@@ -2,45 +2,26 @@
 
 namespace Workdo\SMS\Listeners;
 
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Models\User;
-use Workdo\SMS\Entities\SendMsg;
 use Workdo\CMMS\Events\CreateLocation;
+use Workdo\SMS\Services\SendSMS;
 
 class CreateLocationLis
 {
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
     public function __construct()
     {
         //
     }
 
-    /**
-     * Handle the event.
-     *
-     * @param  object  $event
-     * @return void
-     */
     public function handle(CreateLocation $event)
     {
-        if(module_is_active('SMS') && company_setting('sms_notification_is') == 'on' && !empty(company_setting('SMS New Location')) && company_setting('SMS New Location')  == true)
-        {
-            $request = $event->request;
-            $location = $request->name;
-            $company = User::find($event->location->company_id);
-            $to=\Auth::user()->mobile_no;
-
-            if(!empty($location) && !empty($to)){
-                $uArr = [
-                    'location_name' => $location,
-                ];
-                SendMsg::SendMsgs($to, $uArr , 'New Location');
-            }
+        if (Module_is_active('SMS') && company_setting('SMS New Location') == 'on') {
+            $user = User::find($event->location->created_by);
+            $uArr = [
+                'company_name' => $user->name ?? '-',
+                'location_name' => $event->location->name ?? '-',
+            ];
+            SendSMS::SendMsgs($uArr, 'New Location', $user->mobile_no ?? null, $user->id);
         }
     }
 }

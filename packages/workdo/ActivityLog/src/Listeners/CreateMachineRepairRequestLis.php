@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\MachineRepairManagement\Events\CreateMachineRepairRequest;
 
 class CreateMachineRepairRequestLis
 {
-    public function handle($event)
+    public function handle(CreateMachineRepairRequest $event)
     {
         if (Module_is_active('ActivityLog')) {
             $machineRepairRequest = $event->machinerepairrequest;
@@ -15,7 +16,7 @@ class CreateMachineRepairRequestLis
             $activity = new AllActivityLog();
             $activity['module'] = 'MachineRepairManagement';
             $activity['sub_module'] = 'RepairRequest';
-            $activity['description'] = __('Machine Repair Request created by the ');                          
+            $activity['description'] = __('Machine Repair Request created by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $machineRepairRequest->created_by;
             $activity->save();

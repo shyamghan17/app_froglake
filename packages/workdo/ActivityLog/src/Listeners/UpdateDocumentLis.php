@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\Documents\Events\UpdateDocument;
 
 class UpdateDocumentLis
 {
-    public function handle($event)
+    public function handle(UpdateDocument $event)
     {
         if (Module_is_active('ActivityLog')) {
             $document = $event->document;
@@ -15,7 +16,7 @@ class UpdateDocumentLis
             $activity = new AllActivityLog();
             $activity['module'] = 'Documents';
             $activity['sub_module'] = 'Document';
-            $activity['description'] = __('Document updated by the ');                          
+            $activity['description'] = __('Document updated by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $document->created_by;
             $activity->save();

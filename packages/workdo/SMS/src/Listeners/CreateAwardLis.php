@@ -2,44 +2,23 @@
 
 namespace Workdo\SMS\Listeners;
 
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Workdo\SMS\Entities\SendMsg;
-use Workdo\Hrm\Events\CreateAward;
 use App\Models\User;
+use Workdo\Hrm\Events\CreateAward;
+use Workdo\SMS\Services\SendSMS;
 
 class CreateAwardLis
 {
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        //
-    }
-
-    /**
-     * Handle the event.
-     *
-     * @param  object  $event
-     * @return void
-     */
     public function handle(CreateAward $event)
     {
-        if(module_is_active('SMS') && !empty(company_setting('SMS New Award')) && company_setting('SMS New Award')  == true)
-        {
-            $request = $event->request;
+        if (Module_is_active('SMS') && company_setting('SMS New Award') == 'on') {
             $award = $event->award;
-            $emp = User::find($request->employee_id);
-            if(!empty($emp->mobile_no)){
+            $user = $event->award->employee;
+            if ($user && $user->mobile_no) {
                 $uArr = [
-                    'award_name' => $award->awardType->name,
-                    'user_name' => $emp->name,
-                    'date' => $request->date
+                    'user_name' => $user->name ?? '',
+                    'date' => $award->award_date->format(company_setting('dateFormat',  $user->id)) ?? '',
                 ];
-                SendMsg::SendMsgs($emp->mobile_no, $uArr , 'New Award');
+                SendSMS::SendMsgs($uArr, 'New Award', $user->mobile_no, $award->created_by);
             }
         }
     }

@@ -2,44 +2,26 @@
 
 namespace Workdo\SMS\Listeners;
 
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Models\User;
-use Workdo\SMS\Entities\SendMsg;
 use Workdo\CMMS\Events\CreateSupplier;
+use Workdo\SMS\Services\SendSMS;
+
 class CreateSupplierLis
 {
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
     public function __construct()
     {
         //
     }
 
-    /**
-     * Handle the event.
-     *
-     * @param  object  $event
-     * @return void
-     */
     public function handle(CreateSupplier $event)
     {
-        if(module_is_active('SMS') && company_setting('sms_notification_is') == 'on' && !empty(company_setting('SMS New Supplier')) && company_setting('SMS New Supplier')  == true)
-        {
-            $request = $event->request;
-            $user = $request->name;
-            $company = User::find($event->suppliers->company_id);
-            $to=\Auth::user()->mobile_no;
+        if (Module_is_active('SMS') && company_setting('SMS New Supplier') == 'on') {
+            $uArr = [
+                'company_name' => User::find($event->supplier->created_by)->name ?? '-',
+                'user_name' => $event->supplier->name ?? '-',
+            ];
 
-            if(!empty($user) && !empty($to)){
-                $uArr = [
-                    'user_name' =>$user,
-                ];
-                SendMsg::SendMsgs($to, $uArr , 'New Supplier');
-            }
+            SendSMS::SendMsgs($uArr, 'New Supplier', $event->supplier->contact ?? null);
         }
     }
 }

@@ -2,42 +2,28 @@
 
 namespace Workdo\SMS\Listeners;
 
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Workdo\SMS\Entities\SendMsg;
+use App\Models\User;
 use Workdo\WordpressWoocommerce\Events\CreateWoocommerceProduct;
-use Illuminate\Support\Facades\Auth;
+use Workdo\SMS\Services\SendSMS;
 
 class CreateWoocommerceProductLis
 {
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
     public function __construct()
     {
         //
     }
 
-    /**
-     * Handle the event.
-     *
-     * @param  object  $event
-     * @return void
-     */
     public function handle(CreateWoocommerceProduct $event)
     {
-        $product = $event->request;
-
-        if (module_is_active('SMS') && !empty(company_setting('SMS New Product')) && company_setting('SMS New Product')  == true) {
-
-            $uArr = [
-                'name' => $product['name']
-            ];
-            $to = Auth::user()->mobile_no;
-            SendMsg::SendMsgs($to,$uArr , 'New Product');
-
+        if (Module_is_active('SMS') && company_setting('SMS New Product') == 'on') {
+            $user = creatorUser();
+            if ($user && $user->mobile_no) {
+                $uArr = [
+                    'company_name' => $user->name ?? '',
+                    'name' => $event->wooProduct['name'] ?? 'Product',
+                ];
+                SendSMS::SendMsgs($uArr, 'New Product', $user->mobile_no);
+            }
         }
     }
 }

@@ -2,43 +2,35 @@
 
 namespace Workdo\SMS\Listeners;
 
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Workdo\SMS\Entities\SendMsg;
-use Workdo\Documents\Events\StatusChangeDocument;
 use App\Models\User;
+use Workdo\Documents\Events\StatusChangeDocument;
+use Workdo\SMS\Services\SendSMS;
+
 class StatusChangeDocumentLis
 {
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
     public function __construct()
     {
         //
     }
 
-    /**
-     * Handle the event.
-     *
-     * @param  object  $event
-     * @return void
-     */
     public function handle(StatusChangeDocument $event)
     {
-        $documents = $event->documents;
-        $user = User::find($documents->user_id);
-        $company = User::find($user->created_by);
-        if (module_is_active('SMS')  && company_setting('sms_notification_is')=='on' && !empty(company_setting('SMS Update Status Document')) && company_setting('SMS Update Status Document')  == true) {
-
-            if(!empty($company->mobile_no))
-            {
-                $uArr = [
-                    'status' => $documents->status,
-                    'user_name' => !empty($user) ? $user->name : '-'
-                ];
-                SendMsg::SendMsgs($company->mobile_no , $uArr , 'Update Status Document');
+        if (Module_is_active('SMS') && company_setting('SMS Update Status Document') == 'on') {
+            $document = $event->document;
+            $users = [];
+            if ($document->is_private) {
+                $users = $document->assignedUsers;
+            } else if ($document->creator_id != $document->created_by) {
+                $users = User::whereId($document->created_by)->get();
+            }
+            foreach ($users ?? [] as $user) {
+                if (!empty($user->mobile_no)) {
+                    $uArr = [
+                        'status' => $document->status ?? '',
+                        'user_name' => $user->name ?? '',
+                    ];
+                    SendSMS::SendMsgs($uArr, 'Update Status Document', $user->mobile_no, $document->created_by ?? null);
+                }
             }
         }
     }

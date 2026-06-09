@@ -1,0 +1,25 @@
+{
+    "name": "workdo/optical-and-eye-care-center",
+    "description": "Description for optical-and-eye-care-center package",
+    "type": "library",
+    "license": "MIT",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Workdo\\OpticalAndEyeCareCenter\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "WorkDo",
+            "email": "support@workdo.io"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Workdo\\OpticalAndEyeCareCenter\\Providers\\OpticalAndEyeCareCenterServiceProvider"
+            ]
+        }
+    }
+}

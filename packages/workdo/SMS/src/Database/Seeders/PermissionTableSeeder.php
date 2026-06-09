@@ -10,17 +10,18 @@ use Illuminate\Support\Facades\Artisan;
 
 class PermissionTableSeeder extends Seeder
 {
-     public function run()
+    public function run()
     {
         Model::unguard();
         Artisan::call('cache:clear');
-        $module = 'sms';
 
         $permission = [
-            ['name' => 'sms manage', 'module' => $module, 'label' => 'Manage SMS'],
+            ['name' => 'manage-sms-settings', 'module' => 'sms', 'label' => 'Manage SMS Settings'],
+            ['name' => 'edit-sms-settings', 'module' => 'sms', 'label' => 'Edit SMS Settings'],
         ];
 
-        $company_role = Role::where('name','company')->first();
+        $company_role = Role::where('name', 'company')->first();
+
         foreach ($permission as $perm) {
             $permission_obj = Permission::firstOrCreate(
                 ['name' => $perm['name'], 'guard_name' => 'web'],

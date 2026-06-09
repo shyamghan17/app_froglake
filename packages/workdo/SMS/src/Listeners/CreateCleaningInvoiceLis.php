@@ -2,45 +2,32 @@
 
 namespace Workdo\SMS\Listeners;
 
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Workdo\SMS\Entities\SendMsg;
+use App\Models\User;
 use Workdo\CleaningManagement\Events\CreateCleaningInvoice;
-use Workdo\CleaningManagement\Entities\CleaningInspection;
+use Workdo\CleaningManagement\Models\CleaningInspection;
+use Workdo\SMS\Services\SendSMS;
 
 class CreateCleaningInvoiceLis
 {
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
     public function __construct()
     {
         //
     }
 
-    /**
-     * Handle the event.
-     *
-     * @param  object  $event
-     * @return void
-     */
     public function handle(CreateCleaningInvoice $event)
     {
-        $invoice = $event->invoice;
-        $inspection = CleaningInspection::find($invoice->inspection_id);
-        $client = \App\Models\User::where('id',$inspection->cleaning_booking->user_id)->select('name' , 'mobile_no')->first();
-        $user = isset($inspection->cleaning_booking->customer_name) ? $inspection->cleaning_booking->customer_name : $client['name'] ?? '' ;
+        if (Module_is_active('SMS') && company_setting('SMS New Cleaning Invoice') == 'on') {
+            $invoice = $event->cleaningInvoice;
+            $inspection = CleaningInspection::with('booking')->find($invoice->inspection_id);
+            $client = User::where('id', $inspection->booking->user_id)->first();
+            $created_by = User::find($client->created_by);
 
-        if (module_is_active('SMS')  && company_setting('sms_notification_is')=='on' && !empty(company_setting('SMS New Cleaning Invoice')) && company_setting('SMS New Cleaning Invoice')  == true) {
-
-            if(!empty($client->mobile_no))
-            {
+            if ($client->mobile_no) {
                 $uArr = [
-                    'user_name' => $user
+                    'company_name' => $created_by->name,
+                    'user_name' => $client->name ?? '',
                 ];
-                SendMsg::SendMsgs($client->mobile_no , $uArr , 'New Cleaning Invoice');
+                SendSMS::SendMsgs($uArr, 'New Cleaning Invoice', $client->mobile_no);
             }
         }
     }

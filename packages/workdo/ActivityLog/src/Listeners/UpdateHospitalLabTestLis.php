@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\HospitalManagement\Events\UpdateHospitalLabTest;
 
 class UpdateHospitalLabTestLis
 {
-    public function handle($event)
+    public function handle(UpdateHospitalLabTest $event)
     {
         if (Module_is_active('ActivityLog')) {
             $hospitalLabTest = $event->hospitallabtest;
@@ -15,7 +16,7 @@ class UpdateHospitalLabTestLis
             $activity = new AllActivityLog();
             $activity['module'] = 'HospitalManagement';
             $activity['sub_module'] = 'LabTest';
-            $activity['description'] = __('Hospital Lab Test updated by the ');                          
+            $activity['description'] = __('Hospital Lab Test updated by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $hospitalLabTest->created_by;
             $activity->save();

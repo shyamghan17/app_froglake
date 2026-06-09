@@ -2,914 +2,1136 @@
 
 namespace Workdo\Esewa\Http\Controllers;
 
-use App\Models\EmailTemplate;
-use App\Models\Plan;
-use App\Models\User;
-use App\Models\Order;
-use App\Models\Setting;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Session;
+use Workdo\Esewa\Services\EsewaService;
+
+use App\Models\Coupon;
+use App\Models\User;
+use App\Models\Plan;
+use App\Models\Order;
 use Workdo\Esewa\Events\EsewaPaymentStatus;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
-use Workdo\Account\Entities\BankAccount;
-use Workdo\Esewa\Entities\Esewa as EntitiesEsewa;
+
+use Workdo\Bookings\Models\BookingCustomer;
+use Workdo\Bookings\Models\BookingPackage;
+use Workdo\Bookings\Models\BookingAppointment;
+use Workdo\Bookings\Events\BookingAppointmentPayments;
+
+use Workdo\BeautySpaManagement\Models\BeautyBooking;
+use Workdo\BeautySpaManagement\Models\BeautyBookingReceipt;
+use Workdo\BeautySpaManagement\Models\BeautyService;
+use Workdo\BeautySpaManagement\Models\BeautyServiceOffer;
+use Workdo\BeautySpaManagement\Events\BeautyBookingPayments;
+
+use Workdo\LMS\Models\LMSCart;
+use Workdo\LMS\Models\LMSCoupon;
+use Workdo\LMS\Models\LMSOrder;
+use Workdo\LMS\Models\LMSOrderItem;
+use Workdo\LMS\Events\LMSOrderPayments;
+
+use Workdo\LaundryManagement\Models\LaundryRequest;
+use Workdo\LaundryManagement\Models\LaundryInvoice;
+use Workdo\LaundryManagement\Models\LaundryPayment;
+use Workdo\LaundryManagement\Events\LaundryBookingPayments;
+use Workdo\ParkingManagement\Models\ParkingBooking;
+use Workdo\ParkingManagement\Events\ParkingBookingPayments;
+
+use Workdo\EventsManagement\Models\Event;
+use Workdo\EventsManagement\Models\EventBooking;
+use Workdo\EventsManagement\Models\EventBookingPayment;
+use Workdo\EventsManagement\Events\EventBookingPayments;
+
+use Workdo\Holidayz\Models\HolidayzCart;
+use Workdo\Holidayz\Models\HolidayzRoomBooking;
+use Workdo\Holidayz\Models\HolidayzRoomBookingItem;
+use Workdo\Holidayz\Models\HolidayzCoupon;
+use Workdo\Holidayz\Models\HolidayzCouponUsage;
+use Workdo\Holidayz\Helpers\HolidayzAvailabilityHelper;
+use Workdo\Holidayz\Events\HolidayzBookingPayments;
 
 class EsewaController extends Controller
 {
-    public $currancy;
-    public $invoiceData;
-    public $esewa_payment_is_on;
-    public $esewa_mode;
-    public $esewa_merchant_id;
-    public $is_esewa_enabled;
-
-    public function setting(Request $request)
+    // Plan Payments
+    public function planPayWithEsewa(Request $request)
     {
-        if (\Auth::user()->isAbleTo('esewa manage')) {
-            if ($request->has('esewa_payment_is_on')) {
-                $validator = \Validator::make($request->all(), [
-                    'esewa_merchant_id' => 'required|string',
-                    'esewa_secret_key'  => 'required|string',
-                    'esewa_mode'        => 'required|string',
-                ]);
-
-                if ($validator->fails()) {
-                    return redirect()->back()->with('error', $validator->getMessageBag()->first());
-                }
-            }
-
-            $post = $request->all();
-            unset($post['_token']);
-            unset($post['_method']);
-
-            if ($request->has('esewa_payment_is_on')) {
-                foreach ($post as $key => $value) {
-                    $data = [
-                        'key'        => $key,
-                        'workspace'  => getActiveWorkSpace(),
-                        'created_by' => creatorId(),
-                    ];
-
-                    Setting::updateOrInsert($data, ['value' => $value]);
-                }
-            } else {
-                $data = [
-                    'key'        => 'esewa_payment_is_on',
-                    'workspace'  => getActiveWorkSpace(),
-                    'created_by' => creatorId(),
-                ];
-
-                Setting::updateOrInsert($data, ['value' => 'off']);
-            }
-
-            AdminSettingCacheForget();
-            comapnySettingCacheForget();
-            return redirect()->back()->with('success', __('The esewa setting has been saved successfully.'));
-        } else {
-            return redirect()->back()->with('error', __('Permission denied.'));
-        }
-    }
-
-    public function makePayment($pay)
-    {
-        try {
-            config([
-                'esewa.scd' => $pay['merchant_id'],
-                'esewa.env' => $pay['mode'],
-            ]);
-
-            $payment  = new EntitiesEsewa;
-            $formData = $payment->esewaCheckout($pay['price'], 0, 0, 0, $pay['order_id'], $pay['successURL'], $pay['faildURL']);
-            return ['status' => 'true', 'form_data' => $formData, 'message' => 'SUCCESS'];
-        } catch (\Exception $e) {
-            return ['status' => 'false', 'url' => $pay['faildURL'], 'message' => $e->getMessage()];
-        }
-    }
-
-    public function paymentConfig($id = null, $workspace = Null)
-    {
-        $company_settings          = getCompanyAllSetting($id, $workspace);
-        $this->currancy            = isset($company_settings['defult_currancy']) ? $company_settings['defult_currancy'] : 'NPR';
-        $this->esewa_payment_is_on = isset($company_settings['esewa_payment_is_on']) ? $company_settings['esewa_payment_is_on'] : 'off';
-
+        $plan = Plan::find($request->plan_id);
+        $user = User::find($request->user_id);
         $admin_settings = getAdminAllSetting();
-        config([
-            'esewa.scd'        => $admin_settings['esewa_merchant_id'] ?? '',
-            'esewa.env'        => ucfirst($admin_settings['esewa_mode'] ?? 'Sandbox'),
-            'esewa.secret_key' => $admin_settings['esewa_secret_key'] ?? '',
-        ]);
-        
-        $this->esewa_mode        = $admin_settings['esewa_mode'] ?? 'Sandbox';
-        $this->esewa_merchant_id = $admin_settings['esewa_merchant_id'] ?? '';
-    }
+        $admin_currancy = !empty($admin_settings['defaultCurrency']) ? $admin_settings['defaultCurrency'] : '';
 
-    // plan
-    public function planPayWithESewa(Request $request)
-    {
-        $plan              = Plan::find($request->plan_id);
-        $user_counter      = !empty($request->user_counter_input) ? $request->user_counter_input : 0;
-        $workspace_counter = !empty($request->workspace_counter_input) ? $request->workspace_counter_input : 0;
-        $user_module       = !empty($request->user_module_input) ? $request->user_module_input : '0';
-        $duration          = !empty($request->time_period) ? $request->time_period : 'Month';
+        $user_counter = !empty($request->user_counter_input) ? $request->user_counter_input : 0;
+        $user_module = !empty($request->user_module_input) ? $request->user_module_input : '';
+        $storage_limit = !empty($request->storage_limit_input) ? $request->storage_limit_input : 0;
+        $duration = !empty($request->time_period) ? $request->time_period : 'Month';
         $user_module_price = 0;
+
         if (!empty($user_module) && $plan->custom_plan == 1) {
             $user_module_array = explode(',', $user_module);
-            foreach ($user_module_array as $key => $value) {
-                $temp              = ($duration == 'Year') ? ModulePriceByName($value)['yearly_price'] : ModulePriceByName($value)['monthly_price'];
-                $user_module_price = $user_module_price + $temp;
+            foreach ($user_module_array as $value) {
+                $temp = ($duration == 'Year') ? ModulePriceByName($value)['yearly_price'] : ModulePriceByName($value)['monthly_price'];
+                $user_module_price += $temp;
             }
         }
+
         $user_price = 0;
         if ($user_counter > 0) {
-            $temp       = ($duration == 'Year') ? $plan->price_per_user_yearly : $plan->price_per_user_monthly;
+            $temp = ($duration == 'Year') ? $plan->price_per_user_yearly : $plan->price_per_user_monthly;
             $user_price = $user_counter * $temp;
         }
-        $workspace_price = 0;
-        if ($workspace_counter > 0) {
-            $temp            = ($duration == 'Year') ? $plan->price_per_workspace_yearly : $plan->price_per_workspace_monthly;
-            $workspace_price = $workspace_counter * $temp;
+
+        $storage_price = 0;
+        if ($storage_limit > 0 && $plan->custom_plan == 1) {
+            $temp = ($duration == 'Year') ? $plan->price_per_storage_yearly : $plan->price_per_storage_monthly;
+            $storage_price = $storage_limit * $temp;
         }
+
         $plan_price = ($duration == 'Year') ? $plan->package_price_yearly : $plan->package_price_monthly;
-        $counter    = [
-            'user_counter'      => $user_counter,
-            'workspace_counter' => $workspace_counter,
+        $counter = [
+            'user_counter' => $user_counter,
+            'storage_limit' => $storage_limit,
         ];
 
-
-        $admin_settings = getAdminAllSetting();
-        $admin_currancy = !empty($admin_settings['defult_currancy']) ? $admin_settings['defult_currancy'] : 'INR';
-        if ($admin_currancy != 'NPR' ) {
-            return redirect()->back()->with('error', __('Currency is not supported.'));
-        }
-
-        $order_id       = strtoupper(str_replace('.', '', uniqid('', true)));
+        $orderID = strtoupper(substr(uniqid(), -12));
         if ($plan) {
-            if ($request->coupon_code) {
-                $plan_price = CheckCoupon($request->coupon_code, $plan_price, $plan->id);
-            }
+            $plan->discounted_price = false;
+            $price = $plan_price + $user_module_price + $user_price + $storage_price;
 
-            $price = $plan_price + $user_module_price + $user_price + $workspace_price;
-            if ($price <= 0) {
-                $assignPlan = DirectAssignPlan($plan->id, $duration, $user_module, $counter, 'ESEWA', $request->coupon_code);
-                if ($assignPlan['is_success']) {
-                    return redirect()->route('plans.index')->with('success', __('Plan activated Successfully!'));
-                } else {
-                    return redirect()->route('plans.index')->with('error', __('Something went wrong, Please try again,'));
+            if ($request->coupon_code) {
+                $validation = applyCouponDiscount($request->coupon_code, $price, auth()->id());
+                if ($validation['valid']) {
+                    $price = $validation['final_amount'];
                 }
             }
-            $session                = $request->toArray();
-            $session['amount']      = $price;
-            $session['user_module'] = $user_module;
-            $session['counter']     = $counter;
-            $session['duration']    = $duration;
-            $session['order_id']    = $order_id;
-            $request->session()->put($order_id, $session);
+
+            if ($price <= 0) {
+                $assignPlan = assignPlan($plan->id, $duration, $user_module, $counter, $request->user_id);
+                if ($assignPlan['is_success']) {
+                    return redirect()->route('plans.index')->with('success', __('Plan activated successfully!'));
+                } else {
+                    return redirect()->route('plans.index')->with('error', __('Something went wrong, Please try again.'));
+                }
+            }
 
             try {
-                $paymentData = $this->makePayment([
-                    'merchant_id' => $admin_settings['esewa_merchant_id'] ?? '',
-                    'mode'        => ucfirst($admin_settings['esewa_mode'] ?? 'Sandbox'),
-                    'successURL'  => route('plan.get.esewa.status', ['order_id' => $order_id, 'plan_id' => $plan, 'status' => 'success']),
-                    'faildURL'    => route('plan.get.esewa.status', ['order_id' => $order_id, 'plan_id' => $plan, 'status' => 'faild']),
-                    'price'       => $price,
-                    'order_id'    => $order_id,
-                ]);
+                $esewaService = new EsewaService(null, true);
 
-                if (isset($paymentData['status']) && $paymentData['status'] === 'true') {
-                    return view('esewa::payment.form', ['formData' => $paymentData['form_data']]);
-                } else {
-                    return redirect()->route('plans.index')->with('error', __('Payment failed.'));
-                }
-            } catch (\Exception $th) {
-                return redirect()->route('plans.index')->with('error', $th->getMessage());
+                $callback_url = route('esewa.plan.status', ['order_id' => $orderID]);
+
+                $response = $esewaService->checkout(
+                    $price,
+                    $callback_url,
+                    $orderID,
+                    [
+                        'plan_id' => $plan->id,
+                        'duration' => $duration,
+                        'user_module' => $user_module,
+                        'user_id' => $request->user_id,
+                        'counter' => $counter,
+                        'coupon_code' => $request->coupon_code
+                    ]
+                );
+
+                $order = new Order();
+                $order->order_id = $orderID;
+                $order->name = $user->name;
+                $order->email = $user->email;
+                $order->card_number = null;
+                $order->card_exp_month = null;
+                $order->card_exp_year = null;
+                $order->plan_name = !empty($plan->name) ? $plan->name : 'Basic Package';
+                $order->plan_id = $plan->id;
+                $order->price = !empty($price) ? $price : 0;
+                $order->currency = $admin_currancy;
+                $order->txn_id = $response['transaction_uuid'] ?? null;
+                $order->payment_type = 'Esewa';
+                $order->payment_status = 'pending';
+                $order->receipt = null;
+                $order->created_by = $user->id;
+                $order->save();
+
+                return redirect()->route('esewa.checkout', encrypt($response));
+            } catch (\Exception $e) {
+                return redirect()->route('plans.index')->with('error', $e->getMessage());
             }
-        } else {
-            return redirect()->route('plans.index')->with('error', __('Plan is deleted.'));
         }
+        return redirect()->route('plans.index')->with('error', __('The Plan has been deleted.'));
     }
 
-    public function planGetESewaStatus(Request $request)
-    {
-        $status      = $request->status;
-        $paymentData = null;
-        
-        if (strpos($status, '?data=') !== false) {
-            $parts  = explode('?data=', $status);
-            $status = $parts[0];
-            if (isset($parts[1])) {
-                $paymentData = json_decode(base64_decode($parts[1]), true);
-            }
-        }
-        
-        if ($status == 'success') {
-            $user = \Auth::user();
-            $plan = Plan::find($request->plan_id);
-            
-            if ($plan) {
-                $admin_settings = getAdminAllSetting();
-                
-                if (!$this->verifyEsewaPayment($request, $paymentData)) {
-                    return redirect()->route('plans.index')->with('error', __('Payment verification failed.'));
-                }
-                
-                try {
-                    $session  = (object) $request->session()->get($request->order_id);
-                    $orderID  = strtoupper(str_replace('.', '', uniqid('', true)));
-                    $statuses = __('succeeded');
-
-                    $order = Order::create([
-                        'order_id'       => $orderID,
-                        'name'           => null,
-                        'email'          => null,
-                        'card_number'    => null,
-                        'card_exp_month' => null,
-                        'card_exp_year'  => null,
-                        'plan_name'      => !empty($plan->name) ? $plan->name : 'Basic Package',
-                        'plan_id'        => $plan->id,
-                        'price'          => !empty($paymentData['total_amount']) ? $paymentData['total_amount'] : 0,
-                        'price_currency' => $admin_settings['defult_currancy'],
-                        'txn_id'         => $paymentData['transaction_code'] ?? '',
-                        'payment_type'   => __('eSewa'),
-                        'payment_status' => $statuses,
-                        'receipt'        => null,
-                        'user_id'        => $user->id,
-                    ]);
-
-                    $type       = 'Subscription';
-                    $user       = User::find($user->id);
-                    $assignPlan = $user->assignPlan($plan->id, $session->duration, $session->user_module, $session->counter);
-
-                    if ($request->transaction_code) {
-                        UserCoupon($request->transaction_code, $orderID);
-                    }
-                    
-                    request()->session()->forget($request->order_id);
-                    event(new EsewaPaymentStatus($plan, $type, $order));
-                    
-                    if ($assignPlan['is_success']) {
-                        return redirect()->route('plans.index')->with('success', __('Plan activated Successfully.'));
-                    } else {
-                        return redirect()->route('plans.index')->with('error', __($assignPlan['error']));
-                    }
-                } catch (\Exception $e) {
-                    return redirect()->route('plans.index')->with('error', __('Transaction has been failed.'));
-                }
-            } else {
-                return redirect()->route('plans.index')->with('error', __('Plan is deleted.'));
-            }
-        } else {
-            return redirect()->route('plans.index')->with('error', __('Your Payment has failed!'));
-        }
-    }
-
-    private function verifyEsewaPayment($request, $paymentData = null)
+    public function planGetEsewaStatus(Request $request, $order_id)
     {
         try {
-            if ($paymentData && isset($paymentData['status'])) {
-                return $paymentData['status'] === 'COMPLETE';
-            }
-            
-            $admin_settings = getAdminAllSetting();
-            $env            = $admin_settings['esewa_mode'] ?? 'Sandbox';
-            $base_url       = $env == 'Live' ? 'https://epay.esewa.com.np' : 'https://rc-epay.esewa.com.np';
-            
-            $response = Http::post($base_url . '/api/epay/transaction/status/', [
-                'product_code'     => $admin_settings['esewa_merchant_id'],
-                'total_amount'     => $paymentData['total_amount'] ?? $request->total_amount,
-                'transaction_uuid' => $paymentData['transaction_uuid'] ?? $request->transaction_uuid,
-            ]);
-            
-            if ($response->successful()) {
-                       $data             = $response->json();
-                return $data['status'] === 'COMPLETE';
-            }
-            return false;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
+            $esewaService = new EsewaService();
+            $planData = Session::get($order_id);
+            Session::forget($order_id);
 
-    // invoice and retainer
-    public function invoicePayWithESewa(Request $request)
-    {
-        $admin_settings = getAdminAllSetting();
-
-        if ($request->type == "invoice") {
-            $invoice  = \App\Models\Invoice::find($request->invoice_id);
-            $user_id  = $invoice->created_by;
-            $wokspace = $invoice->workspace;
-        } elseif ($request->type == "retainer") {
-            $invoice  = \Workdo\Retainer\Entities\Retainer::find($request->invoice_id);
-            $user_id  = $invoice->created_by;
-            $wokspace = $invoice->workspace;
-        }
-
-        $order_id = strtoupper(str_replace('.', '', uniqid('', true)));
-        self::paymentConfig($user_id, $wokspace);
-        if ($this->currancy != 'NPR' ) {
-            return redirect()->back()->with('error', __('Currency is not supported.'));
-        }
-        
-        if (isset($this->esewa_payment_is_on) && $this->esewa_payment_is_on == 'on' && !empty($this->esewa_merchant_id)) {
-
-            $validator = \Validator::make(
-                $request->all(),
-                [
-                    'amount'     => 'required|numeric',
-                    'invoice_id' => 'required',
-                ]
-            );
-            if ($validator->fails()) {
-                return redirect()->back()->with('error', $validator->errors()->first());
-            }
-
-            $invoice_id = $request->input('invoice_id');
-            if ($request->type == "invoice") {
-
-                $invoice       = \App\Models\Invoice::find($invoice_id);
-                $invoice_payID = $invoice->invoice_id;
-                $invoiceID     = $invoice->id;
-                $printID       = \App\Models\Invoice::invoiceNumberFormat($invoice_payID, $user_id, $wokspace);
-            } elseif ($request->type == "retainer") {
-                $invoice       = \Workdo\Retainer\Entities\Retainer::find($invoice_id);
-                $invoice_payID = $invoice->invoice_id;
-                $invoiceID     = $invoice->id;
-                $printID       = \Workdo\Retainer\Entities\Retainer::retainerNumberFormat($invoice_payID, $user_id, $wokspace);
-            }
-
-            if ($invoice) {
-
-                $account = BankAccount::where(['created_by'=>$invoice->created_by,'workspace'=>$invoice->workspace])->where('payment_name','eSewa')->first();
-                if(!$account)
-                {
-                    if ($request->type == 'invoice') {
-                        return redirect()->route('pay.invoice', encrypt($invoiceID))->with('error', __('Bank account not connected with eSewa.'));
-                    } elseif ($request->type == 'retainer') {
-                        return redirect()->route('pay.retainer', encrypt($invoiceID))->with('error', __('Bank account not connected with eSewa.'));
-                    }
+            if (!empty($planData) && $esewaService->isPaymentSuccessful($request)) {
+                $Order = Order::where('order_id', $order_id)->first();
+                if ($Order) {
+                    $Order->payment_status = 'succeeded';
+                    $Order->save();
                 }
 
-                $price = $request->amount;
-                
-                $session_data = [
-                    'type'       => $request->type,
-                    'invoice_id' => $invoiceID,
-                    'amount'     => $price,
-                    'order_id'   => $order_id
+                $plan = Plan::find($planData['plan_id']);
+                $counter = [
+                    'user_counter' => $planData['counter']['user_counter'] ?? 0,
+                    'storage_counter' => $planData['counter']['storage_limit'] ?? 0,
                 ];
-                $request->session()->put($order_id, $session_data);
-                
-                try {
-                    $paymentData = $this->makePayment([
-                        'merchant_id' => $admin_settings['esewa_merchant_id'] ?? '',
-                        'mode'        => ucfirst($admin_settings['esewa_mode'] ?? 'Sandbox'),
-                        'successURL'  => route('invoice.esewa.status', ['order_id' => $order_id, 'status' => 'success']),
-                        'faildURL'    => route('invoice.esewa.status', ['order_id' => $order_id, 'status' => 'failed']),
-                        'price'       => $price,
-                        'order_id'    => $order_id,
-                    ]);
 
-                    if (isset($paymentData['status']) && $paymentData['status'] === 'true') {
-                        return view('esewa::payment.form', ['formData' => $paymentData['form_data']]);
-                    } else {
-                        $request->session()->forget($order_id);
-                        if ($request->type == 'invoice') {
-                            return redirect()->route('pay.invoice', encrypt($invoiceID))->with('error', __('Payment failed.'));
-                        } else {
-                            return redirect()->route('pay.retainer', encrypt($invoiceID))->with('error', __('Payment failed.'));
+                $assignPlan = assignPlan($plan->id, $planData['duration'], $planData['user_module'], $counter, $planData['user_id']);
+
+                if ($assignPlan['is_success']) {
+                    if ($planData['coupon_code']) {
+                        $coupon = Coupon::where('code', $planData['coupon_code'])->first();
+                        if ($coupon) {
+                            recordCouponUsage($coupon->id, $planData['user_id'], $order_id);
                         }
                     }
-                } catch (\Exception $e) {
-                    $request->session()->forget($order_id);
-                    if ($request->type == 'invoice') {
-                        return redirect()->route('pay.invoice', encrypt($invoiceID))->with('error', $e->getMessage());
-                    } else {
-                        return redirect()->route('pay.retainer', encrypt($invoiceID))->with('error', $e->getMessage());
+
+                    $type = 'Subscription';
+                    try {
+                        EsewaPaymentStatus::dispatch($plan, $type, $Order);
+                    } catch (\Exception $e) {
                     }
+
+                    return redirect()->route('plans.index')->with('success', __('Plan activated successfully!'));
+                } else {
+                    return redirect()->route('plans.index')->with('error', __('Something went wrong, Please try again.'));
                 }
             } else {
-                if ($request->type == 'invoice') {
-
-                    return redirect()->route('pay.invoice', encrypt($invoiceID))->with('error', __('Invoice is deleted.'));
-                } elseif ($request->type == 'retainer') {
-
-                    return redirect()->route('pay.retainer', encrypt($invoiceID))->with('error', __('Retainer is deleted.'));
-                }
+                return redirect()->route('plans.index')->with('error', __('Payment was cancelled or failed.'));
             }
-        } else {
-            return redirect()->back()->with('error', __('Please Enter Esewa Details.'));
+        } catch (\Exception $exception) {
+            return redirect()->route('plans.index')->with('error', $exception->getMessage());
         }
     }
 
-    public function invoiceGetESewaStatus(Request $request)
+    // Booking Payments
+    public function bookingPayWithEsewa(Request $request, $userSlug = null)
     {
-        $order_id = $request->order_id;
-        $status   = $request->status;
-        
-        $paymentData = null;
-        if (strpos($status, '?data=') !== false) {
-            $parts  = explode('?data=', $status);
-            $status = $parts[0];
-            if (isset($parts[1])) {
-                $paymentData = json_decode(base64_decode($parts[1]), true);
+        try {
+            $user = User::where('slug', $userSlug)->first();
+            if (!$user) {
+                throw new \Exception(__('User not found.'));
             }
-        }
-        
-        $session = $request->session()->get($order_id);
-        if (!$session) {
-            return redirect()->back()->with('error', __('Payment session expired.'));
-        }
-        
-        $type       = $session['type'];
-        $invoice_id = $session['invoice_id'];
-        $amount     = $session['amount'];
-        
-        if ($status != 'success') {
-            $request->session()->forget($order_id);
-            if ($type == 'invoice') {
-                return redirect()->route('pay.invoice', encrypt($invoice_id))->with('error', __('Payment was cancelled or failed.'));
-            } else {
-                return redirect()->route('pay.retainer', encrypt($invoice_id))->with('error', __('Payment was cancelled or failed.'));
+            $package = BookingPackage::find($request->selectedPackageItem);
+            if (!$package) {
+                throw new \Exception(__('Package not found.'));
             }
-        }
-        
-        if (!$this->verifyEsewaPayment($request, $paymentData)) {
-            $request->session()->forget($order_id);
-            if ($type == 'invoice') {
-                return redirect()->route('pay.invoice', encrypt($invoice_id))->with('error', __('Payment verification failed.'));
-            } else {
-                return redirect()->route('pay.retainer', encrypt($invoice_id))->with('error', __('Payment verification failed.'));
+
+            $price = $package->price ?? 0;
+            if ($price <= 0) {
+                return redirect()->route('booking.home', ['userSlug' => $userSlug])->with('error', __('Invalid payment amount.'));
             }
+
+            $orderID = strtoupper(str_replace('.', '', uniqid('', true)));
+            $esewaService = new EsewaService($package->created_by);
+
+            $callback_url = route('esewa.booking.payment.status', ['userSlug' => $userSlug, 'order_id' => $orderID]);
+
+            $response = $esewaService->checkout(
+                $price,
+                $callback_url,
+                $orderID,
+                [
+                    'selectedDate' => $request->selectedDate,
+                    'selectedStaff' => $request->selectedStaff,
+                    'selectedItem' => $request->selectedItem,
+                    'selectedPackageItem' => $request->selectedPackageItem,
+                    'selectedTimeSlot' => [
+                        'start_time' => $request->input('selectedTimeSlot.start_time'),
+                        'end_time' => $request->input('selectedTimeSlot.end_time'),
+                        'label' => $request->input('selectedTimeSlot.label')
+                    ],
+                    'formData' => [
+                        'firstName' => $request->input('formData.firstName'),
+                        'lastName' => $request->input('formData.lastName'),
+                        'email' => $request->input('formData.email'),
+                        'phone' => $request->input('formData.phone'),
+                        'description' => $request->input('formData.description'),
+                        'paymentOption' => $request->input('formData.paymentOption')
+                    ]
+                ]
+            );
+
+            return redirect()->route('esewa.checkout', encrypt($response));
+        } catch (\Exception $e) {
+            return redirect()->route('booking.home', ['userSlug' => $userSlug])
+                ->with('error', $e->getMessage());
         }
+    }
 
-        if ($type == 'invoice') {
-            $invoice = \App\Models\Invoice::find($invoice_id);
-            $this->paymentConfig($invoice->created_by, $invoice->workspace);
-            $this->invoiceData = $invoice;
+    public function bookingGetEsewaStatus(Request $request, $userSlug, $order_id)
+    {
+        try {
 
-            if ($invoice) {
-                try {
-                    $invoice_payment                 = new \App\Models\InvoicePayment();
-                    $invoice_payment->invoice_id     = $invoice_id;
-                    $invoice_payment->date           = Date('Y-m-d');
-                    $invoice_payment->account_id     = 0;
-                    $invoice_payment->payment_method = 0;
-                    $invoice_payment->amount         = $amount;
-                    $invoice_payment->order_id       = $order_id;
-                    $invoice_payment->currency       = $this->currancy;
-                    $invoice_payment->payment_type   = 'eSewa';
-                    $invoice_payment->receipt        = '';
-                    $invoice_payment->save();
+            $esewaService = new EsewaService();
+            $bookingData = Session::get($order_id);
+            Session::forget($order_id);
 
-                    $due = $invoice->getDue();
-                    if ($due <= 0) {
-                        $invoice->status = 4;
-                        $invoice->save();
-                    } else {
-                        $invoice->status = 3;
-                        $invoice->save();
-                    }
+            if (!empty($bookingData) && $esewaService->isPaymentSuccessful($request)) {
+                $package = BookingPackage::find($bookingData['selectedPackageItem']);
+                $userId = $package->created_by ?? null;
 
-                    $request->session()->forget($order_id);
-                    event(new EsewaPaymentStatus($invoice, $type, $invoice_payment));
-                    return redirect()->route('pay.invoice', \Illuminate\Support\Facades\Crypt::encrypt($invoice_id))->with('success', __('Payment added Successfully'));
-                } catch (\Exception $e) {
-                    $request->session()->forget($order_id);
-                    return redirect()->route('pay.invoice', \Illuminate\Support\Facades\Crypt::encrypt($invoice_id))->with('error', $e->getMessage());
+
+                $timeSlot = $bookingData['selectedTimeSlot'];
+                $customer = BookingCustomer::where('email', $bookingData['formData']['email'])
+                    ->where('created_by', $userId)->first();
+
+                if (!$customer) {
+                    $customer = new BookingCustomer();
+                    $customer->first_name = $bookingData['formData']['firstName'];
+                    $customer->last_name = $bookingData['formData']['lastName'];
+                    $customer->email = $bookingData['formData']['email'];
+                    $customer->mobile_number = $bookingData['formData']['phone'];
+                    $customer->description = $bookingData['formData']['description'] ?? null;
+                    $customer->created_by = $userId;
+                    $customer->creator_id = $userId;
+                    $customer->save();
                 }
+
+                $currentYear = date('Y');
+                $lastAppointment = BookingAppointment::where('created_by', $userId)
+                    ->where('appointment_number', 'like', 'APT-' . $currentYear . '-' . $userId . '-%')
+                    ->orderBy('appointment_number', 'desc')->first();
+
+                $nextNumber = $lastAppointment ? ((int) substr($lastAppointment->appointment_number, -4)) + 1 : 1;
+                $appointmentNumber = 'APT-' . $currentYear . '-' . $userId . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
+                $appointment = BookingAppointment::create([
+                    'appointment_number' => $appointmentNumber,
+                    'date' => $bookingData['selectedDate'],
+                    'item_id' => $bookingData['selectedItem'],
+                    'package_id' => $bookingData['selectedPackageItem'],
+                    'staff_id' => $bookingData['selectedStaff'],
+                    'customer_id' => $customer->id,
+                    'start_time' => $timeSlot['start_time'],
+                    'end_time' => $timeSlot['end_time'],
+                    'payment' => 'Esewa',
+                    'status' => 'pending',
+                    'payment_status' => 'paid',
+                    'online_payment_id' => $order_id,
+                    'created_by' => $userId,
+                    'creator_id' => $userId,
+                ]);
+
+                try {
+                    BookingAppointmentPayments::dispatch($appointment);
+                } catch (\Exception $th) {
+                }
+
+                return redirect()->route('booking.home', ['userSlug' => $userSlug])
+                    ->with('success', __('The Booking has been created successfully.'));
             } else {
-                $request->session()->forget($order_id);
-                return redirect()->route('pay.invoice', \Illuminate\Support\Facades\Crypt::encrypt($invoice_id))->with('error', __('Invoice not found.'));
+                return redirect()->route('booking.home', ['userSlug' => $userSlug])
+                    ->with('error', __('Payment was cancelled or failed.'));
             }
-        } elseif ($type == 'retainer') {
+        } catch (\Exception $exception) {
+            return redirect()->route('booking.home', ['userSlug' => $userSlug])
+                ->with('error', $exception->getMessage());
+        }
+    }
 
-            $retainer = \Workdo\Retainer\Entities\Retainer::find($invoice_id);
-            $this->paymentConfig($retainer->created_by, $retainer->workspace);
+    // Beauty Spa Payments
+    public function beautySpaPayWithEsewa(Request $request, $userSlug = null)
+    {
+        try {
+            $user = User::where('slug', $userSlug)->first();
 
-            $this->invoiceData = $retainer;
-            if ($retainer) {
+            if ($user) {
+                $service = BeautyService::where('id', $request->service)
+                    ->where('created_by', $user->id)
+                    ->firstOrFail();
+
+                $offers = BeautyServiceOffer::where('beauty_service_id', $service->id)
+                    ->where('start_date', '<=', $request->date)
+                    ->where('end_date', '>=', $request->date)
+                    ->where('created_by', $user->id)
+                    ->get();
+
+                $price = $offers->isNotEmpty() ? $offers->sum('offer_price') : $service->price;
+                $totalPrice = $price * $request->person;
+
+                if ($totalPrice <= 0) {
+                    return redirect()->back()->with('error', __('Invalid payment amount.'));
+                }
+
+                $orderID = strtoupper(str_replace('.', '', uniqid('', true)));
+                $esewaService = new EsewaService($user->id);
+
+                $callback_url = route('esewa.beauty-spa.payment.status', ['userSlug' => $userSlug, 'order_id' => $orderID]);
+
+                $response = $esewaService->checkout(
+                    $totalPrice,
+                    $callback_url,
+                    $orderID,
+                    [
+                        'service' => $request->service,
+                        'date' => $request->date,
+                        'time_slot' => $request->time_slot,
+                        'person' => $request->person,
+                        'gender' => $request->gender,
+                        'name' => $request->name,
+                        'email' => $request->email,
+                        'phone_number' => $request->phone_number,
+                        'reference' => $request->reference,
+                        'additional_notes' => $request->additional_notes,
+                        'payment_option' => $request->payment_option
+                    ]
+                );
+
+                return redirect()->route('esewa.checkout', encrypt($response));
+            }
+
+            return back()->with('error', __('User not found.'));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function beautySpaGetEsewaStatus(Request $request, $userSlug, $order_id)
+    {
+        try {
+            $esewaService = new EsewaService();
+            $bookingData = Session::get($order_id);
+            Session::forget($order_id);
+
+            if (!empty($bookingData) && $esewaService->isPaymentSuccessful($request)) {
+                $user = User::where('slug', $userSlug)->first();
+
+                $service = BeautyService::where('id', $bookingData['service'])
+                    ->where('created_by', $user->id)
+                    ->first();
+
+                $offers = BeautyServiceOffer::where('beauty_service_id', $service->id)
+                    ->where('start_date', '<=', $bookingData['date'])
+                    ->where('end_date', '>=', $bookingData['date'])
+                    ->where('created_by', $user->id)
+                    ->get();
+
+                $price = $offers->isNotEmpty() ? $offers->sum('offer_price') : $service->price;
+                $servicePrice = $price * $bookingData['person'];
+                $times = explode('-', $bookingData['time_slot']);
+
+                $booking = new BeautyBooking();
+                $booking->name = $bookingData['name'];
+                $booking->email = $bookingData['email'];
+                $booking->phone_number = $bookingData['phone_number'];
+                $booking->service = $bookingData['service'];
+                $booking->date = $bookingData['date'];
+                $booking->start_time = $times[0];
+                $booking->end_time = $times[1];
+                $booking->person = $bookingData['person'];
+                $booking->price = $servicePrice;
+                $booking->gender = $bookingData['gender'];
+                $booking->reference = $bookingData['reference'];
+                $booking->notes = $bookingData['additional_notes'];
+                $booking->payment_option = 'Esewa';
+                $booking->payment_status = 'paid';
+                $booking->stage_id = 0;
+                $booking->creator_id = null;
+                $booking->created_by = $user->id;
+                $booking->save();
+
+                $beautyreceipt = new BeautyBookingReceipt();
+                $beautyreceipt->beauty_booking_id = $booking->id;
+                $beautyreceipt->name = $booking->name;
+                $beautyreceipt->service = $booking->service;
+                $beautyreceipt->number = $booking->phone_number;
+                $beautyreceipt->gender = $booking->gender;
+                $beautyreceipt->start_time = $booking->start_time;
+                $beautyreceipt->end_time = $booking->end_time;
+                $beautyreceipt->price = $booking->price;
+                $beautyreceipt->payment_type = 'Esewa';
+                $beautyreceipt->created_by = $booking->created_by;
+                $beautyreceipt->save();
+
+                try {
+                    BeautyBookingPayments::dispatch($booking);
+                } catch (\Throwable $th) {
+                }
+
+                return redirect()->route('beauty-spa.booking-success', ['userSlug' => $userSlug, 'id' => encrypt($booking->id)])
+                    ->with('success', __('The booking has been created successfully.'));
+            } else {
+                return redirect()->route('beauty-spa.booking', ['userSlug' => $userSlug])
+                    ->with('error', __('Payment was cancelled or failed.'));
+            }
+        } catch (\Exception $exception) {
+            return redirect()->route('beauty-spa.booking', ['userSlug' => $userSlug])
+                ->with('error', $exception->getMessage());
+        }
+    }
+
+    // LMS Payments
+    public function lmsPayWithEsewa(Request $request, $userSlug = null)
+    {
+        try {
+            $user = User::where('slug', $userSlug)->first();
+            if (!$user) {
+                return redirect()->back()->with('error', __('User not found.'));
+            }
+
+            $student = auth('lms_student')->user();
+            if (!$student) {
+                return redirect()->route('lms.frontend.login', ['userSlug' => $userSlug]);
+            }
+
+            $cartItems = LMSCart::where('created_by', $user->id)
+                ->where('student_id', $student->id)
+                ->with('course')
+                ->get();
+
+            if ($cartItems->isEmpty()) {
+                return redirect()->route('lms.frontend.cart', ['userSlug' => $userSlug])
+                    ->with('error', __('Your cart is empty'));
+            }
+
+            $originalTotal = $cartItems->sum('original_price');
+            $subtotal = $cartItems->sum('price');
+            $courseDiscount = $originalTotal - $subtotal;
+            $couponDiscount = 0;
+
+            $appliedCoupon = Session::get('applied_coupon');
+            if ($appliedCoupon) {
+                $coupon = LMSCoupon::where('id', $appliedCoupon['id'])
+                    ->where('created_by', $user->id)
+                    ->first();
+
+                if ($coupon && $coupon->isValid()) {
+                    if (!$coupon->minimum_amount || $subtotal >= $coupon->minimum_amount) {
+                        if ($coupon->type === 'percentage') {
+                            $couponDiscount = ($subtotal * $coupon->value) / 100;
+                        } else {
+                            $couponDiscount = $coupon->value;
+                        }
+                        $couponDiscount = min($couponDiscount, $subtotal);
+                    }
+                }
+            }
+
+            $total = $subtotal - $couponDiscount;
+            if ($total <= 0) {
+                return redirect()->back()->with('error', __('Invalid payment amount.'));
+            }
+
+            $orderID = strtoupper(str_replace('.', '', uniqid('', true)));
+            $esewaService = new EsewaService($user->id);
+
+            $callback_url = route('esewa.lms.payment.status', ['userSlug' => $userSlug, 'order_id' => $orderID]);
+
+            $response = $esewaService->checkout(
+                $total,
+                $callback_url,
+                $orderID,
+                [
+                    'original_total' => $originalTotal,
+                    'payment_method' => $request->payment_method,
+                    'payment_note' => $request->payment_note,
+                    'subtotal' => $subtotal,
+                    'course_discount' => $courseDiscount,
+                    'coupon_discount' => $couponDiscount,
+                    'total' => $total,
+                    'applied_coupon' => $appliedCoupon
+                ]
+            );
+
+            return redirect()->route('esewa.checkout', encrypt($response));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function lmsGetEsewaStatus(Request $request, $userSlug, $order_id)
+    {
+        try {
+            $esewaService = new EsewaService();
+            $orderData = Session::get($order_id);
+            Session::forget($order_id);
+
+            if (!empty($orderData) && $esewaService->isPaymentSuccessful($request)) {
+                $user = User::where('slug', $userSlug)->first();
+                $student = auth('lms_student')->user();
+
+                if (!$orderData) {
+                    return redirect()->route('lms.frontend.home', ['userSlug' => $userSlug])->with('error', __('Something went wrong, Please try again.'));
+                }
+
+                $cartItems = LMSCart::where('created_by', $user->id)
+                    ->where('student_id', $student->id)
+                    ->with('course')
+                    ->get();
+
+                $order = new LMSOrder();
+                $order->order_number = LMSOrder::generateOrderNumber($user->id);
+                $order->student_id = $student->id;
+                $order->payment_method = 'Esewa';
+                $order->payment_status = 'paid';
+                $order->original_total = $orderData['original_total'];
+                $order->subtotal = $orderData['subtotal'];
+                $order->discount_amount = $orderData['course_discount'];
+                $order->coupon_discount = $orderData['coupon_discount'];
+                $order->total_discount = $orderData['course_discount'] + $orderData['coupon_discount'];
+                $order->total_amount = $orderData['total'];
+                $order->coupon_id = $orderData['applied_coupon'] ? $orderData['applied_coupon']['id'] : null;
+                $order->coupon_code = $orderData['applied_coupon'] ? $orderData['applied_coupon']['code'] : null;
+                $order->status = 'completed';
+                $order->notes = $orderData['payment_note'];
+                $order->order_date = now();
+                $order->payment_id = $order_id;
+                $order->creator_id = $user->id;
+                $order->created_by = $user->id;
+                $order->save();
+
+                foreach ($cartItems as $cartItem) {
+                    $orderItem = new LMSOrderItem();
+                    $orderItem->order_id = $order->id;
+                    $orderItem->course_id = $cartItem->course_id;
+                    $orderItem->quantity = $cartItem->quantity;
+                    $orderItem->unit_price = $cartItem->price;
+                    $orderItem->total_price = $cartItem->price * $cartItem->quantity;
+                    $orderItem->save();
+                }
+
+                $cartItems->each->delete();
+                Session::forget('applied_coupon');
+
+                try {
+                    LMSOrderPayments::dispatch($order);
+                } catch (\Throwable $th) {
+                }
+
+                return redirect()->route('lms.frontend.home', ['userSlug' => $userSlug])
+                    ->with('success', __('The order has been created successfully.'));
+            } else {
+                return redirect()->route('lms.frontend.checkout', ['userSlug' => $userSlug])
+                    ->with('error', __('Payment was cancelled or failed.'));
+            }
+        } catch (\Exception $exception) {
+            return redirect()->route('lms.frontend.checkout', ['userSlug' => $userSlug])
+                ->with('error', $exception->getMessage());
+        }
+    }
+
+    // Laundry Payments
+    public function laundryPayWithEsewa(Request $request, $userSlug = null)
+    {
+        try {
+            $user = User::where('slug', $userSlug)->first();
+            $price = floatval($request->total ?? 0);
+
+            if ($price <= 0) {
+                return redirect()->back()->with('error', __('Invalid payment amount.'));
+            }
+
+            $orderID = strtoupper(str_replace('.', '', uniqid('', true)));
+            $esewaService = new EsewaService($user->id);
+
+            $callback_url = route('esewa.laundry.payment.status', ['userSlug' => $userSlug, 'order_id' => $orderID]);
+
+            $response = $esewaService->checkout(
+                $price,
+                $callback_url,
+                $orderID,
+                [
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'phone' => $request->phone,
+                    'address' => $request->address,
+                    'location' => $request->location,
+                    'numberOfItems' => $request->cloth_no,
+                    'specialInstructions' => $request->instructions,
+                    'pickupDate' => $request->pickup_date,
+                    'pickupTime' => $request->pickupTime,
+                    'deliveryDate' => $request->delivery_date,
+                    'deliveryTime' => $request->deliveryTime,
+                    'services' => json_decode($request->services, true) ?? [],
+                    'total' => $request->total
+                ]
+            );
+
+            return redirect()->route('esewa.checkout', encrypt($response));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function laundryGetEsewaStatus(Request $request, $userSlug, $order_id)
+    {
+        try {
+            $esewaService = new EsewaService();
+            $bookingData = Session::get($order_id);
+            Session::forget($order_id);
+
+            if (!empty($bookingData) && $esewaService->isPaymentSuccessful($request)) {
+                $user = User::where('slug', $userSlug)->first();
+
+                $booking = new LaundryRequest();
+                $booking->name = $bookingData['name'];
+                $booking->email = $bookingData['email'];
+                $booking->phone = $bookingData['phone'];
+                $booking->address = $bookingData['address'];
+                $booking->location = $bookingData['location'];
+                $booking->cloth_no = $bookingData['numberOfItems'];
+                $booking->instructions = $bookingData['specialInstructions'];
+                $booking->pickup_date = $bookingData['pickupDate'] . ' ' . $bookingData['pickupTime'];
+                $booking->delivery_date = $bookingData['deliveryDate'] . ' ' . $bookingData['deliveryTime'];
+                $booking->services = $bookingData['services'];
+                $booking->payment_method = 'Esewa';
+                $booking->payment_id = $order_id;
+                $booking->status = 2;
+                $booking->total = $bookingData['total'];
+                $booking->created_by = $user->id;
+                $booking->creator_id = $user->id;
+                $booking->save();
+
+                $invoice = new LaundryInvoice();
+                $invoice->laundry_request_id = $booking->id;
+                $invoice->amount = $booking->total;
+                $invoice->status = 1;
+                $invoice->creator_id = $user->id;
+                $invoice->created_by = $user->id;
+                $invoice->save();
                 
-                try {
-                    $retainer_payment                 = new \Workdo\Retainer\Entities\RetainerPayment();
-                    $retainer_payment->retainer_id    = $invoice_id;
-                    $retainer_payment->date           = Date('Y-m-d');
-                    $retainer_payment->account_id     = 0;
-                    $retainer_payment->payment_method = 0;
-                    $retainer_payment->amount         = $amount;
-                    $retainer_payment->order_id       = $order_id;
-                    $retainer_payment->currency       = $this->currancy;
-                    $retainer_payment->payment_type   = 'eSewa';
-                    $retainer_payment->receipt        = '';
-                    $retainer_payment->save();
-                    $due = $retainer->getDue();
+                if ($invoice->status == 1) {
+                    $payment = new LaundryPayment();
+                    $payment->payment_amount = $invoice->amount;
+                    $payment->invoice_id = $invoice->id;
+                    $payment->payment_date = date('Y-m-d H:i:s');
+                    $payment->status = 'cleared';
+                    $payment->creator_id = $user->id;
+                    $payment->created_by = $user->id;
+                    $payment->save();
+                }
 
-                    if ($due <= 0) {
-                        $retainer->status = 5;
-                        $retainer->save();
-                    } else {
-                        $retainer->status = 4;
-                        $retainer->save();
+                try {
+                    LaundryBookingPayments::dispatch($booking);
+                } catch (\Throwable $th) {
+                }
+
+                return redirect()->route('laundry-management.frontend.booking-success', [
+                    'userSlug' => $userSlug,
+                    'requestId' => encrypt($booking->id)
+                ]);
+            } else {
+                return redirect()->route('laundry-management.frontend.booking', ['userSlug' => $userSlug])
+                    ->with('error', __('Payment was cancelled or failed.'));
+            }
+        } catch (\Exception $exception) {
+            return redirect()->route('laundry-management.frontend.booking', ['userSlug' => $userSlug])
+                ->with('error', $exception->getMessage());
+        }
+    }
+
+    // Parking Payments
+    public function parkingPayWithEsewa(Request $request, $userSlug = null)
+    {
+        try {
+            $user = User::where('slug', $userSlug)->first();
+
+            $price = floatval($request->total_amount);
+            if ($price <= 0) {
+                return redirect()->back()->with('error', __('Invalid payment amount.'));
+            }
+
+            $orderID = strtoupper(str_replace('.', '', uniqid('', true)));
+            $esewaService = new EsewaService($user->id);
+
+            $callback_url = route('esewa.parking.payment.status', ['userSlug' => $userSlug, 'order_id' => $orderID]);
+
+            $response = $esewaService->checkout(
+                $price,
+                $callback_url,
+                $orderID,
+                [
+                    'slot_name' => $request->slot_name,
+                    'slot_type_id' => $request->slot_type_id,
+                    'date' => $request->date,
+                    'start_time' => $request->start_time,
+                    'end_time' => $request->end_time,
+                    'customer_name' => $request->customer_name,
+                    'customer_email' => $request->customer_email,
+                    'customer_phone' => $request->customer_phone,
+                    'vehicle_name' => $request->vehicle_name,
+                    'vehicle_number' => $request->vehicle_number,
+                    'payment_option' => $request->payment_option,
+                    'total_amount' => $request->total_amount
+                ]
+            );
+
+            return redirect()->route('esewa.checkout', encrypt($response));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function parkingGetEsewaStatus(Request $request, $userSlug, $order_id)
+    {
+        try {
+            $esewaService = new EsewaService();
+            $bookingData = Session::get($order_id);
+            Session::forget($order_id);
+
+            if (!empty($bookingData) && $esewaService->isPaymentSuccessful($request)) {
+                $user = User::where('slug', $userSlug)->first();
+
+                $booking = new ParkingBooking();
+                $booking->slot_name = $bookingData['slot_name'];
+                $booking->slot_type_id = $bookingData['slot_type_id'];
+                $booking->booking_date = $bookingData['date'];
+                $booking->start_time = $bookingData['start_time'];
+                $booking->end_time = $bookingData['end_time'];
+                $booking->customer_name = $bookingData['customer_name'];
+                $booking->customer_email = $bookingData['customer_email'];
+                $booking->customer_phone = $bookingData['customer_phone'];
+                $booking->vehicle_name = $bookingData['vehicle_name'];
+                $booking->vehicle_number = $bookingData['vehicle_number'];
+                $booking->total_amount = $bookingData['total_amount'];
+                $booking->payment_method = 'Esewa';
+                $booking->payment_status = 'paid';
+                $booking->booking_status = 'confirmed';
+                $booking->creator_id = $user->id;
+                $booking->created_by = $user->id;
+                $booking->save();
+
+                try {
+                    ParkingBookingPayments::dispatch($booking);
+                } catch (\Throwable $th) {
+                }
+
+                return redirect()->route('parking-management.frontend.booking-success', ['userSlug' => $userSlug, 'id' => encrypt($booking->id)])
+                    ->with('success', __('The parking booking has been created successfully.'));
+            } else {
+                return redirect()->route('parking-management.frontend.booking', ['userSlug' => $userSlug])
+                    ->with('error', __('Payment was cancelled or failed.'));
+            }
+        } catch (\Exception $exception) {
+            return redirect()->route('parking-management.frontend.booking', ['userSlug' => $userSlug])
+                ->with('error', $exception->getMessage());
+        }
+    }
+
+    // Events Payments
+    public function eventsPayWithEsewa(Request $request, $userSlug = null)
+    {
+        try {
+            $userSlug = $request->route('userSlug');
+            $user = User::where('slug', $userSlug)->first();
+            if (!$user) {
+                return redirect()->back()->with('error', __('User not found.'));
+            }
+
+            $eventId = $request->event_id;
+            $price = floatval($request->total);
+
+            if ($price <= 0) {
+                return redirect()->back()->with('error', __('Invalid payment amount.'));
+            }
+
+            $orderID = strtoupper(str_replace('.', '', uniqid('', true)));
+            $esewaService = new EsewaService($user->id);
+
+            $callback_url = route('esewa.events-management.payment.status', ['userSlug' => $userSlug, 'order_id' => $orderID]);
+
+            $response = $esewaService->checkout(
+                $price,
+                $callback_url,
+                $orderID,
+                [
+                    'event_id' => $eventId,
+                    'fullName' => $request->fullName,
+                    'email' => $request->email,
+                    'phone' => $request->phone,
+                    'persons' => $request->persons,
+                    'total' => $request->total,
+                    'ticket_type_id' => $request->ticket_type_id,
+                    'time_slot' => $request->time_slot,
+                    'selected_date' => $request->selected_date
+                ]
+            );
+
+            return redirect()->route('esewa.checkout', encrypt($response));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function eventsGetEsewaStatus(Request $request, $userSlug, $order_id)
+    {
+        try {
+            $esewaService = new EsewaService();
+            $bookingData = Session::get($order_id);
+            Session::forget($order_id);
+        
+            if (!empty($bookingData) && $esewaService->isPaymentSuccessful($request)) {
+                $user = User::where('slug', $userSlug)->first();
+
+                $event = Event::where('id', $bookingData['event_id'])
+                    ->where('created_by', $user->id)
+                    ->first();
+
+                $eventbooking = new EventBooking();
+                $eventbooking->event_id = $bookingData['event_id'];
+                $eventbooking->ticket_type_id = $bookingData['ticket_type_id'];
+                $eventbooking->time_slot = $bookingData['time_slot'];
+                $eventbooking->name = $bookingData['fullName'];
+                $eventbooking->email = $bookingData['email'];
+                $eventbooking->mobile = $bookingData['phone'];
+                $eventbooking->person = $bookingData['persons'];
+                $eventbooking->date = $bookingData['selected_date'];
+                $eventbooking->total_price = $bookingData['total'];
+                $eventbooking->price = $bookingData['total'] / $bookingData['persons'];
+                $eventbooking->status = 'confirmed';
+                $eventbooking->created_by = $user->id;
+                $eventbooking->creator_id = $user->id;
+                $eventbooking->save();
+
+                $eventBookingPayment = new EventBookingPayment();
+                $eventBookingPayment->event_booking_id = $eventbooking->id;
+                $eventBookingPayment->booking_number = $eventbooking->booking_number;
+                $eventBookingPayment->event_name = $event->title;
+                $eventBookingPayment->customer_name = $bookingData['fullName'];
+                $eventBookingPayment->payment_date = now();
+                $eventBookingPayment->amount = $bookingData['total'];
+                $eventBookingPayment->payment_status = 'cleared';
+                $eventBookingPayment->payment_type = 'Esewa';
+                $eventBookingPayment->description = 'Payment via Esewa';
+                $eventBookingPayment->created_by = $user->id;
+                $eventBookingPayment->creator_id = $user->id;
+                $eventBookingPayment->save();
+
+                try {
+                    EventBookingPayments::dispatch($eventbooking, $eventBookingPayment);
+                } catch (\Throwable $th) {
+                }
+
+                return redirect()->route('events-management.frontend.ticket', ['userSlug' => $userSlug, 'id' => $eventbooking->id, 'paymentId' => $eventBookingPayment->id])
+                    ->with('success', __('The event booking has been created successfully.'));
+            } else {
+                return redirect()->route('events-management.frontend.payment', ['userSlug' => $userSlug, 'id' => $bookingData['event_id']])
+                    ->with('error', __('Payment was cancelled or failed.'));
+            }
+        } catch (\Exception $exception) {
+            return redirect()->route('events-management.frontend.payment', ['userSlug' => $userSlug, 'id' => $bookingData['event_id']])
+                ->with('error', $exception->getMessage());
+        }
+    }
+
+    // Holidayz Payments
+    public function holidayzPayWithEsewa(Request $request, $userSlug = null)
+    {
+        try {
+            $userSlug = $request->route('userSlug');
+            $user = User::where('slug', $userSlug)->first();
+            if (!$user) {
+                return redirect()->back()->with('error', __('User not found.'));
+            }
+
+            $customer = auth('holidayz_customer')->user();
+            if (!$customer) {
+                return redirect()->route('hotel.frontend.login', ['userSlug' => $userSlug]);
+            }
+
+            $cart = HolidayzCart::where('created_by', $user->id)
+                ->where('customer_id', $customer->id)
+                ->with(['items.room', 'items.facilities', 'items.taxes'])
+                ->first();
+
+            if (!$cart || $cart->items->isEmpty()) {
+                return redirect()->route('hotel.frontend.cart', ['userSlug' => $userSlug])
+                    ->with('error', __('Your cart is empty'));
+            }
+
+            foreach ($cart->items as $cartItem) {
+                $availableRooms = HolidayzAvailabilityHelper::getAvailableRoomCount(
+                    $cartItem->room_id,
+                    $cartItem->check_in_date->format('Y-m-d'),
+                    $cartItem->check_out_date->format('Y-m-d'),
+                    null,
+                    $user->id
+                );
+
+                if ($cartItem->quantity > $availableRooms) {
+                    return redirect()->route('hotel.frontend.cart', ['userSlug' => $userSlug])
+                        ->with('error', __('Room is no longer available for the selected dates.'));
+                }
+            }
+
+            $subtotal = $cart->items->sum(function ($item) {
+                return $item->rent_per_night * $item->nights * $item->quantity;
+            });
+
+            $tax_amount = $cart->items->sum(function ($item) {
+                return $item->taxes->sum('pivot.tax_amount');
+            });
+
+            $facilities_amount = $cart->items->sum(function ($item) {
+                return $item->facilities->sum('pivot.total_amount');
+            });
+
+            $coupon_discount = 0;
+            $applied_coupon = Session::get('applied_coupon');
+
+            if ($applied_coupon && isset($applied_coupon['id'])) {
+                $coupon = HolidayzCoupon::find($applied_coupon['id']);
+                if ($coupon && $coupon->created_by == $user->id && $coupon->isValid()) {
+                    $coupon_discount = $applied_coupon['discount'] ?? 0;
+                    $coupon_discount = min($coupon_discount, $subtotal);
+                } else {
+                    Session::forget('applied_coupon');
+                    $applied_coupon = null;
+                }
+            }
+
+            $total = $subtotal + $tax_amount + $facilities_amount - $coupon_discount;
+
+            if ($total <= 0) {
+                return redirect()->back()->with('error', __('Invalid payment amount.'));
+            }
+
+            $orderID = strtoupper(str_replace('.', '', uniqid('', true)));
+            $esewaService = new EsewaService($user->id);
+
+            $callback_url = route('esewa.holidayz.payment.status', ['userSlug' => $userSlug, 'order_id' => $orderID]);
+
+            $response = $esewaService->checkout(
+                $total,
+                $callback_url,
+                $orderID,
+                [
+                    'payment_method' => 'Esewa',
+                    'subtotal' => $subtotal,
+                    'tax_amount' => $tax_amount,
+                    'facilities_amount' => $facilities_amount,
+                    'coupon_discount' => $coupon_discount,
+                    'total' => $total,
+                    'applied_coupon' => $applied_coupon,
+                    'special_requests' => $request->special_requests
+                ]
+            );
+
+            return redirect()->route('esewa.checkout', encrypt($response));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function holidayzGetEsewaStatus(Request $request, $userSlug, $order_id)
+    {
+        try {
+            $esewaService = new EsewaService();
+            $orderData = Session::get($order_id);
+            Session::forget($order_id);
+        
+            if (!empty($orderData) && $esewaService->isPaymentSuccessful($request)) {
+                $user = User::where('slug', $userSlug)->first();
+                $customer = auth('holidayz_customer')->user();
+                if (!$user || !$customer) {
+                    return redirect()->route('hotel.frontend.index', ['userSlug' => $userSlug])->with('error', __('Invalid session.'));
+                }
+
+                $cart = HolidayzCart::where('created_by', $user->id)
+                    ->where('customer_id', $customer->id)
+                    ->with(['items.room', 'items.facilities', 'items.taxes'])
+                    ->first();
+
+                $booking = new HolidayzRoomBooking();
+                $booking->booking_date = now();
+                $booking->customer_id = $customer->id;
+                $booking->adults = $cart->items->sum('adults');
+                $booking->children = $cart->items->sum('children');
+                $booking->total_guests = $cart->items->sum('adults') + $cart->items->sum('children');
+                $booking->subtotal = $orderData['subtotal'];
+                $booking->tax_amount = $orderData['tax_amount'];
+                $booking->coupon_id = $orderData['applied_coupon']['id'] ?? null;
+                $booking->discount_amount = $orderData['coupon_discount'];
+                $booking->total_amount = $orderData['total'];
+                $booking->paid_amount = $orderData['total'];
+                $booking->balance_amount = 0;
+                $booking->payment_method = 'Esewa';
+                $booking->status = 'paid';
+                $booking->special_requests = $orderData['special_requests'];
+                $booking->creator_id = $user->id;
+                $booking->created_by = $user->id;
+                $booking->save();
+
+                foreach ($cart->items as $cartItem) {
+                    $bookingItem = new HolidayzRoomBookingItem();
+                    $bookingItem->booking_id = $booking->id;
+                    $bookingItem->room_id = $cartItem->room_id;
+                    $bookingItem->check_in_date = $cartItem->check_in_date;
+                    $bookingItem->check_out_date = $cartItem->check_out_date;
+                    $bookingItem->quantity = $cartItem->quantity;
+                    $bookingItem->adults = $cartItem->adults;
+                    $bookingItem->children = $cartItem->children;
+                    $bookingItem->rent_per_night = $cartItem->rent_per_night;
+                    $bookingItem->nights = $cartItem->nights;
+                    $bookingItem->discount_percentage = 0;
+                    $bookingItem->discount_amount = 0;
+                    $bookingItem->total_amount = $cartItem->rent_per_night * $cartItem->nights * $cartItem->quantity;
+                    $bookingItem->save();
+
+                    foreach ($cartItem->facilities as $facility) {
+                        $bookingItem->facilities()->attach($facility->id, [
+                            'price' => $facility->pivot->price,
+                            'quantity' => $facility->pivot->quantity,
+                            'total_amount' => $facility->pivot->total_amount
+                        ]);
                     }
-                  
-                    $request->session()->forget($order_id);
-                    event(new EsewaPaymentStatus($retainer, $type, $retainer_payment));
-                    return redirect()->route('pay.retainer', \Illuminate\Support\Facades\Crypt::encrypt($invoice_id))->with('success', __('Payment added Successfully'));
-                } catch (\Exception $e) {
-                    $request->session()->forget($order_id);
-                    return redirect()->route('pay.retainer', \Illuminate\Support\Facades\Crypt::encrypt($invoice_id))->with('error', $e->getMessage());
+
+                    foreach ($cartItem->taxes as $tax) {
+                        $bookingItem->taxes()->attach($tax->id, [
+                            'tax_name' => $tax->pivot->tax_name ?? $tax->name,
+                            'tax_rate' => $tax->pivot->tax_rate ?? $tax->rate,
+                            'tax_amount' => $tax->pivot->tax_amount
+                        ]);
+                    }
                 }
-            } else {
-                $request->session()->forget($order_id);
-                return redirect()->route('pay.retainer', \Illuminate\Support\Facades\Crypt::encrypt($invoice_id))->with('error', __('Retainer not found.'));
-            }
-        } else {
-            $request->session()->forget($order_id);
-            return redirect()->back()->with('error', __('Invalid payment type.'));
-        }
-    }
 
-    //lms cource payment
-    public function coursePayWithEsewa(Request $request, $slug)
-    {
-        $cart = session()->get($slug);
+                if ($orderData['applied_coupon']) {
+                    $couponId = $orderData['applied_coupon']['id'];
+                    $coupon = HolidayzCoupon::find($couponId);
+                    if ($coupon) {
+                        $existingUsage = HolidayzCouponUsage::where('coupon_id', $couponId)
+                            ->where('customer_id', $customer->id)
+                            ->exists();
 
-        $store   = \Workdo\LMS\Entities\Store::where('slug', $slug)->first();
-        $student = Auth::guard('students')->user();
+                        if (!$existingUsage) {
+                            $couponUsage = new HolidayzCouponUsage();
+                            $couponUsage->coupon_id = $couponId;
+                            $couponUsage->customer_id = $customer->id;
+                            $couponUsage->used_at = now();
+                            $couponUsage->creator_id = $coupon->creator_id;
+                            $couponUsage->created_by = $coupon->created_by;
+                            $couponUsage->save();
 
-        self::paymentConfig($store->created_by, $store->wokspace_id);
-        if ($this->currancy != 'NPR' ) {
-            return redirect()->back()->with('error', __('Currency is not supported.'));
-        }
-
-        $products       = $cart['products'];
-        $sub_totalprice = 0;
-        $totalprice     = 0;
-        $product_name   = [];
-        $product_id     = [];
-
-        foreach ($products as $key => $product) {
-            $product_name[]  = $product['product_name'];
-            $product_id[]    = $product['id'];
-            $sub_totalprice += $product['price'];
-            $totalprice     += $product['price'];
-        }
-
-        if (isset($cart['coupon'])) {
-            $coupon = $cart['coupon']['coupon'];
-        }
-        if (!empty($coupon)) {
-            if ($coupon['enable_flat'] == 'off') {
-                $discount_value = ($sub_totalprice / 100) * $coupon['discount'];
-                $totalprice     = $sub_totalprice - $discount_value;
-            } else {
-                $discount_value = $coupon['flat_discount'];
-                $totalprice     = $sub_totalprice - $discount_value;
-            }
-        }
-
-        if ($totalprice <= 0) {
-            $assignCourse = \Workdo\LMS\Entities\LmsUtility::DirectAssignCourse($store, 'Esewa');
-            if ($assignCourse['is_success']) {
-                return redirect()->route(
-                    'store-complete.complete',
-                    [
-                        $store->slug,
-                        \Illuminate\Support\Facades\Crypt::encrypt($assignCourse['courseorder_id']),
-                    ]
-                )->with('success', __('Transaction has been success'));
-            } else {
-                return redirect()->route('store.cart', $store->slug)->with('error', __('Something went wrong, Please try again,'));
-            }
-        }
-
-        $order_id = strtoupper(str_replace('.', '', uniqid('', true)));
-        
-        $session_data = [
-            'slug'       => $slug,
-            'cart'       => $cart,
-            'totalprice' => $totalprice,
-            'order_id'   => $order_id
-        ];
-        $request->session()->put($order_id, $session_data);
-        
-        if ($products) {
-            try {
-                $admin_settings = getAdminAllSetting();
-                $paymentData    = $this->makePayment([
-                    'merchant_id' => $admin_settings['esewa_merchant_id'] ?? '',
-                    'mode'        => ucfirst($admin_settings['esewa_mode'] ?? 'Sandbox'),
-                    'successURL'  => route('course.esewa', ['order_id' => $order_id, 'status' => 'success']),
-                    'faildURL'    => route('course.esewa', ['order_id' => $order_id, 'status' => 'failed']),
-                    'price'       => $totalprice,
-                    'order_id'    => $order_id,
-                ]);
-
-                if (isset($paymentData['status']) && $paymentData['status'] === 'true') {
-                    return view('esewa::payment.form', ['formData' => $paymentData['form_data']]);
-                } else {
-                    $request->session()->forget($order_id);
-                    return redirect()->route('store.cart', $store->slug)->with('error', __('Payment failed.'));
+                            $coupon->increment('used_count');
+                        }
+                    }
                 }
-            } catch (\Exception $e) {
-                $request->session()->forget($order_id);
-                return redirect()->back()->with('error', $e->getMessage());
-            }
-        } else {
-            return redirect()->back()->with('error', __('No products found.'));
-        }
-    }
 
-    public function getCoursePaymentStatus(Request $request)
-    {
-        $order_id = $request->order_id;
-        $status   = $request->status;
-        
-        $paymentData = null;
-        if (strpos($status, '?data=') !== false) {
-            $parts  = explode('?data=', $status);
-            $status = $parts[0];
-            if (isset($parts[1])) {
-                $paymentData = json_decode(base64_decode($parts[1]), true);
-            }
-        }
-        
-        $session = $request->session()->get($order_id);
-        if (!$session) {
-            return redirect()->back()->with('error', __('Payment session expired.'));
-        }
-        
-        $slug       = $session['slug'];
-        $cart       = $session['cart'];
-        $totalprice = $session['totalprice'];
-        
-        if ($status != 'success') {
-            $request->session()->forget($order_id);
-            return redirect()->route('store.cart', $slug)->with('error', __('Payment was cancelled or failed.'));
-        }
-        
-        if (!$this->verifyEsewaPayment($request, $paymentData)) {
-            $request->session()->forget($order_id);
-            return redirect()->route('store.cart', $slug)->with('error', __('Payment verification failed.'));
-        }
-        
-        try {
-            $store      = \Workdo\LMS\Entities\Store::where('slug', $slug)->first();
-            $coupon     = isset($cart['coupon']) ? $cart['coupon']['coupon'] : null;
-            $products   = $cart['products'];
-            $product_id = [];
-            
-            foreach ($products as $product) {
-                $product_id[] = $product['id'];
-            }            
-            $student                      = Auth::guard('students')->user();
-            $course_order                 = new \Workdo\LMS\Entities\CourseOrder();
-            $course_order->order_id       = '#' . time();
-            $course_order->name           = $student->name;
-            $course_order->card_number    = '';
-            $course_order->card_exp_month = '';
-            $course_order->card_exp_year  = '';
-            $course_order->student_id     = $student->id;
-            $course_order->course         = json_encode($products);
-            $course_order->price          = $totalprice;
-            $course_order->coupon         = !empty($cart['coupon']['coupon']['id']) ? $cart['coupon']['coupon']['id'] : '';
-            $course_order->coupon_json    = json_encode(!empty($coupon) ? $coupon : '');
-            $course_order->discount_price = !empty($cart['coupon']['discount_price']) ? $cart['coupon']['discount_price'] : '';
-            $course_order->price_currency = !empty(company_setting('defult_currancy', $store->created_by, $store->workspace_id)) ? company_setting('defult_currancy', $store->created_by, $store->workspace_id) : 'USD';
-            $course_order->txn_id         = $paymentData['transaction_code'] ?? $order_id;
-            $course_order->payment_type   = __('eSewa');
-            $course_order->payment_status = 'success';
-            $course_order->receipt        = '';
-            $course_order->store_id       = $store['id'];
-            $course_order->save();
+                HolidayzCart::where('created_by', $user->id)
+                    ->where('customer_id', $customer->id)
+                    ->delete();
 
-            foreach ($products as $course_id) {
-                $purchased_course             = new \Workdo\LMS\Entities\PurchasedCourse();
-                $purchased_course->course_id  = $course_id['product_id'];
-                $purchased_course->student_id = $student->id;
-                $purchased_course->order_id   = $course_order->id;
-                $purchased_course->save();
+                Session::forget('applied_coupon');
 
-                $student             = \Workdo\LMS\Entities\Student::where('id', $purchased_course->student_id)->first();
-                $student->courses_id = $purchased_course->course_id;
-                $student->save();
-            }
-            
-            if (!empty(company_setting('New Course Order', $store->created_by, $store->workspace_id)) && company_setting('New Course Order', $store->created_by, $store->workspace_id) == true) {
-                $course      = \Workdo\LMS\Entities\Course::whereIn('id', $product_id)->get()->pluck('title');
-                $course_name = implode(', ', $course->toArray());
-                $user        = User::where('id', $store->created_by)->where('workspace_id', $store->workspace_id)->first();
-                $uArr        = [
-                    'student_name' => $student->name,
-                    'course_name'  => $course_name,
-                    'store_name'   => $store->name,
-                    'order_url'    => route('user.order', [$store->slug, \Illuminate\Support\Facades\Crypt::encrypt($course_order->id),]),
-                ];
                 try {
-                    EmailTemplate::sendEmailTemplate('New Course Order', [$user->id => $user->email], $uArr, $store->created_by);
-                } catch (\Exception $e) {
-                    return redirect()->back('error', $e->getMessage());
+                    HolidayzBookingPayments::dispatch($booking);
+                } catch (\Throwable $th) {
                 }
-            }
-            
-            $type = 'coursepayment';
-            event(new EsewaPaymentStatus($store, $type, $course_order));
 
-            $request->session()->forget($order_id);
-            session()->forget($slug);
-
-            return redirect()->route(
-                'store-complete.complete',
-                [
-                    $store->slug,
-                    \Illuminate\Support\Facades\Crypt::encrypt($course_order->id),
-                ]
-            )->with('success', __('Transaction has been success'));
-            
-        } catch (\Exception $e) {
-            $request->session()->forget($order_id);
-            return redirect()->route('store.cart', $slug)->with('error', __('Transaction has been failed.'));
-        }
-    }
-
-    //Movie & TV Studio
-    public function contentPayWithEsewa(Request $request, $slug)
-    {
-        $store    = \Workdo\TVStudio\Entities\TVStudioStore::where('slug', $slug)->first();
-        $customer = Auth::guard('customers')->user();
-
-        self::paymentConfig($store->created_by, $store->wokspace_id);
-        if ($this->currancy != 'NPR' ) {
-            return redirect()->back()->with('error', __('Currency is not supported.'));
-        }
-
-        $cart           = session()->get($slug);
-        $products       = $cart['products'];
-        $sub_totalprice = 0;
-        $totalprice     = 0;
-        $product_name   = [];
-        $product_id     = [];
-
-        foreach ($products as $key => $product) {
-            $product_name[]  = $product['product_name'];
-            $product_id[]    = $product['id'];
-            $sub_totalprice += $product['price'];
-            $totalprice     += $product['price'];
-        }
-        if (isset($cart['coupon'])) {
-            $coupon = $cart['coupon']['coupon'];
-        }
-        if (!empty($coupon)) {
-            if ($coupon['enable_flat'] == 'off') {
-                $discount_value = ($sub_totalprice / 100) * $coupon['discount'];
-                $totalprice     = $sub_totalprice - $discount_value;
+                return redirect()->route('hotel.frontend.booking-confirm', [
+                    'userSlug' => $userSlug,
+                    'encryptedBooking' => encrypt($booking->id)
+                ])->with('success', __('Payment completed successfully! Booking #:number', ['number' => $booking->booking_number]));
             } else {
-                $discount_value = $coupon['flat_discount'];
-                $totalprice     = $sub_totalprice - $discount_value;
+                return redirect()->route('hotel.frontend.checkout', ['userSlug' => $userSlug])
+                    ->with('error', __('Payment was cancelled or failed.'));
             }
-        }
-
-        if ($totalprice <= 0) {
-            $assignCourse = \Workdo\TVStudio\Entities\TVStudioUtility::DirectAssignCourse($store, 'Esewa');
-            if ($assignCourse['is_success']) {
-                return redirect()->route(
-                    'tv.store-complete.complete',
-                    [
-                        $store->slug,
-                        \Illuminate\Support\Facades\Crypt::encrypt($assignCourse['courseorder_id']),
-                    ]
-                )->with('success', __('Transaction has been success'));
-            } else {
-                return redirect()->route('store.cart', $store->slug)->with('error', __('Something went wrong, Please try again,'));
-            }
-        }
-
-        $order_id = strtoupper(str_replace('.', '', uniqid('', true)));
-        
-        $session_data = [
-            'slug'       => $slug,
-            'cart'       => $cart,
-            'totalprice' => $totalprice,
-            'order_id'   => $order_id
-        ];
-        $request->session()->put($order_id, $session_data);
-        
-        if ($products) {
-            try {
-                $admin_settings = getAdminAllSetting();
-                $paymentData    = $this->makePayment([
-                    'merchant_id' => $admin_settings['esewa_merchant_id'] ?? '',
-                    'mode'        => ucfirst($admin_settings['esewa_mode'] ?? 'Sandbox'),
-                    'successURL'  => route('content.esewa', ['order_id' => $order_id, 'status' => 'success']),
-                    'faildURL'    => route('content.esewa', ['order_id' => $order_id, 'status' => 'failed']),
-                    'price'       => $totalprice,
-                    'order_id'    => $order_id,
-                ]);
-
-                if (isset($paymentData['status']) && $paymentData['status'] === 'true') {
-                    return view('esewa::payment.form', ['formData' => $paymentData['form_data']]);
-                } else {
-                    $request->session()->forget($order_id);
-                    return redirect()->route('store.cart', $store->slug)->with('error', __('Payment failed.'));
-                }
-            } catch (\Exception $e) {
-                $request->session()->forget($order_id);
-                return redirect()->back()->with('error', $e->getMessage());
-            }
-        } else {
-            return redirect()->back()->with('error', __('No products found.'));
-        }
-    }
-
-    public function getContentPaymentStatus(Request $request)
-    {
-        $order_id = $request->order_id;
-        $status   = $request->status;
-        
-        $paymentData = null;
-        if (strpos($status, '?data=') !== false) {
-            $parts  = explode('?data=', $status);
-            $status = $parts[0];
-            if (isset($parts[1])) {
-                $paymentData = json_decode(base64_decode($parts[1]), true);
-            }
-        }
-        
-        $session = $request->session()->get($order_id);
-        if (!$session) {
-            return redirect()->back()->with('error', __('Payment session expired.'));
-        }
-        
-        $slug       = $session['slug'];
-        $cart       = $session['cart'];
-        $totalprice = $session['totalprice'];
-        
-        if ($status != 'success') {
-            $request->session()->forget($order_id);
-            return redirect()->route('store.cart', $slug)->with('error', __('Payment was cancelled or failed.'));
-        }
-        
-        if (!$this->verifyEsewaPayment($request, $paymentData)) {
-            $request->session()->forget($order_id);
-            return redirect()->route('store.cart', $slug)->with('error', __('Payment verification failed.'));
-        }
-        
-        try {
-            $store    = \Workdo\TVStudio\Entities\TVStudioStore::where('slug', $slug)->first();
-            $coupon   = isset($cart['coupon']) ? $cart['coupon']['coupon'] : null;
-            $products = $cart['products'];
-            
-            $customer                      = Auth::guard('customers')->user();
-            $content_order                 = new \Workdo\TVStudio\Entities\TVStudioOrder();
-            $content_order->order_id       = '#' . time();
-            $content_order->name           = $customer->name;
-            $content_order->card_number    = '';
-            $content_order->card_exp_month = '';
-            $content_order->card_exp_year  = '';
-            $content_order->customer_id    = $customer->id;
-            $content_order->content        = json_encode($products);
-            $content_order->price          = $totalprice;
-            $content_order->coupon         = !empty($cart['coupon']['coupon']['id']) ? $cart['coupon']['coupon']['id'] : '';
-            $content_order->coupon_json    = json_encode(!empty($coupon) ? $coupon : '');
-            $content_order->discount_price = !empty($cart['coupon']['discount_price']) ? $cart['coupon']['discount_price'] : '';
-            $content_order->price_currency = !empty(company_setting('defult_currancy', $store->created_by, $store->workspace_id)) ? company_setting('defult_currancy', $store->created_by, $store->workspace_id) : 'USD';
-            $content_order->txn_id         = $paymentData['transaction_code'] ?? $order_id;
-            $content_order->payment_type   = __('eSewa');
-            $content_order->payment_status = 'success';
-            $content_order->receipt        = '';
-            $content_order->store_id       = $store['id'];
-            $content_order->save();
-
-            foreach ($products as $course_id) {
-                $purchased_content              = new \Workdo\TVStudio\Entities\TVStudioPurchasedContent();
-                $purchased_content->content_id  = $course_id['product_id'];
-                $purchased_content->customer_id = $customer->id;
-                $purchased_content->order_id    = $content_order->id;
-                $purchased_content->save();
-
-                $customer_record              = \Workdo\TVStudio\Entities\TVStudioCustomer::where('id', $purchased_content->customer_id)->first();
-                $customer_record->contents_id = $purchased_content->content_id;
-                $customer_record->save();
-            }
-
-            $type = 'contentpayment';
-            event(new EsewaPaymentStatus($store, $type, $content_order));
-
-            $request->session()->forget($order_id);
-            session()->forget($slug);
-
-            return redirect()->route(
-                'tv.store-complete.complete',
-                [
-                    $store->slug,
-                    \Illuminate\Support\Facades\Crypt::encrypt($content_order->id),
-                ]
-            )->with('success', __('Transaction has been success'));
-            
-        } catch (\Exception $e) {
-            $request->session()->forget($order_id);
-            return redirect()->route('store.cart', $slug)->with('error', __('Transaction has been failed.'));
+        } catch (\Exception $exception) {
+            return redirect()->route('hotel.frontend.checkout', ['userSlug' => $userSlug])
+                ->with('error', $exception->getMessage());
         }
     }
 }
-

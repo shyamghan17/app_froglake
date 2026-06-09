@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\CMMS\Events\UpdateLocation;
 
 class UpdateLocationLis
 {
-    public function handle($event)
+    public function handle(UpdateLocation $event)
     {
         if (Module_is_active('ActivityLog')) {
             $location = $event->location;
@@ -15,7 +16,7 @@ class UpdateLocationLis
             $activity = new AllActivityLog();
             $activity['module'] = 'CMMS';
             $activity['sub_module'] = 'Location';
-            $activity['description'] = __('Location updated by the ');                          
+            $activity['description'] = __('Location updated by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $location->created_by;
             $activity->save();

@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\Appointment\Events\CreateSchedule;
 
 class CreateScheduleLis
 {
-    public function handle($event)
+    public function handle(CreateSchedule $event)
     {
         if (Module_is_active('ActivityLog')) {
             $schedule = $event->schedule;
@@ -15,7 +16,7 @@ class CreateScheduleLis
             $activity = new AllActivityLog();
             $activity['module'] = 'Appointment';
             $activity['sub_module'] = 'Schedule';
-            $activity['description'] = __('New Schedule created by the ');                          
+            $activity['description'] = __('New Schedule created by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $schedule->created_by;
             $activity->save();

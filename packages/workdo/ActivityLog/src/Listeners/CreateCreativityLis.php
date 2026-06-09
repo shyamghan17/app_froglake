@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\InnovationCenter\Events\CreateCreativity;
 
 class CreateCreativityLis
 {
-    public function handle($event)
+    public function handle(CreateCreativity $event)
     {
         if (Module_is_active('ActivityLog')) {
             $creativity = $event->creativity;
@@ -15,7 +16,7 @@ class CreateCreativityLis
             $activity = new AllActivityLog();
             $activity['module'] = 'InnovationCenter';
             $activity['sub_module'] = 'Creativity';
-            $activity['description'] = __('Creativity created by the ');                          
+            $activity['description'] = __('Creativity created by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $creativity->created_by;
             $activity->save();

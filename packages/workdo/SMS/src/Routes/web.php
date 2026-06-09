@@ -1,19 +1,9 @@
 <?php
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
 
 use Illuminate\Support\Facades\Route;
-use Workdo\SMS\Http\Controllers\Company\SettingsController;
+use Workdo\SMS\Http\Controllers\SMSSettingsController;
 
-Route::middleware(['web','auth','verified','PlanModuleCheck:SMS'])->group(function (){
-    Route::post('sms-settings/store', [SettingsController::class ,'store'])->name('sms.setting.save');
-    Route::post('get-smsfields', [SettingsController::class , 'get_smsfields'])->name('get.sms.fields');
+Route::middleware(['web', 'auth', 'verified', 'PlanModuleCheck:SMS'])->group(function () {
+    Route::get('sms/settings', [SMSSettingsController::class, 'index'])->name('sms.settings.index');
+    Route::post('sms/settings/store', [SMSSettingsController::class, 'store'])->name('sms.settings.store');
 });

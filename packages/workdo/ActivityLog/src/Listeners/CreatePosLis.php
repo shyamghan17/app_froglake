@@ -4,10 +4,11 @@ namespace Workdo\ActivityLog\Listeners;
 
 use Workdo\ActivityLog\Models\AllActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Workdo\Pos\Events\CreatePos;
 
 class CreatePosLis
 {
-    public function handle($event)
+    public function handle(CreatePos $event)
     {
         if (Module_is_active('ActivityLog')) {
             $pos = $event->posSale;
@@ -15,7 +16,7 @@ class CreatePosLis
             $activity = new AllActivityLog();
             $activity['module'] = 'Pos';
             $activity['sub_module'] = 'Pos';
-            $activity['description'] = __('Pos created by the ');                          
+            $activity['description'] = __('Pos created by the ');
             $activity['creator_id'] = Auth::user()->id;
             $activity['created_by'] = $pos->created_by;
             $activity->save();
