@@ -13,7 +13,7 @@
 
     body {
         font-family: Arial, Helvetica, sans-serif;
-        background: #f8fafc;
+        background: #ecfdf5;
         color: #334155;
         display: flex;
         justify-content: center;
@@ -28,7 +28,8 @@
         background: #ffffff;
         padding: 60px 40px;
         border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        border: 1px solid #d1fae5;
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.12);
     }
 
     .icon {
@@ -38,7 +39,7 @@
 
     h1 {
         font-size: 42px;
-        color: #0f172a;
+        color: #065f46;
         margin-bottom: 20px;
     }
 
@@ -52,24 +53,25 @@
         display: inline-block;
         margin: 20px 0;
         padding: 10px 18px;
-        background: #eff6ff;
-        color: #2563eb;
+        background: #d1fae5;
+        color: #047857;
         border-radius: 50px;
         font-weight: 600;
     }
 
     .footer {
         margin-top: 30px;
-        color: #64748b;
+        color: #6b7280;
     }
 
     a {
-        color: #2563eb;
+        color: #10b981;
         text-decoration: none;
         font-weight: 600;
     }
 
     a:hover {
+        color: #059669;
         text-decoration: underline;
     }
 
