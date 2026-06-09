@@ -42,7 +42,7 @@ export default function Index() {
     const [sortField, setSortField] = useState(urlParams.get('sort') || '');
     const [sortDirection, setSortDirection] = useState(urlParams.get('direction') || 'asc');
 
-    const [viewMode, setViewMode] = useState<'list' | 'grid'>(urlParams.get('view') as 'list' | 'grid' || 'list');
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>(urlParams.get('view') as 'list' | 'grid' || 'grid');
     const [modalState, setModalState] = useState<UserModalState>({
         isOpen: false,
         mode: '',
@@ -394,134 +394,144 @@ export default function Index() {
                             </div>
                         </div>
                     ) : (
-                        <div className="overflow-auto max-h-[70vh] p-4">
+                        <div className="overflow-auto max-h-[70vh] p-6">
                             {users.data.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
                                     {users.data.map((user) => (
-                                        <Card key={user.id} className="border border-gray-200">
-                                            <div className="p-4">
-                                                <div className="flex items-center gap-3 mb-3">
-                                                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 border flex-shrink-0">
-                                                        {user.avatar ? (
-                                                            <img
-                                                                src={getImagePath(user.avatar)}
-                                                                alt={user.name}
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center">
-                                                                <UserIcon className="w-5 h-5 text-primary" />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <h3 className="font-semibold text-base text-gray-900">{user.name}</h3>
-                                                    </div>
-                                                </div>
+                                        <Card key={user.id} className="group relative overflow-hidden border border-gray-200 hover:border-primary/40 hover:shadow-xl transition-all duration-300">
+                                            {/* Status Badge - Top Right Corner */}
+                                            <div className="absolute top-3 right-3 z-10">
+                                                <span className={`px-2 py-1 rounded-full text-sm ${
+                                                    user.is_enable_login ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                                }`}>
+                                                    {user.is_enable_login ? t('Enabled') : t('Disabled')}
+                                                </span>
+                                            </div>
 
-                                                <div className="space-y-3 mb-3">
-
-                                                    <div>
-                                                        <p className="text-xs font-medium text-gray-600 mb-2">{t('Email')}</p>
-                                                        <p className="text-xs text-gray-900 truncate" title={user.email}>{user.email}</p>
-                                                    </div>
-
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <div>
-                                                            <p className="text-xs font-medium text-gray-600 mb-1">{t('Role')}</p>
-                                                            <p className="text-xs text-gray-900 capitalize truncate">{user.type}</p>
+                                            <div className="p-5">
+                                                {/* Avatar Section - Centered */}
+                                                <div className="flex flex-col items-center mb-4">
+                                                    <div className="relative mb-3">
+                                                        <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border-2 border-primary/30 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                                                            {user.avatar ? (
+                                                                <img src={getImagePath(user.avatar)} alt={user.name} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+                                                                    <UserIcon className="w-7 h-7 text-primary" />
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                        {user.mobile_no && (
-                                                            <div>
-                                                                <p className="text-xs font-medium text-gray-600 mb-1">{t('Mobile')}</p>
-                                                                <p className="text-xs text-gray-900">{user.mobile_no}</p>
-                                                            </div>
-                                                        )}
+                                                        <div className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white ${
+                                                            user.is_online ? 'bg-green-500' : 'bg-gray-400'
+                                                        }`} />
                                                     </div>
+                                                    
+                                                    {/* Name */}
+                                                    <h3 className="font-bold text-base text-gray-900 text-center mb-1.5 line-clamp-1 px-2" title={user.name}>
+                                                        {user.name}
+                                                    </h3>
+                                                    
+                                                    {/* Role Badge */}
+                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-primary/10 to-primary/5 text-primary border border-primary/20 capitalize">
+                                                        {user.type}
+                                                    </span>
                                                 </div>
 
-                                                <div className="flex items-center justify-between pt-3 border-t">
-                                                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
-                                                        user.is_enable_login ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                                    }`}>
-                                                        {user.is_enable_login ? t('Enabled') : t('Disabled')}
-                                                    </span>
-                                                    <div className="flex gap-1">
+                                                {/* Contact Info */}
+                                                <div className="space-y-2 mb-4 bg-gray-50 rounded-lg p-3">
+                                                    <div className="flex items-center gap-2 text-xs text-gray-600">
+                                                        <svg className="w-4 h-4 flex-shrink-0 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                        </svg>
+                                                        <span className="truncate font-medium" title={user.email}>{user.email}</span>
+                                                    </div>
+                                                    {user.mobile_no && (
+                                                        <div className="flex items-center gap-2 text-xs text-gray-600">
+                                                            <svg className="w-4 h-4 flex-shrink-0 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                            </svg>
+                                                            <span className="font-medium">{user.mobile_no}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
 
-                                                        {user.is_disable === 1 ? (
-                                                            <Tooltip delayDuration={300}>
+                                                {/* Action Buttons */}
+                                                <div className="flex items-center justify-center gap-1.5 pt-3 border-t border-gray-200">
+                                                    {user.is_disable === 1 ? (
+                                                        <TooltipProvider>
+                                                            <Tooltip delayDuration={0}>
                                                                 <TooltipTrigger asChild>
-                                                                    <div className="h-8 w-8 p-0 flex items-center justify-center text-gray-400">
+                                                                    <div className="h-9 w-9 flex items-center justify-center text-gray-400 bg-gray-100 rounded-lg">
                                                                         <Lock className="h-4 w-4" />
                                                                     </div>
                                                                 </TooltipTrigger>
-                                                                <TooltipContent>
-                                                                    <p>{t('User is disabled')}</p>
-                                                                </TooltipContent>
+                                                                <TooltipContent><p>{t('User is disabled')}</p></TooltipContent>
                                                             </Tooltip>
-                                                        ) : (
-                                                            <TooltipProvider>
+                                                        </TooltipProvider>
+                                                    ) : (
+                                                        <TooltipProvider>
                                                             {auth.user?.permissions?.includes('impersonate-users') && user.id !== auth.user?.id && (
-                                                                    <Tooltip delayDuration={300}>
-                                                                        <TooltipTrigger asChild>
-                                                                            <Button
-                                                                                variant="ghost"
-                                                                                size="sm"
-                                                                                onClick={() => router.post(route('users.impersonate', user.id))}
-                                                                                className="h-8 w-8 p-0 text-purple-600"
-                                                                            >
-                                                                                <UserCheck className="h-4 w-4" />
-                                                                            </Button>
-                                                                        </TooltipTrigger>
-                                                                        <TooltipContent>
-                                                                            <p>{t('Login As User')}</p>
-                                                                        </TooltipContent>
-                                                                    </Tooltip>
-                                                                )}
-                                                                {auth.user?.permissions?.includes('change-password-users') && (
-                                                                    <Tooltip delayDuration={300}>
-                                                                        <TooltipTrigger asChild>
-                                                                            <Button variant="ghost" size="sm" onClick={() => openModal('change-password', user)} className="h-8 w-8 p-0 text-orange-600">
-                                                                                <Key className="h-4 w-4" />
-                                                                            </Button>
-                                                                        </TooltipTrigger>
-                                                                        <TooltipContent>
-                                                                            <p>{t('Change Password')}</p>
-                                                                        </TooltipContent>
-                                                                    </Tooltip>
-                                                                )}
-                                                                {auth.user?.permissions?.includes('edit-users') && (
-                                                                    <Tooltip delayDuration={300}>
-                                                                        <TooltipTrigger asChild>
-                                                                            <Button variant="ghost" size="sm" onClick={() => openModal('edit', user)} className="h-8 w-8 p-0 text-blue-600">
-                                                                                <Edit className="h-4 w-4" />
-                                                                            </Button>
-                                                                        </TooltipTrigger>
-                                                                        <TooltipContent>
-                                                                            <p>{t('Edit')}</p>
-                                                                        </TooltipContent>
-                                                                    </Tooltip>
-                                                                )}
-                                                                {auth.user?.permissions?.includes('delete-users') && (
-                                                                    <Tooltip delayDuration={300}>
-                                                                        <TooltipTrigger asChild>
-                                                                            <Button
-                                                                                variant="ghost"
-                                                                                size="sm"
-                                                                                onClick={() => openDeleteDialog(user.id)}
-                                                                                className="h-8 w-8 p-0 text-red-600"
-                                                                            >
-                                                                                <Trash2 className="h-4 w-4" />
-                                                                            </Button>
-                                                                        </TooltipTrigger>
-                                                                        <TooltipContent>
-                                                                            <p>{t('Delete')}</p>
-                                                                        </TooltipContent>
-                                                                    </Tooltip>
-                                                                )}
-                                                            </TooltipProvider>
-                                                        )}
-                                                    </div>
+                                                                <Tooltip delayDuration={0}>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Button 
+                                                                            variant="ghost" 
+                                                                            size="sm" 
+                                                                            onClick={() => router.post(route('users.impersonate', user.id))} 
+                                                                            className="h-9 w-9 p-0 text-purple-600 hover:text-purple-700 rounded-lg transition-colors"
+                                                                        >
+                                                                            <UserCheck className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent><p>{t('Login As User')}</p></TooltipContent>
+                                                                </Tooltip>
+                                                            )}
+                                                            {auth.user?.permissions?.includes('change-password-users') && (
+                                                                <Tooltip delayDuration={0}>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Button 
+                                                                            variant="ghost" 
+                                                                            size="sm" 
+                                                                            onClick={() => openModal('change-password', user)} 
+                                                                            className="h-9 w-9 p-0 text-orange-600 hover:text-orange-700 rounded-lg transition-colors"
+                                                                        >
+                                                                            <Key className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent><p>{t('Change Password')}</p></TooltipContent>
+                                                                </Tooltip>
+                                                            )}
+                                                            {auth.user?.permissions?.includes('edit-users') && (
+                                                                <Tooltip delayDuration={0}>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Button 
+                                                                            variant="ghost" 
+                                                                            size="sm" 
+                                                                            onClick={() => openModal('edit', user)} 
+                                                                            className="h-9 w-9 p-0 text-blue-600 hover:text-blue-700 rounded-lg transition-colors"
+                                                                        >
+                                                                            <Edit className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent><p>{t('Edit')}</p></TooltipContent>
+                                                                </Tooltip>
+                                                            )}
+                                                            {auth.user?.permissions?.includes('delete-users') && (
+                                                                <Tooltip delayDuration={0}>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Button 
+                                                                            variant="ghost" 
+                                                                            size="sm" 
+                                                                            onClick={() => openDeleteDialog(user.id)} 
+                                                                            className="h-9 w-9 p-0 text-red-600 hover:text-red-700 rounded-lg transition-colors"
+                                                                        >
+                                                                            <Trash2 className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent><p>{t('Delete')}</p></TooltipContent>
+                                                                </Tooltip>
+                                                            )}
+                                                        </TooltipProvider>
+                                                    )}
                                                 </div>
                                             </div>
                                         </Card>

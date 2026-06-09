@@ -23,6 +23,7 @@ use Workdo\Taskly\Models\TaskSubtask;
 use Workdo\Taskly\Events\CreateTaskSubtask;
 use Workdo\Taskly\Events\DestroyTaskComment;
 use Workdo\Taskly\Events\UpdateProjectTaskStage;
+use App\Models\EmailTemplate;
 
 class ProjectTaskController extends Controller
 {
@@ -140,6 +141,24 @@ class ProjectTaskController extends Controller
 
             CreateProjectTask::dispatch($request, $task);
 
+            if(company_setting('Project Task') == 'on') {
+                
+                $assignedIds = is_array($task->assigned_to) ? $task->assigned_to : json_decode($task->assigned_to, true);
+                $emailData = [
+                    'name'           => $task->title ?? null,
+                    'milestone_name' => $task->milestone->title ?? null,
+                    'title'          => $task->title ?? null,
+                    'duration'       => $task->duration ?? null,
+                ];
+                $memberEmails = User::whereIn('id', $assignedIds)->pluck('email')->toArray();
+                
+                $message = EmailTemplate::sendEmailTemplate('Project Task', $memberEmails, $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('The task has been created successfully.'))
+                        ->with('error', $message['error']);
+                }
+            }
             return redirect()->route('project.tasks.kanban', $validated['project_id'])->with('success', __('The task has been created successfully.'));
         } else {
             return back()->with('error', __('Permission denied'));

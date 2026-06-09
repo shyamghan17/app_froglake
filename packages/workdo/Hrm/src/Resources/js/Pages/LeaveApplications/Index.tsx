@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Dialog } from "@/components/ui/dialog";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Plus, Edit as EditIcon, Trash2, Eye, FileText as FileTextIcon, Download, FileImage, Play } from "lucide-react";
+import { Plus, Edit as EditIcon, Trash2, Eye, FileText as FileTextIcon, Download, FileImage, Play, CalendarDays } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FilterButton } from '@/components/ui/filter-button';
 import { Pagination } from "@/components/ui/pagination";
@@ -58,6 +58,8 @@ export default function Index() {
 
 
     useFlashMessages();
+    const googleDriveButtons = usePageButtons('googleDriveBtn', { module: 'Leave', settingKey: 'GoogleDrive Leave' });
+    const oneDriveButtons = usePageButtons('oneDriveBtn', { module: 'Leave', settingKey: 'OneDrive Leave' });
     const dropboxButtons = usePageButtons('dropboxBtn', { module: 'Leave', settingKey: 'Dropbox Leave' });
     const boxButtons = usePageButtons('boxBtn', { module: 'Leave', settingKey: 'Box Leave' });
 
@@ -276,12 +278,32 @@ export default function Index() {
             pageActions={
                 <div className="flex gap-2">
                     <TooltipProvider>
+                        {googleDriveButtons.map((button) => (
+                            <div key={button.id}>{button.component}</div>
+                        ))}
+                        {oneDriveButtons.map((button) => (
+                            <div key={button.id}>{button.component}</div>
+                        ))}
                         {dropboxButtons.map((button) => (
                             <div key={button.id}>{button.component}</div>
                         ))}
                         {boxButtons.map((button) => (
                             <div key={button.id}>{button.component}</div>
                         ))}
+                        <Tooltip delayDuration={0}>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => router.get(route('hrm.leave-applications.calendar'))}
+                                >
+                                    <CalendarDays className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{t('Calendar')}</p>
+                            </TooltipContent>
+                        </Tooltip>
                         {auth.user?.permissions?.includes('create-leave-applications') && (
                             <Tooltip delayDuration={0}>
                                 <TooltipTrigger asChild>

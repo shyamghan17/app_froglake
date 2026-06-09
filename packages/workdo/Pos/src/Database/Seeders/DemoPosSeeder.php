@@ -204,9 +204,6 @@ class DemoPosSeeder extends Seeder
                 if ($totalAmount > 0) {
                     $discountPercentage = rand($record['discount'][0], $record['discount'][1]);
                     $discountAmount = ($totalAmount * $discountPercentage) / 100;
-                    
-                    // Round discount to nearest 0.50 for realistic pricing
-                    $discountAmount = round($discountAmount * 2) / 2;
                 }
                 
                 $finalAmount = $totalAmount - $discountAmount;

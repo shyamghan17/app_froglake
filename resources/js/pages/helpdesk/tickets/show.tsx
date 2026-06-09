@@ -187,12 +187,11 @@ export default function Show() {
                         </div>
 
                         {/* Reply Form - Fixed at Bottom */}
-                        {auth.user?.permissions?.includes('create-helpdesk-replies') && (
+                        {auth.user?.permissions?.includes('create-helpdesk-replies') && ticket.status !== 'closed' && (
                             <div className="border-t bg-white">
                                 <ReplyForm
                                     ticketId={ticket.id}
                                     onReplyAdded={handleReplyAdded}
-                                    disabled={ticket.status === 'closed'}
                                 />
                             </div>
                         )}

@@ -218,8 +218,8 @@ export default function Index() {
                 <Card>
                     <CardHeader className="border-b bg-gray-50">
                         <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center gap-2">
-                                <Package className="h-5 w-5 text-gray-600" />
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <Package className="h-4 w-4 text-gray-600" />
                                 {t('Available Products')}
                                 <Badge variant="secondary" className="ml-2">{filteredProducts.length}</Badge>
                             </CardTitle>

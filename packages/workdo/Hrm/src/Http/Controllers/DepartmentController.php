@@ -45,8 +45,6 @@ class DepartmentController extends Controller
         if (Auth::user()->can('create-departments')) {
             $validated = $request->validated();
 
-
-
             $department = new Department();
             $department->department_name = $validated['department_name'];
             $department->branch_id = $validated['branch_id'];
@@ -68,8 +66,6 @@ class DepartmentController extends Controller
         if (Auth::user()->can('edit-departments')) {
             $validated = $request->validated();
 
-
-
             $department->department_name = $validated['department_name'];
             $department->branch_id = $validated['branch_id'];
 
@@ -77,9 +73,9 @@ class DepartmentController extends Controller
 
             UpdateDepartment::dispatch($request, $department);
 
-            return redirect()->route('hrm.departments.index')->with('success', __('The department details are updated successfully.'));
+            return back()->with('success', __('The department details are updated successfully.'));
         } else {
-            return redirect()->route('hrm.departments.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 
@@ -89,9 +85,9 @@ class DepartmentController extends Controller
             DestroyDepartment::dispatch($department);
             $department->delete();
 
-            return redirect()->route('hrm.departments.index')->with('success', __('The department has been deleted.'));
+            return back()->with('success', __('The department has been deleted.'));
         } else {
-            return redirect()->route('hrm.departments.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 }

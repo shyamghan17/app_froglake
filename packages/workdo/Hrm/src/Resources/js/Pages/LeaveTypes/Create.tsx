@@ -71,16 +71,6 @@ export default function Create({ onSuccess }: CreateLeaveTypeProps) {
                     <InputError message={errors.max_days_per_year} />
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                    <Switch
-                        id="is_paid"
-                        checked={data.is_paid || false}
-                        onCheckedChange={(checked) => setData('is_paid', !!checked)}
-                    />
-                    <Label htmlFor="is_paid" className="cursor-pointer">{t('Is Paid')}</Label>
-                    <InputError message={errors.is_paid} />
-                </div>
-                
                 <div>
                     <Label htmlFor="color" required>{t('Color')}</Label>
                     <div className="flex gap-2 mt-1">
@@ -90,13 +80,6 @@ export default function Create({ onSuccess }: CreateLeaveTypeProps) {
                             value={data.color}
                             onChange={(e) => setData('color', e.target.value)}
                             className="w-16 h-10 p-1 border rounded"
-                        />
-                        <Input
-                            type="text"
-                            value={data.color}
-                            onChange={(e) => setData('color', e.target.value)}
-                            className="flex-1"
-                            placeholder="#FF6B6B"
                         />
                     </div>
                     <InputError message={errors.color} />
@@ -114,6 +97,16 @@ export default function Create({ onSuccess }: CreateLeaveTypeProps) {
                     <InputError message={errors.description} />
                 </div>
                 
+                <div className="flex items-center space-x-2">
+                    <Switch
+                        id="is_paid"
+                        checked={data.is_paid || false}
+                        onCheckedChange={(checked) => setData('is_paid', !!checked)}
+                    />
+                    <Label htmlFor="is_paid" className="cursor-pointer">{t('Is Paid')}</Label>
+                    <InputError message={errors.is_paid} />
+                </div>
+
                 <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={onSuccess}>
                         {t('Cancel')}

@@ -26,16 +26,17 @@ export default function Create({ onSuccess }: CreateAttendanceProps) {
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         
-        // Format the data before sending
         const formattedData = {
             ...data,
-            date: data.date ? new Date(data.date).toISOString().split('T')[0] : '',
+            date: data.date || '',
             clock_in: data.clock_in ? data.clock_in.substring(0, 16) : '',
             clock_out: data.clock_out ? data.clock_out.substring(0, 16) : '',
         };
         
         post(route('hrm.attendances.store'), {
             data: formattedData,
+            preserveScroll: true,
+            preserveState: false,
             onSuccess: () => {
                 onSuccess();
             }

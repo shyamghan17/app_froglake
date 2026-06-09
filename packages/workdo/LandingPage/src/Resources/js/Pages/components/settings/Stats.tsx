@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Repeater } from '@/components/ui/repeater';
-import { Settings as SettingsIcon } from 'lucide-react';
+import { Layers } from 'lucide-react';
 
 interface StatsProps {
     data: any;
@@ -23,10 +23,10 @@ export default function Stats({ data, getSectionData, updateSectionData, updateS
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-blue-100 rounded-lg">
-                                <SettingsIcon className="h-5 w-5 text-blue-600" />
+                                <Layers className="h-5 w-5 text-blue-600" />
                             </div>
                             <div>
-                                <CardTitle>{t('Statistics Section')}</CardTitle>
+                                <CardTitle className="text-base">{t('Statistics Section')}</CardTitle>
                                 <p className="text-sm text-gray-500">{t('Key business metrics and numbers')}</p>
                             </div>
                         </div>
@@ -40,7 +40,7 @@ export default function Stats({ data, getSectionData, updateSectionData, updateS
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="space-y-2">
+                    <div>
                         <Label>{t('Stats Variant')}</Label>
                         <Select
                             value={getSectionData('stats').variant || 'stats1'}

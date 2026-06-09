@@ -25,29 +25,20 @@ export default function View({ promotion }: ViewProps) {
     return (
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader className="pb-4 border-b">
-                <DialogTitle className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <User className="h-5 w-5" />
-                        {t('Promotion Details')}
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                        <User className="h-5 w-5 text-primary" />
                     </div>
-                   
-                </DialogTitle>
+                    <div>
+                        <DialogTitle className="text-xl font-semibold">{t('Award Details')}</DialogTitle>
+                        <p className="text-sm text-muted-foreground">{promotion.employee?.name}</p>
+                    </div>
+                </div>
             </DialogHeader>
-            
-            <div className="overflow-y-auto flex-1 p-6 space-y-6">
+
+            <div className="overflow-y-auto flex-1 p-6 space-y-2">
                 {/* Employee Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-primary/10 rounded-lg">
-                                <User className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-lg">{promotion.employee?.name || '-'}</h3>
-                                <p className="text-sm text-gray-600">{t('Employee')}</p>
-                            </div>
-                        </div>
-                    </div>
                     {promotion.approved_by && (
                         <div className="bg-green-50 p-4 rounded-lg">
                             <div className="flex items-center gap-3">

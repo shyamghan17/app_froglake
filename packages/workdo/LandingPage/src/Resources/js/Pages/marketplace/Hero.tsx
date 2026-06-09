@@ -96,7 +96,7 @@ export default function MarketplaceHero({ settings, title: propTitle, subtitle: 
                 onClick={() => window.location.href = primaryButtonLink}
             >
                 {primaryButtonText}
-                {config.layout !== 'minimal' && <ArrowRight className="ml-3 h-6 w-6" />}
+                {config.layout !== 'minimal' && <ArrowRight className="ms-3 h-6 w-6" />}
             </button>
             <button
                 className={config.secondaryBtn}

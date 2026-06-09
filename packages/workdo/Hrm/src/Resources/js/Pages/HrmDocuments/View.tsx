@@ -58,7 +58,7 @@ export default function View({ document }: ViewProps) {
                     
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Status')}</label>
-                        <div className="bg-gray-50 p-2 rounded">
+                        <div className="p-1 rounded">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 document.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                 document.status === 'approve' ? 'bg-green-100 text-green-800' :

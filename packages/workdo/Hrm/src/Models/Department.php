@@ -16,11 +16,6 @@ class Department extends Model
         'creator_id',
         'created_by',
     ];
-
-   
-
-
-
     public function branch()
     {
         return $this->belongsTo(Branch::class);

@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Dialog } from "@/components/ui/dialog";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Plus, Edit as EditIcon, Trash2, Eye, Calendar as CalendarIcon, Download, FileImage, Play, CalendarDays, ChevronDown } from "lucide-react";
+import { Plus, Edit as EditIcon, Trash2, Eye, Calendar as CalendarIcon, Download, FileImage, Play, CalendarDays } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FilterButton } from '@/components/ui/filter-button';
 import { Pagination } from "@/components/ui/pagination";
@@ -17,11 +17,9 @@ import { SearchInput } from "@/components/ui/search-input";
 import { ListGridToggle } from '@/components/ui/list-grid-toggle';
 import { PerPageSelector } from '@/components/ui/per-page-selector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import Create from './Create';
 import EditEvent from './Edit';
 import View from './View';
-import StatusUpdate from './StatusUpdate';
 import NoRecordsFound from '@/components/no-records-found';
 import { Event, EventsIndexProps, EventFilters, EventModalState } from './types';
 import { formatDate, formatTime, formatDateTime, formatCurrency, getImagePath } from '@/utils/helpers';
@@ -50,13 +48,14 @@ export default function Index() {
         data: null
     });
     const [viewingItem, setViewingItem] = useState<Event | null>(null);
-    const [statusUpdateItem, setStatusUpdateItem] = useState<Event | null>(null);
 
     const [showFilters, setShowFilters] = useState(false);
 
 
 
     useFlashMessages();
+    const googleDriveButtons = usePageButtons('googleDriveBtn', { module: 'Event', settingKey: 'GoogleDrive Event' });
+    const oneDriveButtons = usePageButtons('oneDriveBtn', { module: 'Event', settingKey: 'OneDrive Event' });
     const dropboxButtons = usePageButtons('dropboxBtn', { module: 'Event', settingKey: 'Dropbox Event' });
     const boxButtons = usePageButtons('boxBtn', { module: 'Event', settingKey: 'Box Event' });
 
@@ -170,29 +169,6 @@ export default function Index() {
                     reject: 'bg-red-100 text-red-700'
                 };
 
-                if (auth.user?.permissions?.includes('manage-event-status') && value === 'pending') {
-                    return (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className={`px-2 py-1 rounded-full text-sm font-medium h-auto hover:bg-yellow-100 hover:text-yellow-800 ${statusColors[value] || statusColors.pending}`}>
-                                    {value ? value.charAt(0).toUpperCase() + value.slice(1) : 'Pending'} <ChevronDown className="h-2 w-2 ml-1" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => updateStatus(row.id, 'pending')}>
-                                    {t('Pending')}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => updateStatus(row.id, 'approved')}>
-                                    {t('Approved')}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => updateStatus(row.id, 'reject')}>
-                                    {t('Reject')}
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    );
-                }
-
                 return (
                     <span className={`px-2 py-1 rounded-full text-sm font-medium ${statusColors[value] || 'bg-gray-100 text-gray-800'}`}>
                         {value ? value.charAt(0).toUpperCase() + value.slice(1) : '-'}
@@ -206,6 +182,34 @@ export default function Index() {
             render: (_: any, event: Event) => (
                 <div className="flex gap-1">
                     <TooltipProvider>
+                        {auth.user?.permissions?.includes('manage-event-status') && event.status === 'pending' && (
+                            <>
+                                <Tooltip delayDuration={0}>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="sm" onClick={() => updateStatus(event.id, 'approved')} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            </svg>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{t('Approve')}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                                <Tooltip delayDuration={0}>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="sm" onClick={() => updateStatus(event.id, 'reject')} className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                            </svg>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{t('Reject')}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </>
+                        )}
                         {auth.user?.permissions?.includes('view-events') && (
                             <Tooltip delayDuration={0}>
                                 <TooltipTrigger asChild>
@@ -263,6 +267,12 @@ export default function Index() {
             pageActions={
                 <TooltipProvider>
                     <div className="flex gap-2">
+                        {googleDriveButtons.map((button) => (
+                            <div key={button.id}>{button.component}</div>
+                        ))}
+                        {oneDriveButtons.map((button) => (
+                            <div key={button.id}>{button.component}</div>
+                        ))}
                         {dropboxButtons.map((button) => (
                             <div key={button.id}>{button.component}</div>
                         ))}
@@ -474,6 +484,34 @@ export default function Index() {
                                                 </span>
                                                 <div className="flex gap-1">
                                                     <TooltipProvider>
+                                                        {auth.user?.permissions?.includes('manage-event-status') && event.status === 'pending' && (
+                                                            <>
+                                                                <Tooltip delayDuration={300}>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Button variant="ghost" size="sm" onClick={() => updateStatus(event.id, 'approved')} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                            </svg>
+                                                                        </Button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>
+                                                                        <p>{t('Approve')}</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                                <Tooltip delayDuration={300}>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Button variant="ghost" size="sm" onClick={() => updateStatus(event.id, 'reject')} className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                                            </svg>
+                                                                        </Button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>
+                                                                        <p>{t('Reject')}</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </>
+                                                        )}
                                                         {auth.user?.permissions?.includes('view-events') && (
                                                             <Tooltip delayDuration={300}>
                                                                 <TooltipTrigger asChild>
@@ -561,10 +599,6 @@ export default function Index() {
 
             <Dialog open={!!viewingItem} onOpenChange={() => setViewingItem(null)}>
                 {viewingItem && <View event={viewingItem} />}
-            </Dialog>
-
-            <Dialog open={!!statusUpdateItem} onOpenChange={() => setStatusUpdateItem(null)}>
-                {statusUpdateItem && <StatusUpdate event={statusUpdateItem} onSuccess={() => setStatusUpdateItem(null)} />}
             </Dialog>
 
             <ConfirmationDialog

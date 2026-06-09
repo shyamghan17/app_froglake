@@ -20,7 +20,6 @@ export default function View({ event }: ViewProps) {
                     </div>
                     <div>
                         <DialogTitle className="text-xl font-semibold">{t('Event Details')}</DialogTitle>
-                        <p className="text-sm text-muted-foreground">{event.title}</p>
                     </div>
                 </div>
             </DialogHeader>
@@ -61,7 +60,7 @@ export default function View({ event }: ViewProps) {
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Status')}</label>
-                        <div className="bg-gray-50 p-2 rounded">
+                        <div className="p-1 rounded">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 event.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                 event.status === 'approved' ? 'bg-green-100 text-green-800' :
@@ -76,7 +75,7 @@ export default function View({ event }: ViewProps) {
 
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">{t('Departments')}</label>
-                    <div className="bg-gray-50 p-2 rounded">
+                    <div className="p-1 rounded">
                         {event.departments && event.departments.length > 0 ? (
                             <div className="flex flex-wrap gap-2">
                                 {event.departments.map((dept: any) => (

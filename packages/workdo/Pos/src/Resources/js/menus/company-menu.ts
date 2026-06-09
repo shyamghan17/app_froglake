@@ -29,9 +29,24 @@ export const posCompanyMenu = (t: (key: string) => string) => [
                 permission: 'manage-pos-orders',
             },
             {
+                title: t('POS Returns'),
+                href: route('pos.returns.index'),
+                permission: 'manage-pos-returns',
+            },
+            {
                 title: t('Print Barcode'),
                 href: route('pos.barcode'),
                 permission: 'manage-pos-barcodes',
+            },
+            {
+                title: t('Billing Counters'),
+                href: route('pos.billing-counters'),
+                permission: 'manage-pos-billing-counters',
+            },
+            {
+                title: t('Pos Discounts'),
+                href: route('pos.discounts.index'),
+                permission: 'manage-pos-discounts',
             },
             {
                 title: t('Reports'),

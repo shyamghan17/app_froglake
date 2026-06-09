@@ -18,14 +18,23 @@ class NotificationsTableSeeder extends Seeder
         Model::unguard();
 
         $notifications = [
-            'Deal Assigned','Deal Moved','New Task','Lead Assigned','Lead Moved','Lead Emails','Deal Emails'
+            'Lead Assign', 
+            'Lead Move',
+
+            'Deal Assign',
+            'Deal Move',
+            
+            'Lead Emails',
+            'Deal Emails'
         ];
+
         $permissions = [
-            'manage-deals',
-            'deal-move',
-            'create-deal-tasks',
             'manage-leads',
             'lead-move',
+
+            'manage-deals',
+            'deal-move',
+             
             'edit-leads',
             'edit-deals',
 

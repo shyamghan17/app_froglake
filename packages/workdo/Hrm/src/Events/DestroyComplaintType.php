@@ -13,7 +13,5 @@ class DestroyComplaintType
     public function __construct(
           public ComplaintType $complaintType
     )
-    {
-        //
-    }
+    {}
 }

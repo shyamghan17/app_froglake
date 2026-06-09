@@ -9,6 +9,7 @@ export interface User {
     type: string;
     is_enable_login: boolean;
     is_disable?: number;
+    is_online?: number;
     avatar?: string;
     created_at: string;
 }

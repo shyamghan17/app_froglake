@@ -1,6 +1,7 @@
 import { Head, router, usePage, Link } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +13,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ShoppingCart, Search, CreditCard, Plus, Minus, Trash2, X, Home, Printer, FileText, Image, Package, Barcode } from 'lucide-react';
 import { getImagePath, formatCurrency,formatDate } from '@/utils/helpers';
 import { useFavicon } from '@/hooks/use-favicon';
-import { useFormFields } from '@/hooks/useFormFields';
 import { BrandProvider } from '@/contexts/brand-context';
 import ReceiptModal from './ReceiptModal';
 
@@ -51,15 +51,23 @@ interface Product {
 
 interface CartItem extends Product {
     quantity: number;
+    item_discount_value?: number;
+    item_discount_amount: number;
 }
 
 interface CreateProps {
     customers: Customer[];
     warehouses: WarehouseType[];
     categories: Category[];
+    counters: Array<{
+        id: number;
+        name: string;
+        code: string;
+        bank_account_id?: number;
+    }>;
 }
 
-function CreateContent({ customers = [], warehouses = [], categories = [] }: CreateProps) {
+function CreateContent({ customers = [], warehouses = [], categories = [], counters = [] }: CreateProps) {
     const { t } = useTranslation();
     const { adminAllSetting, companyAllSetting, auth } = usePage().props as any;
     useFavicon();
@@ -67,7 +75,28 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
     const isSuperAdmin = auth?.user?.roles?.includes('superadmin');
     const globalSettings = isSuperAdmin ? adminAllSetting : companyAllSetting;
 
+    const fetchApplicableDiscount = async (productId: number, quantity: number) => {
+        try {
+            const res = await axios.post(route('pos.get-applicable-discount'), {
+                product_id: productId,
+                quantity: quantity,
+            });
+            if (res.data.discount === true) {
+                return {
+                    item_discount_value: res.data.discount_value,
+                    item_discount_amount: res.data.discount_amount,
+                };
+            }
+        } catch (e) {
+        }
+        return null;
+    };
+
     const [selectedCustomer, setSelectedCustomer] = useState('');
+    const [selectedCounter, setSelectedCounter] = useState(() => {
+        const saved = sessionStorage.getItem('pos_selected_counter');
+        return saved || '';
+    });
     const [selectedWarehouse, setSelectedWarehouse] = useState(() => {
         const saved = sessionStorage.getItem('pos_selected_warehouse');
         return saved || (warehouses.length > 0 ? warehouses[0].id.toString() : '');
@@ -78,6 +107,7 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
     const [products, setProducts] = useState<Product[]>([]);
     const [cart, setCart] = useState<CartItem[]>([]);
     const [loading, setLoading] = useState(false);
+    const [addingToCart, setAddingToCart] = useState<number | null>(null);
 
     useEffect(() => {
         if (selectedWarehouse) {
@@ -112,51 +142,88 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
         }
     };
 
-    const addToCart = (product: Product) => {
+    const addToCart = async (product: Product) => {
+        if (addingToCart === product.id) return;
+        
+        setAddingToCart(product.id);
+        
+        const existing = cart.find(item => item.id === product.id);
+        const newQty = existing ? Math.min(existing.quantity + 1, product.stock) : 1;
+        const discount = await fetchApplicableDiscount(product.id, newQty);
+        
         setCart(prev => {
-            const existing = prev.find(item => item.id === product.id);
             if (existing) {
                 return prev.map(item =>
                     item.id === product.id
-                        ? { ...item, quantity: Math.min(item.quantity + 1, product.stock) }
+                        ? {
+                            ...item,
+                            quantity: newQty,
+                            item_discount_value: discount?.item_discount_value || 0,
+                            item_discount_amount: discount?.item_discount_amount || 0,
+                        }
                         : item
                 );
             }
-            return [...prev, { ...product, quantity: 1 }];
+            return [...prev, {
+                ...product,
+                quantity: 1,
+                item_discount_value: discount?.item_discount_value || 0,
+                item_discount_amount: discount?.item_discount_amount || 0,
+            }];
         });
+        
+        setAddingToCart(null);
     };
 
-    const updateQuantity = (id: number, quantity: number) => {
+    const updateQuantity = async (id: number, quantity: number) => {
         if (quantity <= 0) {
             setCart(prev => prev.filter(item => item.id !== id));
         } else {
-            setCart(prev => prev.map(item =>
-                item.id === id ? { ...item, quantity } : item
-            ));
+            const item = cart.find(item => item.id === id);
+            if (item) {
+                const discount = await fetchApplicableDiscount(id, quantity);
+                setCart(prev => prev.map(cartItem =>
+                    cartItem.id === id
+                        ? {
+                            ...cartItem,
+                            quantity,
+                            item_discount_value: discount?.item_discount_value || 0,
+                            item_discount_amount: discount?.item_discount_amount || 0,
+                        }
+                        : cartItem
+                ));
+            }
         }
     };
 
     const getSubtotal = () => cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
     const getTaxAmount = () => {
         let totalTax = 0;
         cart.forEach(item => {
             const itemSubtotal = item.price * item.quantity;
+            const discountedSubtotal = itemSubtotal - (item.item_discount_amount || 0);
             if (item.taxes && item.taxes.length > 0) {
                 item.taxes.forEach(tax => {
-                    totalTax += (itemSubtotal * tax.rate) / 100;
+                    totalTax += (discountedSubtotal * tax.rate) / 100;
                 });
             }
         });
         return totalTax;
     };
 
+    const getTotalDiscount = () => {
+        return cart.reduce((sum, item) => sum + (item.item_discount_amount || 0), 0);
+    };
+
     const getTaxBreakdown = () => {
         const taxBreakdown: { [key: string]: { name: string; amount: number } } = {};
         cart.forEach(item => {
             const itemSubtotal = item.price * item.quantity;
+            const discountedSubtotal = itemSubtotal - (item.item_discount_amount || 0);
             if (item.taxes && item.taxes.length > 0) {
                 item.taxes.forEach(tax => {
-                    const taxAmount = (itemSubtotal * tax.rate) / 100;
+                    const taxAmount = (discountedSubtotal * tax.rate) / 100;
                     const taxKey = `${tax.name}_${tax.rate}`;
                     if (taxBreakdown[taxKey]) {
                         taxBreakdown[taxKey].amount += taxAmount;
@@ -171,9 +238,23 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
         });
         return Object.values(taxBreakdown);
     };
-    const getTotal = () => getSubtotal() + getTaxAmount() - discountAmount;
+    
+    const getTotal = () => {
+        let total = 0;
+        cart.forEach(item => {
+            const itemSubtotal = item.price * item.quantity;
+            const discountedSubtotal = itemSubtotal - (item.item_discount_amount || 0);
+            let itemTax = 0;
+            if (item.taxes && item.taxes.length > 0) {
+                item.taxes.forEach(tax => {
+                    itemTax += (discountedSubtotal * tax.rate) / 100;
+                });
+            }
+            total += discountedSubtotal + itemTax;
+        });
+        return total;
+    };
 
-    const [discountAmount, setDiscountAmount] = useState(0);
     const [processing, setProcessing] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showReceiptModal, setShowReceiptModal] = useState(false);
@@ -181,23 +262,7 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
     const [paidAmount, setPaidAmount] = useState('0');
     const [paymentMethod, setPaymentMethod] = useState('cash');
     const [nextPosNumber, setNextPosNumber] = useState('');
-    const [data, setData] = useState(() => {
-        const savedBankAccount = sessionStorage.getItem('pos_selected_bank_account');
-        return {
-            bank_account_id: savedBankAccount || ''
-        };
-    });
-    const [errors, setErrors] = useState({});
 
-    // Custom setData function to persist bank account selection
-    const handleSetData = (key: string, value: any) => {
-        if (key === 'bank_account_id') {
-            sessionStorage.setItem('pos_selected_bank_account', value);
-        }
-        setData(prev => ({ ...prev, [key]: value }));
-    };
-
-    const bankAccountField = useFormFields('bankAccountField', data, handleSetData, errors);
 
     useEffect(() => {
         // Fetch next POS number from backend
@@ -224,19 +289,20 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
                 const freshPosNumber = data.pos_number;
                 setNextPosNumber(freshPosNumber);
 
-                // Get current bank account ID from sessionStorage as backup
-                const currentBankAccountId = data.bank_account_id || sessionStorage.getItem('pos_selected_bank_account');
-
+                const selectedCounterData = counters.find(c => c.id.toString() === selectedCounter);
                 const formData = {
                     customer_id: selectedCustomer || null,
                     warehouse_id: selectedWarehouse,
-                    bank_account_id: currentBankAccountId || null,
+                    billing_counter_id: selectedCounter,
+                    bank_account_id: selectedCounterData?.bank_account_id || null,
                     items: cart.map(item => ({
                         id: item.id,
                         quantity: item.quantity,
                         price: item.price,
+                        item_discount_value: item.item_discount_value || 0,
+                        item_discount_amount: item.item_discount_amount || 0,
                     })),
-                    discount: discountAmount,
+                    discount: 0,
                     tax_amount: getTaxAmount(),
                     payment_method: paymentMethod,
                     paid_amount: parseFloat(paidAmount || '0'),
@@ -246,14 +312,14 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
                 setProcessing(true);
 
                 router.post(route('pos.store'), formData, {
-            onSuccess: (response: any) => {
+                onSuccess: (response: any) => {
                 setProcessing(false);
                 setCompletedSale({
                     pos_number: response.props?.pos_number || nextPosNumber,
                     items: cart,
                     subtotal: getSubtotal(),
                     tax: getTaxAmount(),
-                    discount: discountAmount,
+                    discount: 0,
                     total: getTotal(),
                     customer: selectedCustomer ? customers.find(c => c.id.toString() === selectedCustomer) : null,
                     warehouse: warehouses.find(w => w.id.toString() === selectedWarehouse),
@@ -284,7 +350,7 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
         setShowReceiptModal(false);
         setCart([]);
         setSelectedCustomer('');
-        setDiscountAmount(0);
+        setSelectedCounter('');
         setCompletedSale(null);
         // Refresh POS number for next transaction
         fetch(route('pos.pos-number'))
@@ -412,13 +478,22 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
                             </div>
                         ) : filteredProducts.length > 0 ? (
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
-                                {filteredProducts.map(product => (
+                                {filteredProducts.map(product => {
+                                    const isAddingToCart = addingToCart === product.id;
+                                    return (
                                     <Card
                                         key={product.id}
-                                        className="cursor-pointer hover:shadow-md"
+                                        className={`cursor-pointer hover:shadow-md transition-all ${
+                                            isAddingToCart ? 'opacity-50 pointer-events-none' : ''
+                                        }`}
                                         onClick={() => addToCart(product)}
                                     >
-                                        <CardContent className="p-4">
+                                        <CardContent className="p-4 relative">
+                                            {isAddingToCart && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg z-10">
+                                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                                                </div>
+                                            )}
                                             <div className="aspect-square bg-gray-100 rounded mb-3 flex items-center justify-center">
                                                 {product.image ? (
                                                     <img
@@ -450,7 +525,7 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
                                             </div>
                                         </CardContent>
                                     </Card>
-                                ))}
+                                )})}
                             </div>
                         ) : (
                             <div className="text-center py-12">
@@ -465,9 +540,24 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
                     {/* Cart Sidebar Card */}
                     <Card className="w-full lg:w-80 xl:w-96 flex flex-col flex-shrink-0 min-h-0 order-1 lg:order-2 max-h-[40vh] lg:max-h-none">
                         <CardContent className="p-3 sm:p-4 xl:p-6 border-b flex-shrink-0">
-                            {bankAccountField.map((field) => (
-                                <div key={field.id}>{field.component}</div>
-                            ))}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">{t('Billing Counter')} <span className="text-red-500">*</span></label>
+                                <Select value={selectedCounter} onValueChange={(value) => {
+                                    setSelectedCounter(value);
+                                    sessionStorage.setItem('pos_selected_counter', value);
+                                }} required>
+                                    <SelectTrigger className="h-10">
+                                        <SelectValue placeholder={t('Select Billing Counter')} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {counters.map(counter => (
+                                            <SelectItem key={counter.id} value={counter.id.toString()}>
+                                                {counter.name} ({counter.code})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                             <div className="flex items-center justify-between mt-4">
                                 <h3 className="text-lg font-bold text-gray-800 flex items-center">
                                     <ShoppingCart className="h-5 w-5 mr-2 text-gray-600" />
@@ -498,7 +588,12 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    {cart.map(item => (
+                                    {cart.map(item => {
+                                        const itemTotal = item.price * item.quantity;
+                                        const discountAmount = item.item_discount_amount || 0;
+                                        const finalAmount = itemTotal - discountAmount;
+                                        
+                                        return (
                                         <div key={item.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
                                             <div className="flex items-center space-x-3 mb-3">
                                                 <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
@@ -533,6 +628,21 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </div>
+                                            
+                                            {/* Price Breakdown - Always show */}
+                                            <div className="mb-3 space-y-1 text-xs bg-gray-100 p-2 rounded">
+                                                <div className="flex justify-between text-gray-600">
+                                                    <span>{t('Price')}:</span>
+                                                    <span>{formatCurrency(itemTotal)}</span>
+                                                </div>
+                                                {discountAmount > 0 && (
+                                                    <div className="flex justify-between text-green-600">
+                                                        <span>{t('Discount')}:</span>
+                                                        <span>-{formatCurrency(discountAmount)}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center space-x-3">
                                                     <Button
@@ -556,12 +666,12 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
                                                 </div>
                                                 <div className="text-right">
                                                     <div className="text-lg font-bold text-gray-900">
-                                                        {formatCurrency(item.price * item.quantity)}
+                                                        {formatCurrency(finalAmount)}
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    ))}
+                                    )})}
                                 </div>
                             )}
                         </CardContent>
@@ -575,6 +685,14 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
                                             {formatCurrency(getSubtotal())}
                                         </span>
                                     </div>
+                                    {getTotalDiscount() > 0 && (
+                                        <div className="flex justify-between items-center py-0.5">
+                                            <span className="text-xs text-green-600">{t('Total Discount')}</span>
+                                            <span className="text-xs text-green-600">
+                                                -{formatCurrency(getTotalDiscount())}
+                                            </span>
+                                        </div>
+                                    )}
                                     {getTaxBreakdown().length > 0 ? (
                                         getTaxBreakdown().map((tax, index) => (
                                             <div key={index} className="flex justify-between items-center py-0.5">
@@ -592,18 +710,6 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
                                             </span>
                                         </div>
                                     )}
-                                    <div className="flex justify-between items-center py-0.5">
-                                        <span className="text-xs text-gray-600">{t('Discount')}</span>
-                                        <Input
-                                            type="number"
-                                            value={discountAmount}
-                                            onChange={(e) => setDiscountAmount(Number(e.target.value) || 0)}
-                                            className="w-16 h-6 text-right text-xs"
-                                            min="0"
-                                            max={getSubtotal() + getTaxAmount()}
-                                        />
-                                    </div>
-
                                     <div className="flex justify-between items-center py-1 border-t border-gray-200">
                                         <span className="text-lg font-bold text-gray-900">{t('Total')}</span>
                                         <span className="text-xl font-bold text-green-600">
@@ -616,7 +722,7 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
                                             setPaidAmount(getTotal().toString());
                                             setShowPaymentModal(true);
                                         }}
-                                        disabled={cart.length === 0 || !selectedWarehouse}
+                                        disabled={cart.length === 0 || !selectedWarehouse || !selectedCounter}
                                     >
                                         <CreditCard className="h-4 w-4 mr-2" />
                                         {t('Checkout')}
@@ -684,6 +790,8 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('Product')}</th>
                                             <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">{t('Qty')}</th>
                                             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('Price')}</th>
+                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('Subtotal')}</th>
+                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('Discount')}</th>
                                             <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">{t('Taxes')}</th>
                                             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('Tax Amount')}</th>
                                             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('Total')}</th>
@@ -692,16 +800,18 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
                                     <tbody className="divide-y divide-gray-200">
                                         {cart.map((item) => {
                                             const itemSubtotal = item.price * item.quantity;
+                                            const discountAmount = item.item_discount_amount || 0;
+                                            const discountedSubtotal = itemSubtotal - discountAmount;
                                             let itemTaxAmount = 0;
                                             let taxDisplay = '';
                                             if (item.taxes && item.taxes.length > 0) {
                                                 const taxNames = item.taxes.map(tax => {
-                                                    itemTaxAmount += (itemSubtotal * tax.rate) / 100;
+                                                    itemTaxAmount += (discountedSubtotal * tax.rate) / 100;
                                                     return `${tax.name} (${tax.rate}%)`;
                                                 });
                                                 taxDisplay = taxNames.join(', ');
                                             } else {
-                                                taxDisplay = 'No Tax';
+                                                taxDisplay = '-';
                                             }
                                             return (
                                                 <tr key={item.id}>
@@ -713,11 +823,17 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
                                                     </td>
                                                     <td className="px-4 py-3 text-center text-sm">{item.quantity}</td>
                                                     <td className="px-4 py-3 text-right text-sm">{formatCurrency(item.price)}</td>
-                                                    <td className="px-4 py-3 text-center text-sm">
-                                                        <div className="text-xs">{taxDisplay}</div>
+                                                    <td className="px-4 py-3 text-right text-sm">{formatCurrency(itemSubtotal)}</td>
+                                                    <td className="px-4 py-3 text-right text-sm">
+                                                        {discountAmount > 0 ? (
+                                                            <span className="text-green-600 font-medium">-{formatCurrency(discountAmount)}</span>
+                                                        ) : (
+                                                            <span className="text-gray-400">-</span>
+                                                        )}
                                                     </td>
+                                                    <td className="px-4 py-3 text-center text-xs">{taxDisplay}</td>
                                                     <td className="px-4 py-3 text-right text-sm">{formatCurrency(itemTaxAmount)}</td>
-                                                    <td className="px-4 py-3 text-right text-sm font-medium">{formatCurrency(itemSubtotal + itemTaxAmount)}</td>
+                                                    <td className="px-4 py-3 text-right text-sm font-medium">{formatCurrency(discountedSubtotal + itemTaxAmount)}</td>
                                                 </tr>
                                             );
                                         })}
@@ -734,13 +850,15 @@ function CreateContent({ customers = [], warehouses = [], categories = [] }: Cre
                                         <span>{t('Subtotal')}:</span>
                                         <span>{formatCurrency(getSubtotal())}</span>
                                     </div>
+                                    {getTotalDiscount() > 0 && (
+                                        <div className="flex justify-between text-sm">
+                                            <span>{t('Discount')}:</span>
+                                            <span className="text-red-600">-{formatCurrency(getTotalDiscount())}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between text-sm">
                                         <span>{t('Tax')}:</span>
                                         <span>{formatCurrency(getTaxAmount())}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span>{t('Discount')}:</span>
-                                        <span>-{formatCurrency(discountAmount)}</span>
                                     </div>
                                     <Separator className="my-2" />
                                     <div className="flex justify-between font-bold text-lg">

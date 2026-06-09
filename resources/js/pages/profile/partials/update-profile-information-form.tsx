@@ -10,6 +10,7 @@ import MediaPicker from "@/components/MediaPicker";
 import { useTranslation } from "react-i18next";
 import { getImagePath } from "@/utils/helpers";
 import { PhoneInputComponent } from "@/components/ui/phone-input";
+import { Check } from "lucide-react";
 
 export default function UpdateProfileInformation({
     mustVerifyEmail,
@@ -31,6 +32,7 @@ export default function UpdateProfileInformation({
             mobile_no: (user as any).mobile_no || '',
             avatar: (user as any).avatar || '',
             slug: (user as any).slug || '',
+            layout_direction: (user as any).layout_direction || 'ltr',
         });
 
     const submit: FormEventHandler = (e) => {
@@ -115,6 +117,31 @@ export default function UpdateProfileInformation({
                         placeholder="+1234567890"
                         error={errors.mobile_no}
                     />
+                </div>
+
+                <div>
+                    <Label className="mb-2 block">{t('Layout Direction')}</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                        <Button
+                            type="button"
+                            variant={data.layout_direction === 'ltr' ? "default" : "outline"}
+                            className="h-10 justify-start"
+                            onClick={() => setData('layout_direction', 'ltr')}
+                        >
+                            {t('Left-to-Right')}
+                            {data.layout_direction === 'ltr' && <Check className="h-4 w-4 ml-2" />}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant={data.layout_direction === 'rtl' ? "default" : "outline"}
+                            className="h-10 justify-start"
+                            onClick={() => setData('layout_direction', 'rtl')}
+                        >
+                            {t('Right-to-Left')}
+                            {data.layout_direction === 'rtl' && <Check className="h-4 w-4 ml-2" />}
+                        </Button>
+                    </div>
+                    <InputError className="mt-2" message={errors.layout_direction} />
                 </div>
 
                 {user?.type === 'company' && (

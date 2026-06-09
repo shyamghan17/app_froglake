@@ -12,9 +12,6 @@ class DemoUserDealSeeder extends Seeder
 {
     public function run($userId): void
     {
-        if (UserDeal::where('user_id', $userId)->exists()) {
-            return;
-        }
         if (!empty($userId)) {
             // Only get deals that are NOT converted from leads (they already have users)
             $convertedDealIds = Lead::where('created_by', $userId)
@@ -28,7 +25,11 @@ class DemoUserDealSeeder extends Seeder
 
             $users = User::where('created_by', $userId)->where('type', '!=', 'client')->pluck('id')->toArray();
 
-            if ($deals->isEmpty() || empty($users)) {
+            if (empty($users)) {
+                $users = [$userId];
+            }
+
+            if ($deals->isEmpty()) {
                 return;
             }
 

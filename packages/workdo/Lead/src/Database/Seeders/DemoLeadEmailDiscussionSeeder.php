@@ -20,7 +20,11 @@ class DemoLeadEmailDiscussionSeeder extends Seeder
             $leads = Lead::where('created_by', $userId)->with(['pipeline', 'stage'])->get();
             $users = User::where('created_by', $userId)->where('type', '!=', 'client')->pluck('id')->toArray();
 
-            if ($leads->isEmpty() || empty($users)) {
+            if (empty($users)) {
+                $users = [$userId];
+            }
+
+            if ($leads->isEmpty()) {
                 return;
             }
 
@@ -483,49 +487,45 @@ class DemoLeadEmailDiscussionSeeder extends Seeder
                     continue;
                 }
                 $pipelineName = $lead->pipeline?->name ?? 'Sales';
-                $stageName = $lead->stage?->name ?? 'Draft';
+                $stageName    = $lead->stage?->name ?? 'Draft';
+                $leadCreatedAt = Carbon::parse($lead->created_at);
 
                 // Create 1-2 emails per lead
-                $emailCount = rand(1, 2);
+                $emailCount     = rand(1, 2);
                 $emailTemplates = $leadEmailTemplates[$pipelineName][$stageName] ?? $leadEmailTemplates['Sales']['Draft'];
+                $totalSubjects  = count($emailTemplates['subjects']);
 
                 for ($i = 0; $i < $emailCount; $i++) {
-                    $templateIndex = $i % count($emailTemplates['subjects']);
+                    if (!$lead->id || !$lead->email) continue;
 
-                    if (!$lead->id || !$lead->email) {
-                        continue;
-                    }
+                    $templateIndex = rand(0, $totalSubjects - 1);
 
                     LeadEmail::create([
-                        'lead_id' => $lead->id,
-                        'to' => $lead->email,
-                        'subject' => $emailTemplates['subjects'][$templateIndex],
+                        'lead_id'     => $lead->id,
+                        'to'          => $lead->email,
+                        'subject'     => $emailTemplates['subjects'][$templateIndex],
                         'description' => $emailTemplates['descriptions'][$templateIndex],
-                        'created_at' => $lead->created_at->addDays(rand(1, 7))->addHours(rand(1, 23)),
+                        'created_at'  => (clone $leadCreatedAt)->addDays(rand(1, 7))->addHours(rand(1, 23)),
                     ]);
                 }
 
                 // Create 1-2 discussions per lead
-                $discussionCount = rand(1, 2);
+                $discussionCount     = rand(1, 2);
                 $discussionTemplates = $leadDiscussionTemplates[$pipelineName][$stageName] ?? $leadDiscussionTemplates['Sales']['Draft'];
+                $totalDiscussions    = count($discussionTemplates);
 
                 for ($i = 0; $i < $discussionCount; $i++) {
-                    if (empty($users)) {
-                        break;
-                    }
-                    $randomUser = $users[array_rand($users)];
-                    $templateIndex = $i % count($discussionTemplates);
+                    if (empty($users) || !$lead->id) break;
 
-                    if (!$lead->id || !$randomUser) {
-                        continue;
-                    }
+                    $randomUser    = $users[array_rand($users)];
+                    $templateIndex = rand(0, $totalDiscussions - 1);
 
                     LeadDiscussion::create([
-                        'lead_id' => $lead->id,
-                        'comment' => $discussionTemplates[$templateIndex],
+                        'lead_id'    => $lead->id,
+                        'comment'    => $discussionTemplates[$templateIndex],
                         'creator_id' => $randomUser,
                         'created_by' => $userId,
-                        'created_at' => $lead->created_at->addDays(rand(2, 10))->addHours(rand(1, 23)),
+                        'created_at' => (clone $leadCreatedAt)->addDays(rand(2, 10))->addHours(rand(1, 23)),
                     ]);
                 }
             }
@@ -595,28 +595,23 @@ class DemoLeadEmailDiscussionSeeder extends Seeder
 
         // Create files for each pipeline
         $pipelineFiles = [
-            'Sales' => array_slice($leadFilesData, 0, 17),
-            'Marketing' => array_slice($leadFilesData, 17, 17),
-            'Lead Qualification' => array_slice($leadFilesData, 34, 17)
+            'Marketing'          => array_slice($leadFilesData, 0, 17),
+            'Lead Qualification' => array_slice($leadFilesData, 17, 17),
+            'Sales'              => array_slice($leadFilesData, 34, 17),
         ];
 
         foreach ($leads as $lead) {
-            if (!$lead) {
-                continue;
-            }
-            $pipelineName = $lead->pipeline?->name ?? 'Sales';
-            $files = $pipelineFiles[$pipelineName] ?? $pipelineFiles['Sales'];
+            if (!$lead) continue;
 
-            // Select random file record for this lead
-            $fileData = $files[array_rand($files)];
+            $pipelineName = $lead->pipeline?->name ?? 'Sales';
+            $files        = $pipelineFiles[$pipelineName] ?? $pipelineFiles['Sales'];
+            $fileData     = $files[array_rand($files)];
 
             foreach ($fileData['files'] as $fileName) {
-                if (!$lead->id || !$fileName) {
-                    continue;
-                }
+                if (!$lead->id || !$fileName) continue;
 
                 \Workdo\Lead\Models\LeadFile::create([
-                    'lead_id' => $lead->id,
+                    'lead_id'   => $lead->id,
                     'file_name' => $fileName,
                     'file_path' => $fileName,
                 ]);

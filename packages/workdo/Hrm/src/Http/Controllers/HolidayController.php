@@ -62,8 +62,6 @@ class HolidayController extends Controller
             $validated = $request->validated();
 
             $validated['is_paid'] = $request->boolean('is_paid', false);
-            $validated['is_sync_google_calendar'] = $request->boolean('is_sync_google_calendar', false);
-            $validated['is_sync_outlook_calendar'] = $request->boolean('is_sync_outlook_calendar', false);
 
             $holiday = new Holiday();
             $holiday->name = $validated['name'];
@@ -71,9 +69,7 @@ class HolidayController extends Controller
             $holiday->end_date = $validated['end_date'];
             $holiday->holiday_type_id = $validated['holiday_type_id'];
             $holiday->description = $validated['description'];
-            $holiday->is_paid = $validated['is_paid'];
-            $holiday->is_sync_google_calendar = $validated['is_sync_google_calendar'];
-            $holiday->is_sync_outlook_calendar = $validated['is_sync_outlook_calendar'];
+            $holiday->is_paid = $validated['is_paid']; 
 
             $holiday->creator_id = Auth::id();
             $holiday->created_by = creatorId();
@@ -93,18 +89,14 @@ class HolidayController extends Controller
         if(Auth::user()->can('edit-holidays')){
             $validated = $request->validated();
 
-            $validated['is_paid'] = $request->boolean('is_paid', false);
-            $validated['is_sync_google_calendar'] = $request->boolean('is_sync_google_calendar', false);
-            $validated['is_sync_outlook_calendar'] = $request->boolean('is_sync_outlook_calendar', false);
+            $validated['is_paid'] = $request->boolean('is_paid', false); 
 
             $holiday->name = $validated['name'];
             $holiday->start_date = $validated['start_date'];
             $holiday->end_date = $validated['end_date'];
             $holiday->holiday_type_id = $validated['holiday_type_id'];
             $holiday->description = $validated['description'];
-            $holiday->is_paid = $validated['is_paid'];
-            $holiday->is_sync_google_calendar = $validated['is_sync_google_calendar'];
-            $holiday->is_sync_outlook_calendar = $validated['is_sync_outlook_calendar'];
+            $holiday->is_paid = $validated['is_paid']; 
 
             $holiday->save();
 

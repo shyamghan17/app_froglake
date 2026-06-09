@@ -13,7 +13,5 @@ class DestroyDesignation
     public function __construct(
           public Designation $designation
     )
-    {
-        //
-    }
+    {}
 }

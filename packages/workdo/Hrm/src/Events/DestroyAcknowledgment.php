@@ -13,7 +13,5 @@ class DestroyAcknowledgment
     public function __construct(
           public Acknowledgment $acknowledgment
     )
-    {
-        //
-    }
+    {}
 }

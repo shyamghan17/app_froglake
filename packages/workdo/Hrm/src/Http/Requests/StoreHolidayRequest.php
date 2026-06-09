@@ -19,9 +19,7 @@ class StoreHolidayRequest extends FormRequest
             'end_date' => 'required|date|after_or_equal:start_date',
             'holiday_type_id' => 'required|integer|exists:holiday_types,id',
             'description' => 'required|string',
-            'is_paid' => 'boolean',
-            'is_sync_google_calendar' => 'boolean',
-            'is_sync_outlook_calendar' => 'boolean'
+            'is_paid' => 'boolean', 
         ];
     }
 }

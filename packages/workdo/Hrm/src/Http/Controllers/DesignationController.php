@@ -81,9 +81,9 @@ class DesignationController extends Controller
 
             UpdateDesignation::dispatch($request, $designation);
 
-            return redirect()->route('hrm.designations.index')->with('success', __('The designation details are updated successfully.'));
+            return back()->with('success', __('The designation details are updated successfully.'));
         } else {
-            return redirect()->route('hrm.designations.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 
@@ -93,9 +93,9 @@ class DesignationController extends Controller
             DestroyDesignation::dispatch($designation);
             $designation->delete();
 
-            return redirect()->route('hrm.designations.index')->with('success', __('The designation has been deleted.'));
+            return back()->with('success', __('The designation has been deleted.'));
         } else {
-            return redirect()->route('hrm.designations.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 

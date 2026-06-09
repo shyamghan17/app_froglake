@@ -11,8 +11,9 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use App\Events\CreateUser;
 use App\Models\EmailTemplate;
-use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 
 class UserController extends Controller
@@ -40,6 +41,11 @@ class UserController extends Controller
                 ->select('users.*')
                 ->paginate(request('per_page', 10))
                 ->withQueryString();
+
+            $users->getCollection()->transform(function ($user) {
+                $user->is_online = Cache::has("user_online_{$user->id}");
+                return $user;
+            });
 
             $roles = Role::where('created_by', creatorId())->pluck('label', 'id');
 
@@ -100,7 +106,12 @@ class UserController extends Controller
                     'password' => $validated['password'],
                 ];
 
-                EmailTemplate::sendEmailTemplate('New User', [$user->email], $emailData);
+                $message = EmailTemplate::sendEmailTemplate('New User', [$user->email], $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('The user has been created successfully.'))
+                        ->with('error', $message['error']);
+                }
             }
 
             if ($enableEmailVerification === 'on') {

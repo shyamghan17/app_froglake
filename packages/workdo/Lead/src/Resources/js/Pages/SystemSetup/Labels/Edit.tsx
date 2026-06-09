@@ -46,18 +46,6 @@ export default function Edit({ label, onSuccess, pipelines }: EditLabelProps) {
                 </div>
                 
                 <div>
-                    <Label htmlFor="color">{t('Color')}</Label>
-                    <Input
-                        id="color"
-                        type="color"
-                        value={data.color}
-                        onChange={(e) => setData('color', e.target.value)}
-                        className="mt-2 h-10 w-20"
-                    />
-                    <InputError message={errors.color} />
-                </div>
-                
-                <div>
                     <Label htmlFor="pipeline_id">{t('Pipeline')}</Label>
                     <Select value={data.pipeline_id?.toString() || ''} onValueChange={(value) => setData('pipeline_id', value)}>
                         <SelectTrigger>
@@ -74,6 +62,28 @@ export default function Edit({ label, onSuccess, pipelines }: EditLabelProps) {
                     <InputError message={errors.pipeline_id} />
                 </div>
 
+                <div>
+                    <Label htmlFor="color">{t('Color')}</Label>
+                    <div className="flex items-center gap-3 mt-1">
+                        <input
+                            id="color"
+                            type="color"
+                            value={data.color}
+                            onInput={(e) => setData('color', (e.target as HTMLInputElement).value)}
+                            onChange={(e) => setData('color', e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-10 w-14 p-1 cursor-pointer rounded border border-input"
+                        />
+                        <div
+                            className="px-3 py-1 rounded text-white text-sm font-medium"
+                            style={{ backgroundColor: data.color }}
+                        >
+                            {data.name || t('Preview')}
+                        </div>
+                    </div>
+                    <InputError message={errors.color} />
+                </div>
+                
                 <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => onSuccess()}>
                         {t('Cancel')}

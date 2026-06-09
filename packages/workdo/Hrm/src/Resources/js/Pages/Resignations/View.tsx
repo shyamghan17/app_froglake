@@ -20,7 +20,6 @@ export default function View({ resignation }: ViewProps) {
                     </div>
                     <div>
                         <DialogTitle className="text-xl font-semibold">{t('Resignation Details')}</DialogTitle>
-                        <p className="text-sm text-muted-foreground">{resignation.employee?.name}</p>
                     </div>
                 </div>
             </DialogHeader>
@@ -41,7 +40,7 @@ export default function View({ resignation }: ViewProps) {
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Status')}</label>
-                        <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                        <p className="p-1 rounded">
                             <span className={`inline-block px-2 py-1 rounded-full font-medium text-xs ${
                                 resignation.status === 'accepted' ? 'bg-green-100 text-green-800' :
                                 resignation.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :

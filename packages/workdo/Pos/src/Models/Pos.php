@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\User;
 use App\Models\Warehouse;
+use Workdo\Pos\Models\PosBillingCounter;
 
 class Pos extends Model
 {
@@ -14,6 +15,7 @@ class Pos extends Model
         'sale_number',
         'customer_id',
         'warehouse_id',
+        'billing_counter_id',
         'pos_date',
         'status',
         'creator_id',
@@ -23,7 +25,6 @@ class Pos extends Model
     protected function casts(): array
     {
         return [
-            'tax_amount' => 'decimal:2',
             'pos_date' => 'date'
         ];
     }
@@ -38,6 +39,11 @@ class Pos extends Model
         return $this->belongsTo(Warehouse::class);
     }
 
+    public function billingCounter(): BelongsTo
+    {
+        return $this->belongsTo(PosBillingCounter::class, 'billing_counter_id');
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(PosItem::class, 'pos_id');
@@ -46,6 +52,11 @@ class Pos extends Model
     public function payment()
     {
         return $this->hasOne(PosPayment::class, 'pos_id');
+    }
+
+    public function posReturns(): HasMany
+    {
+        return $this->hasMany(PosReturn::class, 'original_pos_id');
     }
 
     public static function generateSaleNumber()

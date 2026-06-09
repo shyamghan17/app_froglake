@@ -13,60 +13,29 @@ interface ViewProps {
 export default function View({ employeetransfer }: ViewProps) {
     const { t } = useTranslation();
 
-    const getStatusColor = (status: string) => {
-        const statusMap: any = {
-            'pending': 'bg-yellow-100 text-yellow-800',
-            'approved': 'bg-green-100 text-green-800', 
-            'in progress': 'bg-blue-100 text-blue-800',
-            'completed': 'bg-green-100 text-green-800',
-            'rejected': 'bg-red-100 text-red-800',
-            'cancelled': 'bg-gray-100 text-gray-800'
-        };
-        return statusMap[status] || 'bg-gray-100 text-gray-800';
-    };
-
-    const getStatusText = (status: string) => {
-        const statusMap: any = {
-            'pending': 'Pending',
-            'approved': 'Approved',
-            'in progress': 'In Progress', 
-            'completed': 'Completed',
-            'rejected': 'Rejected',
-            'cancelled': 'Cancelled'
-        };
-        return statusMap[status] || status;
-    };
-
     return (
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader className="pb-4 border-b">
-                <DialogTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    {t('Employee Transfer Details')}
-                </DialogTitle>
-            </DialogHeader>
-            
-            <div className="overflow-y-auto flex-1 p-6 space-y-6">
-                {/* Employee Info */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h3 className="font-semibold text-lg">{employeetransfer.employee?.name || '-'}</h3>
-                            <p className="text-sm text-gray-600">{t('Employee')}</p>
-                        </div>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(employeetransfer.status)}`}>
-                            {t(getStatusText(employeetransfer.status))}
-                        </span>
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                        <User className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                        <DialogTitle className="text-xl font-semibold">{t('Employee Transfer Details')}</DialogTitle>
+                        <p className="text-sm text-muted-foreground">{employeetransfer.employee?.name}</p>
                     </div>
                 </div>
-
+            </DialogHeader>
+            <div className="overflow-y-auto flex-1 p-6 space-y-6">
                 {/* Transfer Path Visualization */}
-                <div className="bg-blue-50 p-6 rounded-lg">
-                    <h4 className="font-semibold mb-4 flex items-center gap-2">
-                        <ArrowRight className="h-4 w-4" />
-                        {t('Transfer Path')}
-                    </h4>
-                    
+                <div className="bg-blue-50 p-4 rounded-lg">
+                    {/* Transfer Summary */}
+                    <div className="text-center mb-2">
+                        <p className="text-lg font-semibold text-blue-800">
+                            {employeetransfer.from_branch?.branch_name || '-'} → {employeetransfer.to_branch?.branch_name || '-'}
+                        </p>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                         {/* From */}
                         <div className="text-center">
@@ -99,13 +68,6 @@ export default function View({ employeetransfer }: ViewProps) {
                             </div>
                         </div>
                     </div>
-
-                    {/* Transfer Summary */}
-                    <div className="mt-4 text-center">
-                        <p className="text-lg font-semibold text-blue-800">
-                            {employeetransfer.from_branch?.branch_name || '-'} → {employeetransfer.to_branch?.branch_name || '-'}
-                        </p>
-                    </div>
                 </div>
 
                 {/* Transfer Details */}
@@ -123,6 +85,23 @@ export default function View({ employeetransfer }: ViewProps) {
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Approved By')}</label>
                         <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">{employeetransfer.approved_by?.name || '-'}</p>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">{t('Status')}</label>
+                        <div className="p-1 rounded">
+                            <span className={`px-2 py-1 rounded-full text-sm font-medium ${
+                                employeetransfer.status?.toLowerCase() === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                employeetransfer.status?.toLowerCase() === 'approved' ? 'bg-green-100 text-green-800' :
+                                employeetransfer.status?.toLowerCase() === 'in progress' ? 'bg-blue-100 text-blue-800' :
+                                employeetransfer.status?.toLowerCase() === 'completed' ? 'bg-green-100 text-green-800' :
+                                employeetransfer.status?.toLowerCase() === 'rejected' ? 'bg-red-100 text-red-800' :
+                                employeetransfer.status?.toLowerCase() === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+                                'bg-gray-100 text-gray-800'
+                            }`}>
+                                {t(employeetransfer.status?.toLowerCase() === 'in progress' ? 'In Progress' : (employeetransfer.status?.charAt(0).toUpperCase() + employeetransfer.status?.slice(1) || '-'))}
+                            </span>
+                        </div>
                     </div>
                 </div>
 

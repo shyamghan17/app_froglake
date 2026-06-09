@@ -12,6 +12,8 @@ use Workdo\ProductService\Models\ProductServiceItem;
 use App\Models\Warehouse;
 use Carbon\Carbon;
 use Workdo\Pos\Models\Pos;
+use Workdo\Pos\Models\PosReturn;
+use Workdo\Pos\Models\PosReturnItem;
 
 class PosReportController extends Controller
 {
@@ -84,11 +86,100 @@ class PosReportController extends Controller
                 })
                 ->values();
 
+            // Discount data - Top 10 products with discounts
+            $discountData = PosItem::where('created_by', $creatorId)
+                ->where('item_discount_amount', '>', 0)
+                ->with('product')
+                ->get()
+                ->groupBy('product_id')
+                ->map(function($items, $productId) {
+                    $product = $items->first()->product;
+                    return [
+                        'product_name' => $product->name ?? 'Unknown',
+                        'sku' => $product->sku ?? 'N/A',
+                        'total_discount_given' => $items->sum('item_discount_amount'),
+                        'total_revenue' => $items->sum('total_amount'),
+                    ];
+                })
+                ->sortByDesc('total_discount_given')
+                ->take(10)
+                ->values();
+
+            // Monthly discount trends
+            $monthlyDiscounts = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $date = Carbon::now()->subMonths($i);
+                $discountAmount = PosItem::where('created_by', $creatorId)
+                    ->whereYear('created_at', $date->year)
+                    ->whereMonth('created_at', $date->month)
+                    ->sum('item_discount_amount');
+                $monthlyDiscounts[] = [
+                    'month' => $date->format('M Y'),
+                    'discount_amount' => $discountAmount,
+                ];
+            }
+
+            // Return data - Top 10 products with returns
+            $returnData = PosReturnItem::whereHas('posReturn', function($query) use ($creatorId) {
+                    $query->where('created_by', $creatorId);
+                })
+                ->with('product')
+                ->get()
+                ->groupBy('product_id')
+                ->map(function($items, $productId) {
+                    $product = $items->first()->product;
+                    $totalReturns = $items->sum('return_quantity');
+                    $totalReturnAmount = $items->sum('total_amount');
+                    
+                    return [
+                        'product_name' => $product->name ?? 'Unknown',
+                        'sku' => $product->sku ?? 'N/A',
+                        'total_returns' => $totalReturns,
+                        'total_return_amount' => $totalReturnAmount,
+                    ];
+                })
+                ->sortByDesc('total_return_amount')
+                ->take(10)
+                ->values();
+
+            // Monthly return trends
+            $monthlyReturns = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $date = Carbon::now()->subMonths($i);
+                $returnAmount = PosReturn::where('created_by', $creatorId)
+                    ->whereYear('created_at', $date->year)
+                    ->whereMonth('created_at', $date->month)
+                    ->sum('total_amount');
+                $returnCount = PosReturn::where('created_by', $creatorId)
+                    ->whereYear('created_at', $date->year)
+                    ->whereMonth('created_at', $date->month)
+                    ->count();
+                $monthlyReturns[] = [
+                    'month' => $date->format('M Y'),
+                    'return_amount' => $returnAmount,
+                    'return_count' => $returnCount,
+                ];
+            }
+
+            // Return statistics
+            $totalReturns = PosReturn::where('created_by', $creatorId)->count();
+            $totalReturnAmount = PosReturn::where('created_by', $creatorId)->sum('total_amount');
+
+            $returnStats = [
+                'total_returns' => $totalReturns,
+                'total_return_amount' => $totalReturnAmount,
+            ];
+
             return Inertia::render('Pos/Reports/Sales', [
                 'salesData' => $salesData,
                 'dailySales' => $dailySales,
                 'monthlySales' => $monthlySales,
                 'warehouseSales' => $warehouseSales,
+                'discountData' => $discountData,
+                'monthlyDiscounts' => $monthlyDiscounts,
+                'returnData' => $returnData,
+                'monthlyReturns' => $monthlyReturns,
+                'returnStats' => $returnStats,
             ]);
         }else{
             return redirect()->route('pos.index')->with('error', __('Permission denied'));
@@ -99,19 +190,33 @@ class PosReportController extends Controller
     {
         if(Auth::user()->can('manage-pos-reports')){
             $creatorId = creatorId();
-            
+
+            // Get approved/completed returns grouped by product
+            $returnData = PosReturnItem::whereHas('posReturn', function($query) use ($creatorId) {
+                    $query->where('created_by', $creatorId)
+                          ->whereIn('status', ['approved', 'completed']);
+                })
+                ->selectRaw('product_id, SUM(return_quantity) as total_return_quantity, SUM(total_amount) as total_return_amount')
+                ->groupBy('product_id')
+                ->get()
+                ->keyBy('product_id');
+
             // Product performance data
             $productData = PosItem::where('created_by', $creatorId)
                 ->with('product')
                 ->get()
                 ->groupBy('product_id')
-                ->map(function($items, $productId) {
+                ->map(function($items, $productId) use ($returnData) {
                     $product = $items->first()->product;
+                    $returns = $returnData->get($productId);
+                    $returnQuantity = $returns ? (float) $returns->total_return_quantity : 0;
+                    $returnAmount = $returns ? (float) $returns->total_return_amount : 0;
+
                     return [
                         'name' => $product->name,
                         'sku' => $product->sku,
-                        'total_quantity' => $items->sum('quantity'),
-                        'total_revenue' => $items->sum('total_amount'),
+                        'total_quantity' => max(0, $items->sum('quantity') - $returnQuantity),
+                        'total_revenue' => max(0, $items->sum('total_amount') - $returnAmount),
                         'total_orders' => $items->pluck('pos_id')->unique()->count()
                     ];
                 })

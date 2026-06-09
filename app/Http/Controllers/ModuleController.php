@@ -64,35 +64,39 @@ class ModuleController extends Controller
                     return redirect()->back()->with('error', __($check_child_module['msg']));
                 }
             } else {
-                $addon = AddOn::where('module', $request->name)->first();
-                if (empty($addon)) {
-                    Artisan::call('migrate --path=/packages/workdo/' . $request->name . '/src/Database/Migrations --force');
-                    Artisan::call('package:seed ' . $request->name);
-
-                    $filePath = base_path('packages/workdo/' . $request->name . '/module.json');
-                    $jsonContent = file_get_contents($filePath);
-                    $data = json_decode($jsonContent, true);
-
-
-                    $addon = new AddOn;
-                    $addon->module = $data['name'];
-                    $addon->name = $data['alias'];
-                    $addon->monthly_price = $data['monthly_price'] ?? 0;
-                    $addon->yearly_price = $data['yearly_price'] ?? 0;
-                    $addon->package_name = $data['package_name'];
-                    $addon->for_admin = $data['for_admin'] ?? false;
-                    $addon->priority = $data['priority'] ?? 0;
-                    $addon->save();
-                }
-                (new Module())->moduleCacheForget($request->name);
-                $module = (new Module())->find($request->name);
                 $check_parent_module = $this->Check_Parent_Module($module);
-                if ($check_parent_module['status'] == true) {
+                if ($check_parent_module['status'] == true) 
+                {
+                    $addon = AddOn::where('module', $request->name)->first();
+                    if (empty($addon)) {
+                        Artisan::call('migrate --path=/packages/workdo/' . $request->name . '/src/Database/Migrations --force');
+                        Artisan::call('package:seed ' . $request->name);
+
+                        $filePath = base_path('packages/workdo/' . $request->name . '/module.json');
+                        $jsonContent = file_get_contents($filePath);
+                        $data = json_decode($jsonContent, true);
+
+
+                        $addon = new AddOn;
+                        $addon->module = $data['name'];
+                        $addon->name = $data['alias'];
+                        $addon->monthly_price = $data['monthly_price'] ?? 0;
+                        $addon->yearly_price = $data['yearly_price'] ?? 0;
+                        $addon->package_name = $data['package_name'];
+                        $addon->for_admin = $data['for_admin'] ?? false;
+                        $addon->priority = $data['priority'] ?? 0;
+                        $addon->save();
+                    }
+
+                    (new Module())->moduleCacheForget($request->name);
+                    $module = (new Module())->find($request->name);
+                
                     Artisan::call('migrate --path=/packages/workdo/' . $request->name . '/src/Database/Migrations --force');
                     Artisan::call('package:seed ' . $request->name);
                     $module = (new Module())->find($request->name);
                     $module->enable();
                     return redirect()->back()->with('success', __('Module Enable Successfully!'));
+                    
                 } else {
                     return redirect()->back()->with('error', __($check_parent_module['msg']));
                 }
@@ -104,7 +108,7 @@ class ModuleController extends Controller
 
     public function Check_Parent_Module($module)
     {
-        $path = $module->getPath() . '/module.json';
+        $path = base_path('packages/workdo/' . $module->name) . '/module.json';        
         $json = json_decode(file_get_contents($path), true);
         $data['status'] = true;
         $data['msg'] = '';
@@ -131,7 +135,7 @@ class ModuleController extends Controller
     }
     public function Check_Child_Module($module)
     {
-        $path = $module->getPath() . '/module.json';
+        $path = base_path('packages/workdo/' . $module->name) . '/module.json';
         $json = json_decode(file_get_contents($path), true);
         if (isset($json['child_module']) && !empty($json['child_module'])) {
             foreach ($json['child_module'] as $key => $value) {

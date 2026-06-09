@@ -11,16 +11,16 @@ import { Plus } from 'lucide-react';
 import AuthenticatedLayout from '@/layouts/authenticated-layout';
 import DealShowSidebar from "./Show/DealShowSidebar";
 import General from "./Show/General";
-import Tasks from "./Show/Tasks";
-import Users from "./Show/Users";
-import Products from "./Show/Products";
-import Sources from "./Show/Sources";
+import Tasks from "./Show/Tasks/Index";
+import Users from "./Show/Users/Index";
+import Products from "./Show/Products/Index";
+import Sources from "./Show/Sources/Index";
 
 
 import Files from "./Show/Files";
-import Calls from "./Show/Calls";
+import Calls from "./Show/Calls/Index";
 import Activity from "./Show/Activity";
-import Clients from "./Show/Clients";
+import Clients from "./Show/Clients/Index";
 import { Deal } from './types';
 
 interface DealShowProps {
@@ -36,7 +36,7 @@ export default function Show() {
     const { t } = useTranslation();
     const [activeSection, setActiveSection] = useState('general');
     const [currentDeal, setCurrentDeal] = useState(deal);
-    const videoHubButtons = usePageButtons('dealShowButtons', { deal });
+    const videoHubButtons = usePageButtons('videoHubBtn', { addonModule: 'Lead', fallbackName: 'Lead', itemId: deal?.id, subModuleKeyword: 'deal' });
     const spreadsheetButtons = usePageButtons('spreadsheetBtn', { module: 'Deal', id: deal.id });
     const businessProcessMappingButtons = usePageButtons('businessProcessMappingBtn', { module: 'Lead', submodule: 'Deal', id: deal.id });
     // Update currentDeal when deal prop changes
@@ -59,7 +59,7 @@ export default function Show() {
             activity: t('Activity')
         };
 
-        const showAddButton = ['tasks', 'users', 'products', 'sources', 'calls', 'clients'].includes(activeSection);
+        const showAddButton = ['users', 'products', 'sources', 'calls', 'clients'].includes(activeSection);
 
         return (
             <div className="flex justify-between items-center mb-6">
@@ -177,7 +177,7 @@ export default function Show() {
                 <div className="flex-1">
                     <Card className="shadow-sm">
                         <CardContent className="p-6">
-                            {activeSection !== 'general' && renderSectionHeader()}
+                            {activeSection !== 'general' && activeSection !== 'tasks' && activeSection !== 'users' && activeSection !== 'products' && activeSection !== 'sources' && activeSection !== 'calls' && activeSection !== 'clients' && renderSectionHeader()}
                             {renderSectionContent()}
                         </CardContent>
                     </Card>

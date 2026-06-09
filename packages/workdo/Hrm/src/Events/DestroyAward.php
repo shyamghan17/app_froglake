@@ -13,7 +13,5 @@ class DestroyAward
     public function __construct(
           public Award $award
     )
-    {
-        //
-    }
+    {}
 }

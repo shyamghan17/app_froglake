@@ -88,7 +88,10 @@ class Project extends Model
             'manage-project-task',
             'manage-own-project-task',
             'manage-project-bug',
-            'manage-own-project-bug'
+            'manage-own-project-bug',
+            'manage-project-payments',
+            'manage-own-project-payments',
+            'view-project-payments',
         ];
         if ($rolename == 'staff') {
             $roles_v = Role::where('name', 'staff')->where('id', $role_id)->first();

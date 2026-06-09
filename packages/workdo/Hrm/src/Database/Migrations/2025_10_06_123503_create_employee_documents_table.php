@@ -14,8 +14,8 @@ return new class extends Migration
                 $table->unsignedBigInteger('user_id');
                 $table->unsignedBigInteger('document_type_id');
                 $table->string('file_path');
-                $table->unsignedBigInteger('creator_id')->nullable();
-                $table->unsignedBigInteger('created_by');
+                $table->foreignId('creator_id')->nullable()->index();
+                $table->foreignId('created_by')->nullable()->index();
                 $table->timestamps();
 
                 $table->foreign('user_id')->references('id')->on('employees')->onDelete('cascade');

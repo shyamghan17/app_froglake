@@ -19,11 +19,7 @@ return new class extends Migration
                 $table->date('warning_date')->nullable();
                 $table->longText('description')->nullable();
                 $table->string('document')->nullable();
-                $table->enum('status', [
-                    'pending',
-                    'approved',
-                    'rejected',
-                ])->default('pending');
+                $table->enum('status', ['pending','approved','rejected'])->default('pending');
                 $table->string('employee_response')->nullable();
 
                 $table->foreignId('creator_id')->nullable()->index();

@@ -41,6 +41,8 @@ class DatabaseSeeder extends Seeder
             (new DemoCouponDetailsSeeder())->run();
             (new DemoBankTransferSeeder())->run($userId);
             (new MessengerSeeder())->run();
+            (new AIAgentChatSessionSeeder())->run($userId);
+            (new AIAgentChatMessageSeeder())->run($userId);
 
              // temporary
             // (new PackageSeeder())->run($userId);

@@ -86,22 +86,8 @@ class DealTaskController extends Controller
                     'log_type' => 'Create Task',
                     'remark' => json_encode(['title' => $dealTask->name]),
                 ]);
-                if (!empty(company_setting('New Task')) && company_setting('New Task')  == 'on') {
-                    $tArr = [
-                        'deal_name' => $deal->name,
-                        'deal_pipeline' => $deal->pipeline->name,
-                        'deal_stage' => $deal->stage->name,
-                        'deal_status' => $deal->status,
-                        'deal_price' => $deal->price,
-                        'task_name' => $dealTask->name,
-                        'task_priority' => is_numeric($dealTask->priority) ? (DealTask::$priorities[$dealTask->priority] ?? $dealTask->priority) : $dealTask->priority,
-                        'task_status' => is_numeric($dealTask->status) ? (DealTask::$status[$dealTask->status] ?? $dealTask->status) : $dealTask->status,
-                    ];
-
-                    // Send Email
-                    $resp = EmailTemplate::sendEmailTemplate('New Task', $usrs, $tArr);
-                }
-                return back()->with('success', __('The task has been created successfully.') . ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));                
+                 
+                return back()->with('success', __('The task has been created successfully.'));                
             }
         }
         else{

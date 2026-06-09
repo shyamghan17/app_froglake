@@ -8,6 +8,8 @@ export interface User {
 export interface LeaveType {
     id: number;
     name: string;
+    color?: string;
+    is_paid?: boolean;
 }
 
 export interface Employee {
@@ -58,8 +60,11 @@ export interface LeaveApplicationFilters {
     reason: string;
     status: string;
     employee_id: string;
+    leave_type_id: string;
     start_date: string;
     end_date: string;
+    month: string;
+    year: string;
 }
 
 export type PaginatedLeaveApplications = PaginatedData<LeaveApplication>;

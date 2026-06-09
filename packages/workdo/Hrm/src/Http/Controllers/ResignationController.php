@@ -10,11 +10,12 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Workdo\Hrm\Events\UpdateResignaionStatus;
+use Workdo\Hrm\Events\UpdateResignationStatus;
 use Workdo\Hrm\Events\CreateResignation;
 use Workdo\Hrm\Events\UpdateResignation;
 use Workdo\Hrm\Events\DestroyResignation;
 use Workdo\Hrm\Models\Employee;
+use App\Models\EmailTemplate;
 
 class ResignationController extends Controller
 {
@@ -146,7 +147,21 @@ class ResignationController extends Controller
             $resignation->status = $status;
             $resignation->approved_by = Auth::id();
             $resignation->save();
-            UpdateResignaionStatus::dispatch($request, $resignation);
+            UpdateResignationStatus::dispatch($request, $resignation);
+            if(company_setting('Resignations Status') == 'on') {
+                $emailData = [
+                    'employee_name'      => $resignation->employee->name ?? null,
+                    'last_working_date'  => $resignation->last_working_date ? \Carbon\Carbon::parse($resignation->last_working_date)->format('Y-m-d') : null,
+                    'reason'             => $resignation->reason ?? null,
+                    'status'             => $resignation->status ?? null,
+                ]; 
+                $message = EmailTemplate::sendEmailTemplate('Resignations Status', [$resignation->employee->email ?? null], $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('The resignation status has been updated successfully.'))
+                        ->with('error', $message['error']);
+                }
+            }
 
             return redirect()->back()->with('success', __('The resignation status has been updated successfully.'));
         } else {

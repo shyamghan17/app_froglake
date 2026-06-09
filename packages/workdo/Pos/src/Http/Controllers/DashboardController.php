@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Workdo\Pos\Models\Pos;
+use Workdo\Pos\Models\PosReturn;
+use Workdo\Pos\Models\PosBillingCounter;
 use Workdo\ProductService\Models\ProductServiceItem;
 use App\Models\User;
 use Carbon\Carbon;
@@ -40,20 +42,7 @@ class DashboardController extends Controller
         $thisWeek = Carbon::now()->startOfWeek();
         $thisMonth = Carbon::now()->startOfMonth();
 
-        // Sales Analytics
-        $todaySales = PosPayment::where('created_by', $creatorId)
-            ->whereDate('created_at', $today)
-            ->sum('discount_amount');
-
-        $weekSales = PosPayment::where('created_by', $creatorId)
-            ->where('created_at', '>=', $thisWeek)
-            ->sum('discount_amount');
-
-        $monthSales = PosPayment::where('created_by', $creatorId)
-            ->where('created_at', '>=', $thisMonth)
-            ->sum('discount_amount');
-
-        $totalSales = PosPayment::where('created_by', $creatorId)->count();
+        $totalSales = Pos::where('created_by', $creatorId)->count();
         $totalRevenue = PosPayment::where('created_by', $creatorId)->sum('discount_amount');
         $avgTransaction = $totalSales > 0 ? $totalRevenue / $totalSales : 0;
 
@@ -62,40 +51,44 @@ class DashboardController extends Controller
             ->where('type', '!=', 'service')
             ->count();
 
+        $returnSubquery = DB::table('pos_return_items')
+            ->join('pos_returns', 'pos_return_items.return_id', '=', 'pos_returns.id')
+            ->where('pos_returns.created_by', $creatorId)
+            ->whereIn('pos_returns.status', ['approved', 'completed'])
+            ->select('pos_return_items.product_id')
+            ->selectRaw('SUM(pos_return_items.return_quantity) as total_return_quantity')
+            ->selectRaw('SUM(pos_return_items.total_amount) as total_return_amount')
+            ->groupBy('pos_return_items.product_id');
+
         // Top Products
         $topProducts = DB::table('pos_items')
             ->join('pos', 'pos_items.pos_id', '=', 'pos.id')
             ->join('product_service_items', 'pos_items.product_id', '=', 'product_service_items.id')
+            ->leftJoinSub($returnSubquery, 'returns', function ($join) {
+                $join->on('pos_items.product_id', '=', 'returns.product_id');
+            })
             ->where('pos.created_by', $creatorId)
             ->select(
                 'product_service_items.name',
-                DB::raw('SUM(pos_items.quantity) as total_quantity'),
-                DB::raw('SUM(pos_items.total_amount) as total_revenue')
+                DB::raw('GREATEST(SUM(pos_items.quantity) - IFNULL(returns.total_return_quantity, 0), 0) as total_quantity'),
+                DB::raw('GREATEST(SUM(pos_items.total_amount) - IFNULL(returns.total_return_amount, 0), 0) as total_revenue')
             )
-            ->groupBy('pos_items.product_id', 'product_service_items.name')
+            ->groupBy('pos_items.product_id', 'product_service_items.name', 'returns.total_return_quantity', 'returns.total_return_amount')
             ->orderBy('total_quantity', 'desc')
             ->limit(5)
             ->get();
 
         // Recent Sales
-        $recentSales = Pos::with(['customer:id,name', 'warehouse:id,name', 'payment:pos_id,discount_amount'])
+        $recentSales = Pos::with(['customer:id,name', 'warehouse:id,name'])
             ->where('created_by', $creatorId)
             ->latest()
             ->limit(5)
             ->get()
             ->map(function ($sale) {
-                $sale->total = PosPayment::where('pos_id', $sale->id)->sum('discount_amount');
+                $payment = PosPayment::where('pos_id', $sale->id)->first();
+                $sale->total = $payment ? $payment->discount_amount : 0;
                 return $sale;
             });
-
-        // Sales by Status
-        $salesByStatus = Pos::where('created_by', $creatorId)
-            ->select('status', DB::raw('count(*) as count'))
-            ->groupBy('status')
-            ->pluck('count', 'status')
-            ->toArray();
-
-
 
         // Customer Stats
         $totalCustomers = User::whereHas('roles', function ($query) {
@@ -105,6 +98,19 @@ class DashboardController extends Controller
         $walkInSales = Pos::where('created_by', $creatorId)
             ->whereNull('customer_id')
             ->count();
+
+        // Returns Stats
+        $totalReturns = PosReturn::where('created_by', $creatorId)->count();
+        $returnsAmount = PosReturn::where('created_by', $creatorId)
+            ->whereIn('status', ['approved', 'completed'])
+            ->sum('total_amount');
+
+        // Recent Returns
+        $recentReturns = PosReturn::with(['customer:id,name'])
+            ->where('created_by', $creatorId)
+            ->latest()
+            ->limit(5)
+            ->get();
 
         // Last 10 days sales report
         $last10DaysSales = [];
@@ -137,29 +143,54 @@ class DashboardController extends Controller
                             'product_name' => $product->name,
                             'sku' => $product->sku ?? 'N/A',
                             'warehouse_name' => $stock->warehouse->name ?? 'Unknown',
-                            'stock' => $stock->quantity
+                            'stock' => $stock->quantity,
+                            'image' => $product->image ?? null
                         ];
                     });
             })
-
             ->values();
+
+        // Billing Counter wise daily sales data (Today)
+        $counterWiseSales = PosBillingCounter::where('created_by', $creatorId)
+            ->where('status', true)
+            ->get()
+            ->map(function ($counter) use ($creatorId, $today) {
+                $todaySales = Pos::where('billing_counter_id', $counter->id)
+                    ->where('created_by', $creatorId)
+                    ->whereDate('created_at', $today)
+                    ->count();
+
+                $todayRevenue = DB::table('pos_payments')
+                    ->join('pos', 'pos_payments.pos_id', '=', 'pos.id')
+                    ->where('pos.billing_counter_id', $counter->id)
+                    ->where('pos.created_by', $creatorId)
+                    ->whereDate('pos_payments.created_at', $today)
+                    ->sum('pos_payments.discount_amount');
+
+                return [
+                    'counter_name' => $counter->name,
+                    'counter_code' => $counter->code,
+                    'today_sales' => $todaySales,
+                    'today_revenue' => $todayRevenue,
+                ];
+            });
         return Inertia::render('Pos/Dashboard/Index', [
             'stats' => [
-                'today_sales' => $todaySales,
-                'week_sales' => $weekSales,
-                'month_sales' => $monthSales,
                 'total_sales' => $totalSales,
                 'total_revenue' => $totalRevenue,
                 'avg_transaction' => $avgTransaction,
                 'total_products' => $totalProducts,
                 'total_customers' => $totalCustomers,
                 'walk_in_sales' => $walkInSales,
+                'total_returns' => $totalReturns,
+                'returns_amount' => $returnsAmount,
             ],
             'topProducts' => $topProducts,
             'recentSales' => $recentSales,
-            'salesByStatus' => $salesByStatus,
+            'recentReturns' => $recentReturns,
             'last10DaysSales' => $last10DaysSales,
             'outOfStockProductsList' => $outOfStockProductsList,
+            'counterWiseSales' => $counterWiseSales,
 
         ]);
     }

@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useTranslation } from 'react-i18next';
+import { Palette } from 'lucide-react';
 
 interface ColorsProps {
     data: any;
@@ -40,8 +41,14 @@ export default function Colors({ data, getSectionData, updateSectionData, update
     return (
         <Card>
             <CardHeader>
-                <div className="flex items-center justify-between">
-                    <CardTitle>{t('Color Settings')}</CardTitle>
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-pink-100 rounded-lg">
+                        <Palette className="h-5 w-5 text-pink-600" />
+                    </div>
+                    <div>
+                        <CardTitle className="text-base">{t('Color Settings')}</CardTitle>
+                        <p className="text-sm text-gray-500">{t('Customize the color scheme of your landing page')}</p>
+                    </div>
                 </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -109,7 +116,8 @@ export default function Colors({ data, getSectionData, updateSectionData, update
 
                 <div>
                     <Label>{t('Color Presets')}</Label>
-                    <div className="grid grid-cols-5 gap-3 mt-3">
+                    <p className="text-xs text-gray-400 mt-1 mb-3">{t('Select a preset to quickly apply a color scheme, or customize individual colors above.')}</p>
+                    <div className="grid grid-cols-5 gap-3">
                         {presetColors.map((preset) => {
                             const isActive = colors.primary === preset.primary && colors.secondary === preset.secondary && colors.accent === preset.accent;
                             return (

@@ -11,9 +11,9 @@ class PaySalary
 {
     use Dispatchable, SerializesModels;
 
-    public function __construct( public Request $request,
-        public PayrollEntry $payrollEntry)
-    {
-        //
-    }
+    public function __construct( 
+        public Request $request,
+        public PayrollEntry $payrollEntry
+    )
+    {}
 }

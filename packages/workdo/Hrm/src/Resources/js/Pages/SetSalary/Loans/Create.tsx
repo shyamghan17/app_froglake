@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import InputError from '@/components/ui/input-error';
 import { DatePicker } from '@/components/ui/date-picker';
+import { CurrencyInput } from '@/components/ui/currency-input';
 
 interface CreateLoanProps {
     employeeId: number;
@@ -93,18 +94,32 @@ export default function Create({ employeeId, loanTypes, onSuccess }: CreateLoanP
                 </div>
 
                 <div>
-                    <Label htmlFor="amount" required>{t('Amount')}</Label>
-                    <Input
-                        id="amount"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={data.amount}
-                        onChange={(e) => setData('amount', e.target.value)}
-                        placeholder={data.type === 'percentage' ? t('Enter percentage') : t('Enter amount')}
-                        required
-                    />
-                    <InputError message={errors.amount} />
+                    {data.type === 'percentage' ? (
+                        <>
+                            <Label htmlFor="amount" required>{t('Percentage')}</Label>
+                            <Input
+                                id="amount"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="100"
+                                value={data.amount}
+                                onChange={(e) => setData('amount', e.target.value)}
+                                placeholder={t('Enter percentage')}
+                                required
+                            />
+                            <InputError message={errors.amount} />
+                        </>
+                    ) : (
+                        <CurrencyInput
+                            label={t('Amount')}
+                            value={data.amount}
+                            onChange={(value) => setData('amount', value)}
+                            error={errors.amount}
+                            placeholder={t('Enter amount')}
+                            required
+                        />
+                    )}
                 </div>
 
                 <div>

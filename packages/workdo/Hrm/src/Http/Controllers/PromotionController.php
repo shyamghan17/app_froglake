@@ -16,6 +16,7 @@ use Workdo\Hrm\Models\Employee;
 use Workdo\Hrm\Events\CreatePromotion;
 use Workdo\Hrm\Events\DestroyPromotion;
 use Workdo\Hrm\Events\UpdatePromotion;
+use App\Models\EmailTemplate;
 
 class PromotionController extends Controller
 {
@@ -85,7 +86,6 @@ class PromotionController extends Controller
             $promotion->effective_date = $validated['effective_date'];
             $promotion->reason = $validated['reason'];
             $promotion->document = basename($validated['document']);
-            $promotion->status = 'pending';
 
             $promotion->creator_id = Auth::id();
             $promotion->created_by = creatorId();
@@ -123,8 +123,7 @@ class PromotionController extends Controller
             $promotion->current_designation_id = $validated['current_designation_id'];
             $promotion->effective_date = $validated['effective_date'];
             $promotion->reason = $validated['reason'];
-            $promotion->document = basename($validated['document']);
-            // $promotion->status = $validated['status'] ?? 'pending';
+            $promotion->document = basename($validated['document']); 
 
             $promotion->save();
 
@@ -163,6 +162,29 @@ class PromotionController extends Controller
             ]);
 
             $promotion->status = $validated['status'];
+
+            $promotion->load(['employee', 'previousBranch', 'previousDepartment', 'previousDesignation', 'currentBranch', 'currentDepartment', 'currentDesignation']);
+
+            if(company_setting('Promotions Approval') == 'on') {
+                $emailData = [
+                    'employee_name'             => $promotion->employee->name ?? null,
+                    'previous_branch_name'      => $promotion->previousBranch->branch_name ?? null,
+                    'previous_department_name'  => $promotion->previousDepartment->department_name ?? null,
+                    'previous_designation_name' => $promotion->previousDesignation->designation_name ?? null,
+                    'current_branch_name'       => $promotion->currentBranch->branch_name ?? null,
+                    'current_department_name'   => $promotion->currentDepartment->department_name ?? null,
+                    'current_designation_name'  => $promotion->currentDesignation->designation_name ?? null,
+                    'effective_date'            => $promotion->effective_date ? $promotion->effective_date->format('Y-m-d') : null,
+                    'reason'                    => $promotion->reason ?? null,
+                ]; 
+              
+                $message = EmailTemplate::sendEmailTemplate('Promotions Approval', [$promotion->employee->email ?? null], $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('The promotion status has been updated successfully.'))
+                        ->with('error', $message['error']);
+                }
+            }
 
             if ($validated['status'] === 'approved') {
                 $promotion->approved_by = Auth::id();

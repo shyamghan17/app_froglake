@@ -128,11 +128,83 @@ class EmailTemplate extends Model
            
             '{return_number}',
             '{return_date}',
-            '{reason}',
            
             '{purchase_vendor_name}',
+
+            '{proposal_number}',
+            '{status}',
+
+            '{plan_name}',
+            '{plan_price}',
+            '{plan_duration}',
                 
             '{item_name}',
+            '{item_details}',
+
+            '{budget}',
+            '{end_date}',
+
+            '{milestone_name}',
+            '{title}',
+            '{duration}',
+            
+            '{employee_name}',
+            '{award_type}',
+            '{award_date}',
+
+            '{previous_branch_name}',
+            '{previous_department_name}',
+            '{previous_designation_name}',
+            '{current_branch_name}',
+            '{current_department_name}',
+            '{current_designation_name}',
+            '{effective_date}',
+            '{reason}',
+            '{last_working_date}',
+            
+            '{warning_type_name}',
+            '{subject}',
+
+            '{from_branch_name}',
+            '{from_department_name}',
+            '{from_designation_name}',
+            '{to_branch_name}',
+            '{to_department_name}',
+            '{to_designation_name}',
+            '{transfer_date}',
+
+            '{leave_type}',
+            '{total_days}',
+
+            '{payment_number}',
+            '{payment_date}',
+            '{customer_name}',
+            '{payment_amount}',
+            '{reference_number}',
+           
+            '{vendor_name}',
+
+            '{payroll_frequency}',
+            '{pay_period_start}',
+            '{pay_period_end}',
+            '{pay_date}',
+            '{basic_salary}',
+            '{total_allowances}',
+            '{total_loans}',
+            '{gross_pay}',
+            '{net_pay}',
+            '{working_days}',
+            '{present_days}',
+            '{absent_days}',
+            '{half_days}',
+            '{paid_leave_days}',
+            '{unpaid_leave_days}',
+            '{overtime_hours}',
+
+            '{debit_note_number}',
+            '{debit_note_date}',
+            '{credit_note_number}',
+            '{credit_note_date}',
 
             '{file_name}',
             '{file_size}',
@@ -164,6 +236,8 @@ class EmailTemplate extends Model
 
             '{lead_name}',
             '{lead_email}',
+            '{lead_subject}',
+            '{follow_up_date}',
             '{lead_pipeline}',
             '{lead_stage}',
             '{lead_old_stage}',
@@ -214,6 +288,7 @@ class EmailTemplate extends Model
             '{ticket_description}',
             '{ticket_category}',
             '{ticket_priority}',
+            '{reply_description}',
 
             '{child_name}',
             '{parent_name}',
@@ -233,6 +308,75 @@ class EmailTemplate extends Model
             '{request_category}',
 
             '{request_id}',
+
+            '{meeting_title}',
+            '{meeting_date}',
+            '{meeting_time}',
+            '{meeting_location}',
+            '{meeting_description}',
+            '{organizer_name}',
+            '{attendees_list}',
+
+            '{account_name}',
+            '{account_email}',
+            '{account_phone}',
+            '{account_website}',
+            '{account_type}',
+            '{account_industry}',
+            '{billing_address}',
+            '{billing_city}',
+            '{billing_state}',
+            '{billing_country}',
+            '{billing_postal_code}',
+            '{account_description}',
+            '{assigned_user}',
+            '{created_by}',
+
+            '{opportunity_name}',
+            '{opportunity_amount}',
+            '{opportunity_expected_amount}',
+            '{opportunity_probability}',
+            '{opportunity_close_date}',
+            '{opportunity_next_followup_date}',
+            '{opportunity_lead_source}',
+            '{opportunity_next_step}',
+            '{opportunity_description}',
+            '{opportunity_account}',
+            '{opportunity_contact}',
+            '{opportunity_stage}',
+
+            '{opportunity_new_stage}',
+
+            '{quote_number}',
+            '{quote_name}',
+            '{quote_amount}',
+            '{quote_date}',
+            '{quote_expiry_date}',
+            '{quote_status}',
+            '{quote_old_status}',
+            '{quote_account}',
+            '{quote_opportunity}',
+
+            '{order_number}',
+            '{order_name}',
+            '{order_amount}',
+            '{order_date}',
+            '{order_status}',
+            '{order_old_status}',
+            '{order_account}',
+            '{order_opportunity}',
+            '{order_quote}',
+
+            '{contact_name}',
+            '{contact_email}',
+            '{contact_phone}',
+            '{contact_department}',
+            '{contact_account}',
+            '{contact_address}',
+            '{contact_city}',
+            '{contact_state}',
+            '{contact_country}',
+            '{contact_postal_code}',
         ];
         $arrValue    = [
             'app_name' => '-',
@@ -252,12 +396,84 @@ class EmailTemplate extends Model
            
             'return_number' => '-',
             'return_date' => '-',
-            'reason' => '-',
            
             'purchase_vendor_name' => '-',
 
-            'item_name' => '-',
+            'proposal_number' => '-',
+            'status' => '-',
 
+            'plan_name' => '-',
+            'plan_price' => '-',
+            'plan_duration' => '-',
+
+            'item_name' => '-',
+            'item_details' => '-',
+
+            'budget' => '-',
+            'end_date' => '-',
+
+            'milestone_name' => '-',
+            'title' => '-',
+            'duration' => '-',
+
+            'employee_name' => '-',
+            'award_type' => '-',
+            'award_date' => '-',
+            
+            'previous_branch_name' => '-',
+            'previous_department_name' => '-',
+            'previous_designation_name' => '-',
+            'current_branch_name' => '-',
+            'current_department_name' => '-',
+            'current_designation_name' => '-',
+            'effective_date' => '-',
+            'reason' => '-',
+            'last_working_date' => '-',
+
+            'warning_type_name' => '-',
+            'subject' => '-',
+
+            'from_branch_name' => '-',
+            'from_department_name' => '-',
+            'from_designation_name' => '-',
+            'to_branch_name' => '-',
+            'to_department_name' => '-',
+            'to_designation_name' => '-',
+            'transfer_date' => '-',
+
+            'leave_type' => '-',
+            'total_days' => '-',
+            
+            'payment_number' => '-',
+            'payment_date' => '-',
+            'customer_name' => '-',
+            'payment_amount' => '-',
+            'reference_number' => '-',
+
+            'vendor_name' => '-',
+
+            'payroll_frequency' => '-',
+            'pay_period_start' => '-',
+            'pay_period_end' => '-',
+            'pay_date' => '-',
+            'basic_salary' => '-',
+            'total_allowances' => '-',
+            'total_loans' => '-',
+            'gross_pay' => '-',
+            'net_pay' => '-',
+            'working_days' => '-',
+            'present_days' => '-',
+            'absent_days' => '-',
+            'half_days' => '-',
+            'paid_leave_days' => '-',
+            'unpaid_leave_days' => '-',
+            'overtime_hours' => '-',
+
+            'debit_note_number' => '-',
+            'debit_note_date' => '-',
+            'credit_note_number' => '-',
+            'credit_note_date' => '-',
+            
             'file_name' => '-',
             'file_size' => '-',
             'download_link' => '-',
@@ -289,6 +505,8 @@ class EmailTemplate extends Model
 
             'lead_name' => '-',
             'lead_email' => '-',
+            'lead_subject' => '-',
+            'follow_up_date' => '-',
             'lead_pipeline' => '-',
             'lead_stage' => '-',
             'lead_old_stage' => '-',
@@ -338,6 +556,7 @@ class EmailTemplate extends Model
             'ticket_description' => '-',
             'ticket_category' => '-',
             'ticket_priority' => '-',
+            'reply_description' => '-',
 
             'child_name' => '-',
             'parent_name' => '-',
@@ -357,6 +576,75 @@ class EmailTemplate extends Model
             'request_category'          => '-',
 
             'request_id'     => '-',
+
+            'meeting_title'    => '-',
+            'meeting_date'    => '-',
+            'meeting_time'    => '-',
+            'meeting_location'    => '-',
+            'meeting_description'    => '-',
+            'organizer_name'    => '-',
+            'attendees_list'    => '-',
+
+            'account_name' => '-',
+            'account_email' => '-',
+            'account_phone' => '-',
+            'account_website' => '-',
+            'account_type' => '-',
+            'account_industry' => '-',
+            'billing_address' => '-',
+            'billing_city' => '-',
+            'billing_state' => '-',
+            'billing_country' => '-',
+            'billing_postal_code' => '-',
+            'account_description' => '-',
+            'assigned_user' => '-',
+            'created_by' => '-',
+
+            'opportunity_name' => '-',
+            'opportunity_amount' => '-',
+            'opportunity_expected_amount' => '-',
+            'opportunity_probability' => '-',
+            'opportunity_close_date' => '-',
+            'opportunity_next_followup_date' => '-',
+            'opportunity_lead_source' => '-',
+            'opportunity_next_step' => '-',
+            'opportunity_description' => '-',
+            'opportunity_account' => '-',
+            'opportunity_contact' => '-',
+            'opportunity_stage' => '-',
+
+            'opportunity_new_stage' => '-',
+
+            'quote_number' => '-',
+            'quote_name' => '-',
+            'quote_amount' => '-',
+            'quote_date' => '-',
+            'quote_expiry_date' => '-',
+            'quote_status' => '-',
+            'quote_old_status' => '-',
+            'quote_account' => '-',
+            'quote_opportunity' => '-',
+
+            'order_number' => '-',
+            'order_name' => '-',
+            'order_amount' => '-',
+            'order_date' => '-',
+            'order_status' => '-',
+            'order_old_status' => '-',
+            'order_account' => '-',
+            'order_opportunity' => '-',
+            'order_quote' => '-',
+
+            'contact_name' => '-',
+            'contact_email' => '-',
+            'contact_phone' => '-',
+            'contact_department' => '-',
+            'contact_account' => '-',
+            'contact_address' => '-',
+            'contact_city' => '-',
+            'contact_state' => '-',
+            'contact_country' => '-',
+            'contact_postal_code' => '-',
         ];
 
         foreach ($obj as $key => $val) {
@@ -405,8 +693,7 @@ class EmailTemplate extends Model
 
     public static function reminderSendEmail($reminder, $moduleData)
     {
-        $actionConfig = is_array($reminder->action_config) ? $reminder->action_config : [];
-        
+        $actionConfig = is_array($reminder->action_config) ? $reminder->action_config[$reminder->actions] ?? [] : [];
         $to = $actionConfig['email'] ?? null;
         $companySettings = getCompanyAllSetting($reminder->created_by);
 
@@ -417,9 +704,8 @@ class EmailTemplate extends Model
                     ? company_setting('company_name', $reminder->created_by) 
                     : env('APP_NAME'),
                 'subject' => $reminder->name . ' - ' . __('Reminder Notification'),
-                'content' => $actionConfig['message'],
+                'content' => $actionConfig['message'] ?? '',
             ];
-
             $content = (object)$content;
 
             if (!isset($companySettings['email_fromAddress']) || empty($companySettings['email_fromAddress'])) {

@@ -156,8 +156,15 @@ export const printReceipt = (completedSale: any, globalSettings: any) => {
             <div class="items-section">
                 ${completedSale.items.map((item: any) => {
                     const itemSubtotal = item.price * item.quantity;
-                    const itemTaxRate = item.taxes && item.taxes.length > 0 ? item.taxes[0].rate : 0;
-                    const itemTaxAmount = (itemSubtotal * itemTaxRate) / 100;
+                    const itemDiscount = item.item_discount_amount || 0;
+                    const discountedSubtotal = itemSubtotal - itemDiscount;
+                    let itemTaxAmount = 0;
+                    const itemTaxRate = item.taxes && item.taxes.length > 0 ? item.taxes.reduce((sum: number, tax: any) => sum + tax.rate, 0) : 0;
+                    if (item.taxes && item.taxes.length > 0) {
+                        item.taxes.forEach((tax: any) => {
+                            itemTaxAmount += (discountedSubtotal * tax.rate) / 100;
+                        });
+                    }
                     return `
                         <div class="item">
                             <div class="item-name">${item.name}</div>
@@ -171,12 +178,22 @@ export const printReceipt = (completedSale: any, globalSettings: any) => {
                                     <span>${formatCurrency(item.price, { companyAllSetting: globalSettings })}</span>
                                 </div>
                                 <div class="item-row">
+                                    <span>Subtotal:</span>
+                                    <span>${formatCurrency(itemSubtotal, { companyAllSetting: globalSettings })}</span>
+                                </div>
+                                ${itemDiscount > 0 ? `
+                                <div class="item-row" style="color: #16a34a;">
+                                    <span>Discount:</span>
+                                    <span>-${formatCurrency(itemDiscount, { companyAllSetting: globalSettings })}</span>
+                                </div>
+                                ` : ''}
+                                <div class="item-row">
                                     <span>Tax (${itemTaxRate}%):</span>
                                     <span>${formatCurrency(itemTaxAmount, { companyAllSetting: globalSettings })}</span>
                                 </div>
                                 <div class="item-row" style="font-weight: bold;">
-                                    <span>Subtotal:</span>
-                                    <span>${formatCurrency(itemSubtotal + itemTaxAmount, { companyAllSetting: globalSettings })}</span>
+                                    <span>Total:</span>
+                                    <span>${formatCurrency(discountedSubtotal + itemTaxAmount, { companyAllSetting: globalSettings })}</span>
                                 </div>
                             </div>
                         </div>
@@ -184,20 +201,12 @@ export const printReceipt = (completedSale: any, globalSettings: any) => {
                 }).join('')}
             </div>
             
-            <div class="separator"></div>
-            
             <div class="totals">
-                <div class="total-row">
-                    <span>Discount:</span>
-                    <span>-${formatCurrency(completedSale.discount, { companyAllSetting: globalSettings })}</span>
-                </div>
                 <div class="final-total">
                     <span>TOTAL:</span>
                     <span>${formatCurrency(completedSale.total, { companyAllSetting: globalSettings })}</span>
                 </div>
             </div>
-            
-            <div class="separator"></div>
             
             <div class="footer">
                 <div class="thank-you">*** THANK YOU ***</div>

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import InputError from '@/components/ui/input-error';
 import { DatePicker } from '@/components/ui/date-picker';
+import { CurrencyInput } from '@/components/ui/currency-input';
 
 interface CreateOvertimeProps {
     employeeId: number;
@@ -93,18 +94,13 @@ export default function Create({ employeeId, onSuccess }: CreateOvertimeProps) {
                 </div>
 
                 <div>
-                    <Label htmlFor="rate" required>{t('Rate')}</Label>
-                    <Input
-                        id="rate"
-                        type="number"
-                        step="0.01"
-                        min="0"
+                    <CurrencyInput
+                        label={t('Rate')}
                         value={data.rate}
-                        onChange={(e) => setData('rate', e.target.value)}
-                        placeholder={t('Enter rate')}
+                        onChange={(value) => setData('rate', value)}
+                        error={errors.rate}
                         required
                     />
-                    <InputError message={errors.rate} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

@@ -49,7 +49,7 @@ export default function View({ loan }: ViewLoanProps) {
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Type')}</label>
-                        <div className="bg-gray-50 p-2 rounded">
+                        <div className="rounded">
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                 loan.type === 'fixed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
                             }`}>

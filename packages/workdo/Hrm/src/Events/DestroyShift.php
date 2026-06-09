@@ -13,7 +13,5 @@ class DestroyShift
     public function __construct(
           public Shift $shift
     )
-    {
-        //
-    }
+    {}
 }

@@ -50,11 +50,11 @@ const FEATURES_VARIANTS = {
 
 export default function Features({ settings }: FeaturesProps) {
     const sectionData = settings?.config_sections?.sections?.features || {};
-    const variant = sectionData.variant || 'features1';
+    const variant = sectionData.variant;
     const config = FEATURES_VARIANTS[variant as keyof typeof FEATURES_VARIANTS] || FEATURES_VARIANTS.features1;
     
-    const title = sectionData.title || 'Powerful Features';
-    const subtitle = sectionData.subtitle || 'Everything your business needs in one integrated platform';
+    const title = sectionData.title;
+    const subtitle = sectionData.subtitle;
     const colors = settings?.config_sections?.colors || { primary: '#10b981', secondary: '#059669', accent: '#f59e0b' };
     const [currentSlide, setCurrentSlide] = useState(0);
     
@@ -106,7 +106,7 @@ export default function Features({ settings }: FeaturesProps) {
 
         if (config.layout === 'list') {
             return (
-                <div key={index} className="flex items-start space-x-6 p-6 bg-white rounded-lg shadow-sm">
+                <div key={index} className="flex items-start gap-6 p-6 bg-white rounded-lg shadow-sm">
                     <div className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: colors.primary }}>
                         <IconComponent className="h-6 w-6 text-white" />
                     </div>
@@ -132,7 +132,7 @@ export default function Features({ settings }: FeaturesProps) {
 
         if (config.layout === 'split') {
             return (
-                <div key={index} className="flex items-center space-x-4 p-4 bg-gray-800 rounded-lg">
+                <div key={index} className="flex items-center gap-4 p-4 bg-gray-800 rounded-lg">
                     <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: colors.primary }}>
                         <IconComponent className="h-5 w-5 text-white" />
                     </div>
@@ -146,7 +146,7 @@ export default function Features({ settings }: FeaturesProps) {
 
         if (config.layout === 'carousel') {
             return (
-                <div key={index} className="flex-shrink-0 w-80 mr-6 group">
+                <div key={index} className="flex-shrink-0 w-80 me-6 group">
                     <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-gray-200 transform hover:-translate-y-2 h-full">
                         <div className="w-16 h-16 mb-6 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300" style={{ backgroundColor: `${colors.primary}15` }}>
                             <IconComponent className="h-8 w-8" style={{ color: colors.primary }} />
@@ -229,7 +229,7 @@ export default function Features({ settings }: FeaturesProps) {
                         >
                             <ChevronRight className="w-6 h-6" />
                         </button>
-                        <div className="flex justify-center mt-8 space-x-2">
+                        <div className="flex justify-center mt-8 gap-2">
                             {features.map((_, index) => (
                                 <button
                                     key={index}

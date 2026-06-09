@@ -90,7 +90,7 @@ class CustomerController extends Controller
             $customer->tax_number = $validated['tax_number'] ?? null;
             $customer->payment_terms = $validated['payment_terms'] ?? null;
             $customer->billing_address = $validated['billing_address'];
-            $customer->shipping_address = $validated['same_as_billing'] ? $validated['billing_address'] : $validated['shipping_address'];
+            $customer->shipping_address = $validated['same_as_billing'] ? $validated['billing_address'] : ($validated['shipping_address'] ?? null);
             $customer->same_as_billing = $validated['same_as_billing'] ?? false;
             $customer->notes = $validated['notes'] ?? null;
             $customer->save();

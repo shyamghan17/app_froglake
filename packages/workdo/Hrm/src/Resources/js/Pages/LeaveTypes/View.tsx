@@ -19,7 +19,6 @@ export default function View({ leavetype }: ViewProps) {
                     </div>
                     <div>
                         <DialogTitle className="text-xl font-semibold">{t('Leave Type Details')}</DialogTitle>
-                        <p className="text-sm text-muted-foreground">{leavetype.name}</p>
                     </div>
                 </div>
             </DialogHeader>
@@ -28,13 +27,7 @@ export default function View({ leavetype }: ViewProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Name')}</label>
-                        <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded flex items-center gap-2">
-                            <div 
-                                className="w-3 h-3 rounded-full border border-gray-300" 
-                                style={{ backgroundColor: leavetype.color || '#FF6B6B' }}
-                            ></div>
-                            <span>{leavetype.name || '-'}</span>
-                        </div>
+                        <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">{leavetype.name || '-'}</p>
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Max Days Per Year')}</label>
@@ -42,17 +35,16 @@ export default function View({ leavetype }: ViewProps) {
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Color')}</label>
-                        <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded flex items-center gap-2">
+                        <div className="p-1 rounded flex items-center gap-2">
                             <div 
                                 className="w-6 h-6 rounded border border-gray-300" 
                                 style={{ backgroundColor: leavetype.color || '#FF6B6B' }}
                             ></div>
-                            <span>{leavetype.color || '#FF6B6B'}</span>
                         </div>
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Is Paid')}</label>
-                        <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                        <div className="p-1 rounded">
                             <span className={`inline-block px-2 py-1 rounded-full font-medium text-xs ${
                                 leavetype.is_paid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                             }`}>

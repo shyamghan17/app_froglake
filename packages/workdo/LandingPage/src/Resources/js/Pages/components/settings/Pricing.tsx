@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
+import { CreditCard } from 'lucide-react';
 
 interface PricingProps {
     data: any;
@@ -45,27 +46,33 @@ export default function Pricing({ data, getSectionData, updateSectionData, updat
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <CardTitle>{t('Pricing Page Settings')}</CardTitle>
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-emerald-100 rounded-lg">
+                            <CreditCard className="h-5 w-5 text-emerald-600" />
+                        </div>
+                        <div>
+                            <CardTitle className="text-base">{t('Pricing Page Settings')}</CardTitle>
+                            <p className="text-sm text-gray-500">{t('Configure the pricing and subscription plans page')}</p>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {/* Page Title and Subtitle */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                        <div>
                             <Label htmlFor="pricing-title">{t('Page Title')}</Label>
                             <Input
                                 id="pricing-title"
-                                value={sectionData.title || 'Subscription Setting'}
+                                value={sectionData.title}
                                 onChange={(e) => updateSectionData('pricing', { title: e.target.value })}
                                 placeholder={t('Enter page title')}
                             />
                         </div>
-                        <div className="space-y-2">
+                        <div>
                             <Label htmlFor="pricing-subtitle">{t('Page Subtitle')}</Label>
                             <Textarea
                                 id="pricing-subtitle"
-                                value={sectionData.subtitle || 'Choose the perfect subscription plan for your business needs'}
+                                value={sectionData.subtitle}
                                 onChange={(e) => updateSectionData('pricing', { subtitle: e.target.value })}
                                 placeholder={t('Enter page subtitle')}
                                 rows={3}
@@ -75,10 +82,10 @@ export default function Pricing({ data, getSectionData, updateSectionData, updat
 
                     {/* Default Settings */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                        <div>
                             <Label htmlFor="pricing-subscription-type">{t('Default Subscription Type')}</Label>
                             <Select
-                                value={sectionData.default_subscription_type || 'pre-package'}
+                                value={sectionData.default_subscription_type}
                                 onValueChange={(value) => updateSectionData('pricing', { default_subscription_type: value })}
                             >
                                 <SelectTrigger>
@@ -90,7 +97,7 @@ export default function Pricing({ data, getSectionData, updateSectionData, updat
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="space-y-2">
+                        <div>
                             <Label htmlFor="pricing-price-type">{t('Default Price Type')}</Label>
                             <Select
                                 value={sectionData.default_price_type || 'monthly'}
@@ -108,11 +115,11 @@ export default function Pricing({ data, getSectionData, updateSectionData, updat
                     </div>
 
                     {/* Empty State Message */}
-                    <div className="space-y-2">
+                    <div>
                         <Label htmlFor="pricing-empty-message">{t('Empty State Message')}</Label>
                         <Textarea
                             id="pricing-empty-message"
-                            value={sectionData.empty_message || 'No plans available. Check back later for new pricing plans.'}
+                            value={sectionData.empty_message}
                             onChange={(e) => updateSectionData('pricing', { empty_message: e.target.value })}
                             placeholder={t('Message to show when no plans are available')}
                             rows={3}

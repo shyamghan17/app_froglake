@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Workdo\Account\Events\ApproveCreditNote;
 use Workdo\Account\Events\DestroyCreditNote;
 use Workdo\Account\Services\JournalService;
+use App\Models\EmailTemplate;
 
 class CreditNoteController extends Controller
 {
@@ -127,6 +128,26 @@ class CreditNoteController extends Controller
                     'approved_by' => Auth::id()
                 ]);
                 ApproveCreditNote::dispatch($creditNote);
+                if(company_setting('Credit Note Approval') == 'on') {
+
+                    $creditNote->load('customer', 'invoice', 'salesReturn');
+
+                    $emailData = [
+                        'credit_note_number' => $creditNote->credit_note_number ?? null,
+                        'credit_note_date'   => $creditNote->credit_note_date ? \Carbon\Carbon::parse($creditNote->credit_note_date)->format('d M Y') : null,
+                        'customer_name'      => $creditNote->customer->name ?? null,
+                        'invoice_number'     => $creditNote->invoice->invoice_number ?? null,
+                        'return_number'      => $creditNote->salesReturn->return_number ?? null,
+                        'reason'             => $creditNote->reason ?? null,
+                        'total_amount'       => number_format($creditNote->total_amount, 2),
+                    ];
+                    $message = EmailTemplate::sendEmailTemplate('Credit Note Approval', [$creditNote->customer->email ?? null], $emailData);
+                    if($message['is_success'] == false && !empty($message['error'])) {
+                        return back()
+                            ->with('success', __('Credit note approved successfully.'))
+                            ->with('error', $message['error']);
+                    }
+                }
 
                 return back()->with('success', __('Credit note approved successfully.'));
             } catch (\Exception $e) {

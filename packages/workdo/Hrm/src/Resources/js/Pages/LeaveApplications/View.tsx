@@ -29,13 +29,7 @@ export default function View({ leaveapplication }: ViewProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Leave Type')}</label>
-                        <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded flex items-center gap-2">
-                            <div
-                                className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: leaveapplication.leave_type?.color || '#gray' }}
-                            ></div>
-                            <span>{leaveapplication.leave_type?.name || '-'}</span>
-                        </div>
+                        <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">{leaveapplication.leave_type?.name || '-'}</p>
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Total Days')}</label>
@@ -59,7 +53,7 @@ export default function View({ leaveapplication }: ViewProps) {
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Is Paid')}</label>
-                        <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                        <div className="p-1 rounded">
                             <span className={`inline-block px-2 py-1 rounded-full font-medium text-xs ${
                                 leaveapplication.leave_type?.is_paid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                             }`}>
@@ -69,7 +63,7 @@ export default function View({ leaveapplication }: ViewProps) {
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Status')}</label>
-                        <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                        <div className="p-1 rounded">
                             <span className={`inline-block px-2 py-1 rounded-full font-medium text-xs ${
                                 leaveapplication.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                 leaveapplication.status === 'approved' ? 'bg-green-100 text-green-800' :

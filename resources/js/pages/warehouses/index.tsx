@@ -54,6 +54,8 @@ export default function Index() {
 
     // Add hook here
     const pageButtons = usePageButtons('warehouseBtn','Test data');
+    const googleDriveBtn = usePageButtons('googleDriveBtn', { module: 'Warehouse', settingKey: 'GoogleDrive Warehouse' });
+    const oneDriveBtn = usePageButtons('oneDriveBtn', { module: 'Warehouse', settingKey: 'OneDrive Warehouse' });
     const dropboxBtn = usePageButtons('dropboxBtn', { module: 'Warehouse', settingKey: 'Dropbox Warehouse' });
     const boxBtn = usePageButtons('boxBtn', { module: 'Warehouse', settingKey: 'Box Warehouse' });
 
@@ -184,6 +186,12 @@ export default function Index() {
                 <div className="flex gap-2">
                     <TooltipProvider>
                         {pageButtons.map((button) => (
+                            <div key={button.id}>{button.component}</div>
+                        ))}
+                        {googleDriveBtn.map((button) => (
+                            <div key={button.id}>{button.component}</div>
+                        ))}
+                        {oneDriveBtn.map((button) => (
                             <div key={button.id}>{button.component}</div>
                         ))}
                         {dropboxBtn.map((button) => (

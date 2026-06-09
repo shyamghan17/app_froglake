@@ -118,6 +118,11 @@ class PermissionRoleSeeder extends Seeder
             ['name' => 'manage-email-notification-settings', 'module' => 'settings', 'label' => 'Manage Email Notification Settings'],
             ['name' => 'manage-pusher-settings', 'module' => 'settings', 'label' => 'Manage Pusher Settings'],
             ['name' => 'edit-pusher-settings', 'module' => 'settings', 'label' => 'Edit Pusher Settings'],
+            ['name' => 'manage-ai-agent-settings', 'module' => 'settings', 'label' => 'Manage AI Agent Settings'],
+            ['name' => 'edit-ai-agent-settings', 'module' => 'settings', 'label' => 'Edit AI Agent Settings'],
+
+            // AI Agent management
+            ['name' => 'manage-ai-agent', 'module' => 'ai-agent', 'label' => 'Manage AI Agent'],
 
             // Media management
             ['name' => 'manage-media', 'module' => 'media', 'label' => 'Manage Media'],
@@ -264,6 +269,7 @@ class PermissionRoleSeeder extends Seeder
             // Email Template Helpdesk Permission
             ['name' => 'manage-email-helpdesk-tickets', 'module' => 'email-template', 'label' => 'Manage Email Helpdesk Tickets'],
             ['name' => 'manage-email-helpdesk-replies', 'module' => 'email-template', 'label' => 'Manage Email Helpdesk Reply'],
+            ['name' => 'manage-email-plan-purchases', 'module' => 'email-template', 'label' => 'Manage Plan Purchases'],
 
         ];
 
@@ -284,7 +290,7 @@ class PermissionRoleSeeder extends Seeder
                     'manage-bank-transfer-requests', 'approve-bank-transfer-requests', 'reject-bank-transfer-requests','delete-bank-transfer-requests',
                     'manage-profile', 'edit-profile', 'change-password-profile',
                     'manage-orders', 'view-orders',
-                    'manage-email-helpdesk-tickets', 'manage-email-helpdesk-replies'
+                    'manage-email-helpdesk-tickets', 'manage-email-helpdesk-replies','manage-email-plan-purchases'
                 ]
             ],
             'company' => [
@@ -300,7 +306,7 @@ class PermissionRoleSeeder extends Seeder
 
                     'manage-helpdesk-tickets', 'manage-own-helpdesk-tickets', 'view-helpdesk-tickets', 'create-helpdesk-tickets',  'edit-helpdesk-tickets',
                     'manage-helpdesk-replies', 'create-helpdesk-replies',
-                    'manage-settings', 'edit-settings', 'manage-brand-settings', 'edit-brand-settings', 'manage-company-settings', 'edit-company-settings', 'manage-system-settings', 'edit-system-settings', 'manage-email-settings', 'edit-email-settings', 'test-email','manage-email-notification-settings',
+                    'manage-settings', 'edit-settings', 'manage-brand-settings', 'edit-brand-settings', 'manage-company-settings', 'edit-company-settings', 'manage-system-settings', 'edit-system-settings', 'manage-email-settings', 'edit-email-settings', 'test-email','manage-email-notification-settings','manage-ai-agent-settings', 'edit-ai-agent-settings','manage-ai-agent',
                     'manage-currency-settings', 'edit-currency-settings', 'manage-media', 'manage-own-media', 'create-media', 'download-media', 'delete-media', 'manage-media-directories', 'manage-own-media-directories', 'create-media-directories', 'edit-media-directories', 'delete-media-directories',
                     'manage-plans', 'manage-any-plans', 'manage-own-plans', 'view-plans', 'create-plans', 'edit-plans', 'delete-plans',
                     'manage-bank-transfer-requests', 'delete-bank-transfer-requests',

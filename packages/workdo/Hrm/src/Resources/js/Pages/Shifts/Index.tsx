@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Dialog } from "@/components/ui/dialog";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Plus, Edit as EditIcon, Trash2, Eye, Clock as ClockIcon, Download, FileImage } from "lucide-react";
+import { Plus, Edit as EditIcon, Trash2, Clock as ClockIcon, Download, FileImage } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Pagination } from "@/components/ui/pagination";
 import { SearchInput } from "@/components/ui/search-input";
@@ -17,7 +17,6 @@ import { ListGridToggle } from '@/components/ui/list-grid-toggle';
 import { PerPageSelector } from '@/components/ui/per-page-selector';
 import Create from './Create';
 import EditShift from './Edit';
-import View from './View';
 import NoRecordsFound from '@/components/no-records-found';
 import { Shift, ShiftsIndexProps, ShiftFilters, ShiftModalState } from './types';
 import { formatDate, formatTime, formatDateTime, formatCurrency, getImagePath } from '@/utils/helpers';
@@ -42,7 +41,6 @@ export default function Index() {
         mode: '',
         data: null
     });
-    const [viewingItem, setViewingItem] = useState<Shift | null>(null);
 
 
 
@@ -112,30 +110,30 @@ export default function Index() {
             render: (value: string) => value ? formatTime(value) : '-'
         },
         {
+            key: 'break_start_time',
+            header: t('Break Start Time'),
+            sortable: false,
+            render: (value: string) => value ? formatTime(value) : '-'
+        },
+        {
+            key: 'break_end_time',
+            header: t('Break End Time'),
+            sortable: false,
+            render: (value: string) => value ? formatTime(value) : '-'
+        },
+        {
             key: 'is_night_shift',
             header: t('Night Shift'),
             sortable: false,
             render: (value: boolean) => <span dangerouslySetInnerHTML={{ __html: getNightShiftBadge(value) }} />
         },
         
-        ...(auth.user?.permissions?.some((p: string) => ['view-shifts', 'edit-shifts', 'delete-shifts'].includes(p)) ? [{
+        ...(auth.user?.permissions?.some((p: string) => ['edit-shifts', 'delete-shifts'].includes(p)) ? [{
             key: 'actions',
             header: t('Actions'),
             render: (_: any, shift: Shift) => (
                 <div className="flex gap-1">
                     <TooltipProvider>
-                        {auth.user?.permissions?.includes('view-shifts') && (
-                            <Tooltip delayDuration={0}>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" onClick={() => setViewingItem(shift)} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
-                                        <Eye className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{t('View')}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        )}
                         {auth.user?.permissions?.includes('edit-shifts') && (
                             <Tooltip delayDuration={0}>
                                 <TooltipTrigger asChild>
@@ -303,18 +301,6 @@ export default function Index() {
                                                 </span>
                                                 <div className="flex gap-1">
                                                     <TooltipProvider>
-                                                        {auth.user?.permissions?.includes('view-shifts') && (
-                                                            <Tooltip delayDuration={300}>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button variant="ghost" size="sm" onClick={() => setViewingItem(shift)} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
-                                                                        <Eye className="h-4 w-4" />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>
-                                                                    <p>{t('View')}</p>
-                                                                </TooltipContent>
-                                                            </Tooltip>
-                                                        )}
                                                         {auth.user?.permissions?.includes('edit-shifts') && (
                                                             <Tooltip delayDuration={300}>
                                                                 <TooltipTrigger asChild>
@@ -386,10 +372,6 @@ export default function Index() {
                         onSuccess={closeModal}
                     />
                 )}
-            </Dialog>
-
-            <Dialog open={!!viewingItem} onOpenChange={() => setViewingItem(null)}>
-                {viewingItem && <View shift={viewingItem} />}
             </Dialog>
 
             <ConfirmationDialog

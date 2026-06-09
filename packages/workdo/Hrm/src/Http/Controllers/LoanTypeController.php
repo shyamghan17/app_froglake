@@ -70,8 +70,6 @@ class LoanTypeController extends Controller
         if(Auth::user()->can('edit-loan-types')){
             $validated = $request->validated();
 
-
-
             $loantype->name = $validated['name'];
             $loantype->description = $validated['description'];
 
@@ -79,10 +77,10 @@ class LoanTypeController extends Controller
 
             UpdateLoanType::dispatch($request, $loantype);
 
-            return redirect()->route('hrm.loan-types.index')->with('success', __('The loan type details are updated successfully.'));
+            return back()->with('success', __('The loan type details are updated successfully.'));
         }
         else{
-            return redirect()->route('hrm.loan-types.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 
@@ -92,10 +90,10 @@ class LoanTypeController extends Controller
             DestroyLoanType::dispatch($loantype);
             $loantype->delete();
 
-            return redirect()->route('hrm.loan-types.index')->with('success', __('The loan type has been deleted.'));
+            return back()->with('success', __('The loan type has been deleted.'));
         }
         else{
-            return redirect()->route('hrm.loan-types.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 

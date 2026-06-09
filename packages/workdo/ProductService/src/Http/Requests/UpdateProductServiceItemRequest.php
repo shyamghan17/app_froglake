@@ -15,7 +15,7 @@ class UpdateProductServiceItemRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'sku' => 'required|string|max:255',
+            'sku' => 'required|string|max:255|unique:product_service_items,sku,' . ($this->route('item')?->id ?? 'NULL') . ',id,created_by,' . creatorId(),
             'tax_ids' => 'required|array',
             'category_id' => 'required|exists:product_service_categories,id',
             'description' => 'nullable|string',

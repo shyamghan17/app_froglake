@@ -13,7 +13,5 @@ class DestroyAnnouncementCategory
     public function __construct(
           public AnnouncementCategory $announcementCategory
     )
-    {
-        //
-    }
+    {}
 }

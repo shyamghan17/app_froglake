@@ -86,6 +86,7 @@ class DemoBankAccountSeeder extends Seeder
         ];
 
         $bankGLAccounts = ChartOfAccount::where('created_by', $userId)
+            ->where('is_active', true)
             ->whereBetween('account_code', ['1000', '1099'])
             ->pluck('id')
             ->toArray();

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 use Workdo\LandingPage\Models\CustomPage;
 use Illuminate\Support\Facades\Auth;
+use Workdo\LandingPage\Http\Requests\StoreLandingPageRequest;
 
 class LandingPageController extends Controller
 {
@@ -201,16 +202,10 @@ class LandingPageController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(StoreLandingPageRequest $request)
     {
         if(Auth::user()->can('edit-landing-page')){
-            $validated = $request->validate([
-                'company_name' => 'nullable|string|max:255',
-                'contact_email' => 'nullable|email|max:255',
-                'contact_phone' => 'nullable|string|max:255',
-                'contact_address' => 'nullable|string',
-                'config_sections' => 'nullable|array'
-            ]);
+            $validated = $request->validated();
 
             // Handle image paths - store only filename
             if (isset($validated['config_sections']['sections'])) {

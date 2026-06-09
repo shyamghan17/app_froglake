@@ -40,7 +40,7 @@ export const hrmCompanyMenu = (t: (key: string) => string) => [
                 ],
             },
             {
-                title: t('Attedance'),
+                title: t('Attendance'),
                 permission: 'manage-attendances',
                 children: [
                     {
@@ -66,7 +66,7 @@ export const hrmCompanyMenu = (t: (key: string) => string) => [
                     },
                     {
                         title: t('Leave Applications'),
-                        href: route('hrm.leave-applications.index'),
+                        href: route('hrm.leave-applications.calendar'),
                         permission: 'manage-leave-applications',
                     },
                     {

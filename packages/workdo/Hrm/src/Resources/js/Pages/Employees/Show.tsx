@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, FileText } from 'lucide-react';
-import { formatDate, getImagePath, getCurrencySymbol } from '@/utils/helpers';
+import { formatDate, getImagePath, formatCurrency } from '@/utils/helpers';
 import { useFormFields } from '@/hooks/useFormFields';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -171,7 +171,7 @@ export default function Show() {
                                                 </div>
                                                 <div>
                                                     <p className="text-sm text-muted-foreground mb-1">{t('Shift')}</p>
-                                                    <p className="font-medium">{employee.shift?.shift_name || 'N/A'}</p>
+                                                    <p className="font-medium">{employee.shift?.shift_name || '-'}</p>
                                                 </div>
                                             </div>
                                         </TabsContent>
@@ -250,15 +250,15 @@ export default function Show() {
                                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                                 <div>
                                                     <p className="text-sm text-muted-foreground mb-1">{t('Hours Per Day')}</p>
-                                                    <p className="font-medium">{employee.hours_per_day || 'N/A'}</p>
+                                                    <p className="font-medium">{employee.hours_per_day || '-'}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-sm text-muted-foreground mb-1">{t('Days Per Week')}</p>
-                                                    <p className="font-medium">{employee.days_per_week || 'N/A'}</p>
+                                                    <p className="font-medium">{employee.days_per_week || '-'}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-sm text-muted-foreground mb-1">{t('Rate Per Hour')}</p>
-                                                    <p className="font-medium">{employee.rate_per_hour ? `${getCurrencySymbol()}${employee.rate_per_hour}` : 'N/A'}</p>
+                                                    <p className="font-medium">{employee.rate_per_hour ? formatCurrency(employee.rate_per_hour) : '-'}</p>
                                                 </div>
                                             </div>
                                         </TabsContent>
@@ -442,7 +442,7 @@ export default function Show() {
                                         </div>
                                         <div>
                                             <p className="text-xs text-muted-foreground mb-1">{t('Rate Per Hour')}</p>
-                                            <p className="font-medium text-sm">{employee.rate_per_hour ? `${getCurrencySymbol()}${employee.rate_per_hour}` : 'N/A'}</p>
+                                            <p className="font-medium text-sm">{employee.rate_per_hour ? formatCurrency(employee.rate_per_hour) : 'N/A'}</p>
                                         </div>
                                     </div>
                                 </TabsContent>

@@ -17,7 +17,11 @@ class UpdateUserRequest extends FormRequest
 
         return [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $userId,
+            'email' => [
+                'required',
+                'email',
+                'unique:users,email,' . $userId . ',id,created_by,' . creatorId()
+            ],
             'mobile_no' => 'nullable|string|regex:/^\+\d{1,3}\d{9,13}$/',
             'is_enable_login' => 'boolean',
         ];

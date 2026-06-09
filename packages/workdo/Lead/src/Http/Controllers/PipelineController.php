@@ -12,6 +12,8 @@ use Workdo\Lead\Events\CreatePipeline;
 use Workdo\Lead\Events\UpdatePipeline;
 use Workdo\Lead\Events\DestroyPipeline;
 use App\Models\User;
+use Workdo\Lead\Models\LeadStage;
+use Workdo\Lead\Models\DealStage;
 
 
 class PipelineController extends Controller
@@ -53,6 +55,30 @@ class PipelineController extends Controller
             $pipeline->created_by = creatorId();
             $pipeline->save();
 
+            // Create default Lead Stages
+            $defaultLeadStages = ['Draft', 'Sent', 'Open', 'Revised', 'Declined', 'Accepted'];
+            foreach ($defaultLeadStages as $index => $stageName) {
+                LeadStage::create([
+                    'name'       => $stageName,
+                    'pipeline_id'=> $pipeline->id,
+                    'order'      => $index + 1,
+                    'creator_id' => Auth::id(),
+                    'created_by' => creatorId(),
+                ]);
+            }
+
+            // Create default Deal Stages
+            $defaultDealStages = ['Initial Contact', 'Qualification', 'Meeting', 'Proposal', 'Close'];
+            foreach ($defaultDealStages as $index => $stageName) {
+                DealStage::create([
+                    'name'       => $stageName,
+                    'pipeline_id'=> $pipeline->id,
+                    'order'      => $index + 1,
+                    'creator_id' => Auth::id(),
+                    'created_by' => creatorId(),
+                ]);
+            }
+
             CreatePipeline::dispatch($request, $pipeline);
 
             return redirect()->route('lead.pipelines.index')->with('success', __('The pipeline has been created successfully.'));
@@ -64,8 +90,7 @@ class PipelineController extends Controller
 
     public function update(UpdatePipelineRequest $request, Pipeline $pipeline)
     {
-        try {
-            if(Auth::user()->can('edit-pipelines')){
+        if(Auth::user()->can('edit-pipelines')){
             $validated = $request->validated();
             $pipeline->name = $validated['name'];
 
@@ -78,28 +103,24 @@ class PipelineController extends Controller
         else{
             return back()->with('error', __('Permission denied'));
         }
-        } catch (\Exception $e) {
-            return back()->with('error', __('Pipeline not found'));
-        }
     }
 
     public function destroy(Pipeline $pipeline)
     {
-        try {
-            if(Auth::user()->can('delete-pipelines')){
+        if(Auth::user()->can('delete-pipelines')){
+                if (LeadStage::where('pipeline_id', $pipeline->id)->exists() || DealStage::where('pipeline_id', $pipeline->id)->exists()) {
+                    return back()->with('error', __('Pipeline cannot be deleted because it has stages associated with it.'));
+                }
                 // Set default_pipeline to null for all users who have this pipeline as default
                 User::where('default_pipeline', $pipeline->id)->update(['default_pipeline' => null]);
-                
+
                 DestroyPipeline::dispatch($pipeline);
                 $pipeline->delete();
 
-            return back()->with('success', __('The pipeline has been deleted.'));
-        }
+                return back()->with('success', __('The pipeline has been deleted.'));
+            }
         else{
             return back()->with('error', __('Permission denied'));
-        }
-        } catch (\Exception $e) {
-            return back()->with('error', __('Pipeline not found'));
         }
     }
 

@@ -28,7 +28,7 @@ export default function Features({ data, getSectionData, updateSectionData, upda
                                 <Star className="h-5 w-5 text-blue-600" />
                             </div>
                             <div>
-                                <CardTitle>{t('Features Content')}</CardTitle>
+                                <CardTitle className="text-base">{t('Features Content')}</CardTitle>
                                 <p className="text-sm text-gray-500">{t('Manage your product features')}</p>
                             </div>
                         </div>
@@ -42,33 +42,35 @@ export default function Features({ data, getSectionData, updateSectionData, upda
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                        <Label>{t('Features Variant')}</Label>
-                        <Select
-                            value={getSectionData('features').variant || 'features1'}
-                            onValueChange={(value) => updateSectionData('features', { variant: value })}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder={t('Select Features Style')} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="features1">{t('Grid')}</SelectItem>
-                                <SelectItem value="features2">{t('List')}</SelectItem>
-                                <SelectItem value="features3">{t('Cards')}</SelectItem>
-                                <SelectItem value="features4">{t('Split')}</SelectItem>
-                                <SelectItem value="features5">{t('Carousel')}</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <Label>{t('Features Variant')}</Label>
+                            <Select
+                                value={getSectionData('features').variant || 'features1'}
+                                onValueChange={(value) => updateSectionData('features', { variant: value })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder={t('Select Features Style')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="features1">{t('Grid')}</SelectItem>
+                                    <SelectItem value="features2">{t('List')}</SelectItem>
+                                    <SelectItem value="features3">{t('Cards')}</SelectItem>
+                                    <SelectItem value="features4">{t('Split')}</SelectItem>
+                                    <SelectItem value="features5">{t('Carousel')}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label>{t('Section Title')}</Label>
+                            <Input
+                                value={getSectionData('features').title || ''}
+                                onChange={(e) => updateSectionData('features', { title: e.target.value })}
+                                placeholder={t('Powerful Features')}
+                            />
+                        </div>
                     </div>
-                    <div className="space-y-2">
-                        <Label>{t('Section Title')}</Label>
-                        <Input
-                            value={getSectionData('features').title || ''}
-                            onChange={(e) => updateSectionData('features', { title: e.target.value })}
-                            placeholder={t('Powerful Features')}
-                        />
-                    </div>
-                    <div className="space-y-2">
+                    <div>
                         <Label>{t('Section Subtitle')}</Label>
                         <Textarea
                             value={getSectionData('features').subtitle || ''}

@@ -13,7 +13,5 @@ class DestroyAttendance
     public function __construct(
           public Attendance $attendance
     )
-    {
-        //
-    }
+    {}
 }

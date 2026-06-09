@@ -134,9 +134,9 @@ export default function Index() {
             {availableTypes.length > 0 && (
                 <div className='mb-4'>
                     <Tabs value={activeType} onValueChange={handleTabChange}>
-                        <TabsList>
+                        <TabsList className="mb-3 w-full justify-start overflow-x-auto overflow-y-hidden h-auto p-1">
                             {availableTypes.map(type => (
-                                <TabsTrigger key={type} value={type} className="capitalize">
+                                <TabsTrigger key={type} value={type} className="capitalize whitespace-nowrap flex-shrink-0  ">
                                     {getPackageAlias(type)}
                                 </TabsTrigger>
                             ))}

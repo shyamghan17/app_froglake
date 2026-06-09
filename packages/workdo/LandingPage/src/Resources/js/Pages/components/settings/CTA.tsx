@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { ArrowUpDown } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import MediaPicker from '@/components/MediaPicker';
 
 interface CTAProps {
@@ -26,10 +26,10 @@ export default function CTA({ data, getSectionData, updateSectionData, updateSec
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-orange-100 rounded-lg">
-                                <ArrowUpDown className="h-5 w-5 text-orange-600" />
+                                <Zap className="h-5 w-5 text-orange-600" />
                             </div>
                             <div>
-                                <CardTitle>{t('Call to Action')}</CardTitle>
+                                <CardTitle className="text-base">{t('Call to Action')}</CardTitle>
                                 <p className="text-sm text-gray-500">{t('Final conversion section')}</p>
                             </div>
                         </div>
@@ -43,33 +43,35 @@ export default function CTA({ data, getSectionData, updateSectionData, updateSec
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label>{t('CTA Variant')}</Label>
-                        <Select
-                            value={getSectionData('cta').variant || 'cta1'}
-                            onValueChange={(value) => updateSectionData('cta', { variant: value })}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder={t('Select CTA Style')} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="cta1">{t('Centered')}</SelectItem>
-                                <SelectItem value="cta2">{t('Split')}</SelectItem>
-                                <SelectItem value="cta3">{t('Card')}</SelectItem>
-                                <SelectItem value="cta4">{t('Gradient')}</SelectItem>
-                                <SelectItem value="cta5">{t('Minimal')}</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <Label>{t('CTA Variant')}</Label>
+                            <Select
+                                value={getSectionData('cta').variant || 'cta1'}
+                                onValueChange={(value) => updateSectionData('cta', { variant: value })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder={t('Select CTA Style')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="cta1">{t('Centered')}</SelectItem>
+                                    <SelectItem value="cta2">{t('Split')}</SelectItem>
+                                    <SelectItem value="cta3">{t('Card')}</SelectItem>
+                                    <SelectItem value="cta4">{t('Gradient')}</SelectItem>
+                                    <SelectItem value="cta5">{t('Minimal')}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label>{t('Main Title')}</Label>
+                            <Input
+                                value={getSectionData('cta').title || ''}
+                                onChange={(e) => updateSectionData('cta', { title: e.target.value })}
+                                placeholder={t('Ready to Transform Your Business?')}
+                            />
+                        </div>
                     </div>
-                    <div className="space-y-2">
-                        <Label>{t('Main Title')}</Label>
-                        <Input
-                            value={getSectionData('cta').title || ''}
-                            onChange={(e) => updateSectionData('cta', { title: e.target.value })}
-                            placeholder={t('Ready to Transform Your Business?')}
-                        />
-                    </div>
-                    <div className="space-y-2">
+                    <div>
                         <Label>{t('Subtitle')}</Label>
                         <Textarea
                             value={getSectionData('cta').subtitle || ''}
@@ -79,7 +81,7 @@ export default function CTA({ data, getSectionData, updateSectionData, updateSec
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                        <div>
                             <Label>{t('Primary Button Text')}</Label>
                             <Input
                                 value={getSectionData('cta').primary_button || ''}
@@ -87,7 +89,7 @@ export default function CTA({ data, getSectionData, updateSectionData, updateSec
                                 placeholder={t('Start Free Trial')}
                             />
                         </div>
-                        <div className="space-y-2">
+                        <div>
                             <Label>{t('Secondary Button Text')}</Label>
                             <Input
                                 value={getSectionData('cta').secondary_button || ''}
@@ -97,20 +99,16 @@ export default function CTA({ data, getSectionData, updateSectionData, updateSec
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label className="flex items-center gap-2">
-                                {t('Primary Button Link')}
-                            </Label>
+                        <div>
+                            <Label>{t('Primary Button Link')}</Label>
                             <Input
                                 value={getSectionData('cta').primary_button_link || ''}
                                 onChange={(e) => updateSectionData('cta', { primary_button_link: e.target.value })}
                                 placeholder="https://example.com/signup"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label className="flex items-center gap-2">
-                                {t('Secondary Button Link')}
-                            </Label>
+                        <div>
+                            <Label>{t('Secondary Button Link')}</Label>
                             <Input
                                 value={getSectionData('cta').secondary_button_link || ''}
                                 onChange={(e) => updateSectionData('cta', { secondary_button_link: e.target.value })}
@@ -119,10 +117,8 @@ export default function CTA({ data, getSectionData, updateSectionData, updateSec
                         </div>
                     </div>
                     {getSectionData('cta').variant === 'cta2' && (
-                        <div className="space-y-2">
-                            <Label className="flex items-center gap-2">
-                                {t('CTA Image (Split Layout)')}
-                            </Label>
+                        <div>
+                            <Label>{t('CTA Image (Split Layout)')}</Label>
                             <MediaPicker
                                 value={getSectionData('cta').image || ''}
                                 onChange={(value) => updateSectionData('cta', { image: value })}

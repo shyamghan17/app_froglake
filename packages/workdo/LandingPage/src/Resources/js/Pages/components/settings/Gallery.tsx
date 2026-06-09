@@ -27,7 +27,7 @@ export default function Gallery({ data, getSectionData, updateSectionData, updat
                                 <Image className="h-5 w-5 text-indigo-600" />
                             </div>
                             <div>
-                                <CardTitle>{t('Image Gallery')}</CardTitle>
+                                <CardTitle  className="text-base">{t('Image Gallery')}</CardTitle>
                                 <p className="text-sm text-gray-500">{t('Product showcase slider')}</p>
                             </div>
                         </div>
@@ -41,33 +41,35 @@ export default function Gallery({ data, getSectionData, updateSectionData, updat
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                        <Label>{t('Gallery Variant')}</Label>
-                        <Select
-                            value={getSectionData('gallery').variant || 'gallery1'}
-                            onValueChange={(value) => updateSectionData('gallery', { variant: value })}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder={t('Select Gallery Style')} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="gallery1">{t('Slider')}</SelectItem>
-                                <SelectItem value="gallery2">{t('Grid')}</SelectItem>
-                                <SelectItem value="gallery3">{t('Stacked')}</SelectItem>
-                                <SelectItem value="gallery4">{t('Carousel')}</SelectItem>
-                                <SelectItem value="gallery5">{t('Lightbox')}</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <Label>{t('Gallery Variant')}</Label>
+                            <Select
+                                value={getSectionData('gallery').variant || 'gallery1'}
+                                onValueChange={(value) => updateSectionData('gallery', { variant: value })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder={t('Select Gallery Style')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="gallery1">{t('Slider')}</SelectItem>
+                                    <SelectItem value="gallery2">{t('Grid')}</SelectItem>
+                                    <SelectItem value="gallery3">{t('Stacked')}</SelectItem>
+                                    <SelectItem value="gallery4">{t('Carousel')}</SelectItem>
+                                    <SelectItem value="gallery5">{t('Lightbox')}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label>{t('Section Title')}</Label>
+                            <Input
+                                value={getSectionData('gallery').title || ''}
+                                onChange={(e) => updateSectionData('gallery', { title: e.target.value })}
+                                placeholder={t('See WorkDo Dash in Action')}
+                            />
+                        </div>
                     </div>
-                    <div className="space-y-2">
-                        <Label>{t('Section Title')}</Label>
-                        <Input
-                            value={getSectionData('gallery').title || ''}
-                            onChange={(e) => updateSectionData('gallery', { title: e.target.value })}
-                            placeholder={t('See WorkDo Dash in Action')}
-                        />
-                    </div>
-                    <div className="space-y-2">
+                    <div>
                         <Label>{t('Section Subtitle')}</Label>
                         <Input
                             value={getSectionData('gallery').subtitle || ''}

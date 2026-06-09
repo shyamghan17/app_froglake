@@ -52,16 +52,30 @@ function extractTranslations($file, &$translations) {
         return;
     }
 
-    // Match t("...") and t('...') patterns
-    preg_match_all('/(?<![a-zA-Z0-9_])t\(["\']([^"\']*)["\'\)]/', $content, $tMatches);
+    // Match t("...") - double-quoted strings (apostrophes allowed inside)
+    preg_match_all('/(?<![a-zA-Z0-9_])t\("((?:[^"\\\\]|\\\\.)*)"\)/', $content, $tDoubleMatches);
 
-    // Match __("...") and __('...') patterns
-    preg_match_all('/__\(["\']([^"\']*)["\'\)]/', $content, $underscoreMatches);
+    // Match t('...') - single-quoted strings (handles escaped apostrophes like \')
+    preg_match_all('/(?<![a-zA-Z0-9_])t\(\'((?:[^\'\\\\]|\\\\.)*)\'\)/', $content, $tSingleMatches);
 
-    // Combine all matches and add to translations
-    $allMatches = array_merge($tMatches[1], $underscoreMatches[1]);
+    // Match __("...") - double-quoted strings (apostrophes allowed inside)
+    preg_match_all('/__\("((?:[^"\\\\]|\\\\.)*)"\)/', $content, $underscoreDoubleMatches);
+
+    // Match __('...') - single-quoted strings (handles escaped apostrophes like \')
+    preg_match_all('/__\(\'((?:[^\'\\\\]|\\\\.)*)\'\)/', $content, $underscoreSingleMatches);
+
+    // Combine all matches
+    $allMatches = array_merge(
+        $tDoubleMatches[1],
+        $tSingleMatches[1],
+        $underscoreDoubleMatches[1],
+        $underscoreSingleMatches[1]
+    );
+
     foreach ($allMatches as $match) {
-        $translations[$match] = $match;
+        // Unescape escaped quotes (e.g., \' -> ' and \" -> ")
+        $key = str_replace(["\\'", '\\"'], ["'", '"'], $match);
+        $translations[$key] = $key;
     }
 }
 

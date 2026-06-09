@@ -23,6 +23,8 @@ class UpdateDealRequest extends FormRequest
             'sources.*'     => 'integer|exists:sources,id',
             'products'      => 'nullable|array',
             'notes'         => 'nullable|string',
+            'clients'       => 'nullable|array',
+            'clients.*'     => 'integer|exists:users,id',
         ];
         
     }

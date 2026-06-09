@@ -35,8 +35,16 @@ class HandleInertiaRequests extends Middleware
         if (!$this->isInstalled()) {
             return [];
         }
-        $locale = $request->user()->lang ?? $this->getSuperAdminLang();
+        
+        // Get locale and layout direction
+        $locale = $request->user() ? ($request->user()->lang ?? $this->getSuperAdminLang()) : $this->getSuperAdminLang();
         app()->setLocale($locale);
+        
+        // Get layout direction from user or auto-detect for guests
+        $rtlLanguages = ['ar', 'he'];
+        $layoutDirection = $request->user() && $request->user()->layout_direction
+            ? $request->user()->layout_direction
+            : (in_array($locale, $rtlLanguages) ? 'rtl' : 'ltr');
 
         // language file
         $languageFile = resource_path('lang/language.json');
@@ -61,6 +69,7 @@ class HandleInertiaRequests extends Middleware
                     : ['activatedPackages' => ActivatedModule()],
                 'impersonating' => $request->session()->has('impersonator_id'),
                 'lang' => $locale,
+                'layout_direction' => $layoutDirection,
             ],
             'flash' => [
                 'success' => $request->session()->get('success'),

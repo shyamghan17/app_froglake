@@ -52,11 +52,11 @@ class StoreEmployeeRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'documents.required' => 'At least one document is required.',
-            'documents.*.document_type_id.required' => 'Please select a document type.',
-            'documents.*.file.required' => 'Please upload a document file.',
-            'documents.*.file.mimes' => 'Document must be a PDF, DOC, DOCX, JPG, JPEG, or PNG file.',
-            'documents.*.file.max' => 'Document file size must not exceed 2MB.'
+            'documents.required' => __('At least one document is required.'),
+            'documents.*.document_type_id.required' => __('Please select a document type.'),
+            'documents.*.file.required' => __('Please upload a document file.'),
+            'documents.*.file.mimes' => __('Document must be a PDF, DOC, DOCX, JPG, JPEG, or PNG file.'),
+            'documents.*.file.max' => __('Document file size must not exceed 2MB.')
         ];
     }
 }

@@ -172,13 +172,6 @@ export default function EditEvent({ event, onSuccess }: EditEventProps) {
                             onChange={(e) => setData('color', e.target.value)}
                             className="w-16 h-10 p-1 border rounded"
                         />
-                        <Input
-                            type="text"
-                            value={data.color}
-                            onChange={(e) => setData('color', e.target.value)}
-                            className="flex-1"
-                            placeholder="#3b82f6"
-                        />
                     </div>
                     <InputError message={errors.color} />
                 </div>

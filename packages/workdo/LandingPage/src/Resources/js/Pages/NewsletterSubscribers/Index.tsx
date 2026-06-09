@@ -97,22 +97,13 @@ export default function Index({ subscribers }: IndexProps) {
             key: 'email',
             header: t('Email'),
             sortable: true,
-            render: (value: string) => (
-                <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <span className="font-medium">{value}</span>
-                </div>
-            )
+            render: (value: string) => (value)
         },
         {
             key: 'ip_address',
             header: t('IP Address'),
             sortable: true,
-            render: (value: string) => (
-                <span className="text-sm text-gray-600 font-mono">
-                    {value || '-'}
-                </span>
-            )
+            render: (value: string) => (value || '-')
         },
         {
             key: 'details',
@@ -132,11 +123,7 @@ export default function Index({ subscribers }: IndexProps) {
             key: 'subscribed_at',
             header: t('Subscribed At'),
             sortable: true,
-            render: (value: string) => (
-                <span className="text-sm text-gray-600">
-                    {formatDate(value)}
-                </span>
-            )
+            render: (value: string) => (formatDate(value))
         },
         ...(auth.user?.permissions?.includes('delete-newsletter-subscribers') ? [{
             key: 'actions',

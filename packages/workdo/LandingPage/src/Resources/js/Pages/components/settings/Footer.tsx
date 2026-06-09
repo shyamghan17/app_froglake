@@ -3,11 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch'; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Repeater } from '@/components/ui/repeater';
-import { Layout, Plus, Trash2 } from 'lucide-react';
+import { Layers } from 'lucide-react';
 
 interface CustomPage {
     id: number;
@@ -62,11 +61,11 @@ export default function Footer({ data, getSectionData, updateSectionData, update
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gray-100 rounded-lg">
-                                <Layout className="h-5 w-5 text-gray-600" />
+                            <div className="p-2 bg-blue-100 rounded-lg">
+                                <Layers className="h-5 w-5 text-blue-600" />
                             </div>
                             <div>
-                                <CardTitle>{t('Footer Content')}</CardTitle>
+                                <CardTitle className="text-base">{t('Footer Content')}</CardTitle>
                                 <p className="text-sm text-gray-500">{t('Footer information and links')}</p>
                             </div>
                         </div>
@@ -80,7 +79,7 @@ export default function Footer({ data, getSectionData, updateSectionData, update
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="space-y-2">
+                    <div>
                         <Label>{t('Footer Variant')}</Label>
                         <Select
                             value={getSectionData('footer').variant || 'footer1'}
@@ -98,7 +97,7 @@ export default function Footer({ data, getSectionData, updateSectionData, update
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="space-y-2">
+                    <div>
                         <Label>{t('Company Description')}</Label>
                         <Textarea
                             value={getSectionData('footer').description || ''}
@@ -109,7 +108,7 @@ export default function Footer({ data, getSectionData, updateSectionData, update
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">
-                        <div className="space-y-2">
+                        <div>
                             <Label>{t('Newsletter Title')}</Label>
                             <Input
                                 value={getSectionData('footer').newsletter_title || ''}
@@ -117,7 +116,7 @@ export default function Footer({ data, getSectionData, updateSectionData, update
                                 placeholder={t('Join Our Community')}
                             />
                         </div>
-                        <div className="space-y-2">
+                        <div>
                             <Label>{t('Newsletter Description')}</Label>
                             <Textarea
                                 value={getSectionData('footer').newsletter_description || ''}
@@ -126,21 +125,23 @@ export default function Footer({ data, getSectionData, updateSectionData, update
                                 rows={2}
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label>{t('Newsletter Button Text')}</Label>
-                            <Input
-                                value={getSectionData('footer').newsletter_button_text || ''}
-                                onChange={(e) => updateSectionData('footer', { newsletter_button_text: e.target.value })}
-                                placeholder={t('Subscribe')}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>{t('Copyright Text')}</Label>
-                            <Input
-                                value={getSectionData('footer').copyright_text || ''}
-                                onChange={(e) => updateSectionData('footer', { copyright_text: e.target.value })}
-                                placeholder={`© 2026 Company Name. All rights reserved.`}
-                            />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label>{t('Newsletter Button Text')}</Label>
+                                <Input
+                                    value={getSectionData('footer').newsletter_button_text || ''}
+                                    onChange={(e) => updateSectionData('footer', { newsletter_button_text: e.target.value })}
+                                    placeholder={t('Subscribe')}
+                                />
+                            </div>
+                            <div>
+                                <Label>{t('Copyright Text')}</Label>
+                                <Input
+                                    value={getSectionData('footer').copyright_text || ''}
+                                    onChange={(e) => updateSectionData('footer', { copyright_text: e.target.value })}
+                                    placeholder={`© 2026 Company Name. All rights reserved.`}
+                                />
+                            </div>
                         </div>
                     </div>
                     

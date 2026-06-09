@@ -93,6 +93,12 @@ export default function Index({ pages }: IndexProps) {
             )
         },
         {
+            key: 'updated_at',
+            header: t('Last Updated'),
+            sortable: true,
+            render: (value: string) => (formatDate(value))
+        },
+        {
             key: 'is_active',
             header: t('Status'),
             sortable: true,
@@ -101,16 +107,6 @@ export default function Index({ pages }: IndexProps) {
                     value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                 }`}>
                     {value ? t('Active') : t('Inactive')}
-                </span>
-            )
-        },
-        {
-            key: 'updated_at',
-            header: t('Last Updated'),
-            sortable: true,
-            render: (value: string) => (
-                <span className="text-sm text-gray-600">
-                    {formatDate(value)}
                 </span>
             )
         },

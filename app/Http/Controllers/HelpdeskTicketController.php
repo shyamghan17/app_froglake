@@ -17,6 +17,55 @@ use Inertia\Inertia;
 
 class HelpdeskTicketController extends Controller
 {
+    public function today()
+    {
+        if(Auth::user()->can('manage-helpdesk-tickets')){
+            $query = HelpdeskTicket::query()
+                ->with(['category', 'creator', 'replies.creator'])
+                ->where(function($q) {
+                    if(Auth::user()->can('manage-any-helpdesk-tickets')) {
+                        // Get all tickets
+                    } elseif(Auth::user()->can('manage-own-helpdesk-tickets')) {
+                        $q->where('created_by', creatorId());
+                    } else {
+                        $q->whereRaw('1 = 0');
+                    }
+                })
+                ->whereIn('status', ['open', 'in_progress'])
+                ->when(request('search'), fn($q) => $q->where(function($query) {
+                    $query->where('title', 'like', '%' . request('search') . '%')
+                          ->orWhere('ticket_id', 'like', '%' . request('search') . '%')
+                          ->orWhere('description', 'like', '%' . request('search') . '%');
+                }))
+                ->latest();
+
+            $tickets = $query->get();
+
+            // Calculate statistics
+            $stats = [
+                'total' => $tickets->count(),
+                'urgent' => $tickets->where('priority', 'urgent')->count(),
+                'high' => $tickets->where('priority', 'high')->count(),
+                'medium' => $tickets->where('priority', 'medium')->count(),
+                'low' => $tickets->where('priority', 'low')->count(),
+                'open' => $tickets->where('status', 'open')->count(),
+                'in_progress' => $tickets->where('status', 'in_progress')->count(),
+            ];
+
+            $categories = HelpdeskCategory::where('is_active', true)
+                ->get(['id', 'name', 'color']);
+
+            return Inertia::render('helpdesk/tickets/today', [
+                'tickets' => $tickets,
+                'stats' => $stats,
+                'categories' => $categories,
+            ]);
+        }
+        else{
+            return back()->with('error', __('Permission denied'));
+        }
+    }
+
     public function index()
     {
         if(Auth::user()->can('manage-helpdesk-tickets')){
@@ -44,7 +93,7 @@ class HelpdeskTicketController extends Controller
                 ->withQueryString();
 
             $categories = HelpdeskCategory::where('is_active', true)
-                ->get(['id', 'name']);
+                ->get(['id', 'name', 'color']);
 
             $companies = [];
             if(Auth::user()->type === 'superadmin') {
@@ -103,7 +152,12 @@ class HelpdeskTicketController extends Controller
                         'ticket_category' => $ticket->category->name ?? null,
                         'ticket_priority' => $ticket->priority ?? null,
                     ];
-                    EmailTemplate::sendEmailTemplate('Helpdesk Ticket', [$toEmail], $emailData, $adminUser->id);
+                    $message = EmailTemplate::sendEmailTemplate('Helpdesk Ticket', [$toEmail], $emailData, $adminUser->id);
+                    if($message['is_success'] == false && !empty($message['error'])) {
+                        return back()
+                            ->with('success', __('The ticket has been created successfully.'))
+                            ->with('error', $message['error']);
+                    }
                 }
             } catch (\Throwable $th) {
                 return back()->with('error', $th->getMessage());

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Palette, Save, Upload, FileText, Settings as SettingsIcon, Layout, Moon, SidebarIcon, Check } from 'lucide-react';
+import { Palette, Save, Upload, FileText, Settings as SettingsIcon, Moon, SidebarIcon, Check } from 'lucide-react';
 import MediaPicker from '@/components/MediaPicker';
 import { useTranslation } from 'react-i18next';
 import { router } from '@inertiajs/react';
@@ -21,7 +21,6 @@ interface BrandSettings {
   footerText: string;
   sidebarVariant: string;
   sidebarStyle: string;
-  layoutDirection: string;
   themeMode: string;
   themeColor: string;
   customColor: string;
@@ -46,7 +45,6 @@ export default function BrandSettings({ userSettings, auth }: BrandSettingsProps
     footerText: userSettings?.footerText || '© WorkDo. All rights reserved.',
     sidebarVariant: userSettings?.sidebarVariant || 'inset',
     sidebarStyle: userSettings?.sidebarStyle || 'plain',
-    layoutDirection: userSettings?.layoutDirection || 'ltr',
     themeMode: userSettings?.themeMode || 'light',
     themeColor: userSettings?.themeColor || 'green',
     customColor: userSettings?.customColor || '#10b981',
@@ -63,7 +61,6 @@ export default function BrandSettings({ userSettings, auth }: BrandSettingsProps
         footerText: userSettings?.footerText || '© WorkDo. All rights reserved.',
         sidebarVariant: userSettings?.sidebarVariant || 'inset',
         sidebarStyle: userSettings?.sidebarStyle || 'plain',
-        layoutDirection: userSettings?.layoutDirection || 'ltr',
         themeMode: userSettings?.themeMode || 'light',
         themeColor: userSettings?.themeColor || 'green',
         customColor: userSettings?.customColor || '#10b981',
@@ -430,43 +427,6 @@ export default function BrandSettings({ userSettings, auth }: BrandSettingsProps
                     </div>
                   </div>
 
-                  {/* Layout Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center">
-                      <Layout className="h-5 w-5 mr-2 text-muted-foreground" />
-                      <h3 className="text-base font-medium">{t('Layout')}</h3>
-                    </div>
-                    <Separator className="my-2" />
-
-                    <div className="space-y-2">
-                      <Label className="mb-2 block">{t('Layout Direction')}</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button
-                          type="button"
-                          variant={settings.layoutDirection === "ltr" ? "default" : "outline"}
-                          className="h-10 justify-start"
-                          onClick={() => handleSelectChange('layoutDirection', 'ltr')}
-                        >
-                          {t('Left-to-Right')}
-                          {settings.layoutDirection === "ltr" && (
-                            <Check className="h-4 w-4 ml-2" />
-                          )}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={settings.layoutDirection === "rtl" ? "default" : "outline"}
-                          className="h-10 justify-start"
-                          onClick={() => handleSelectChange('layoutDirection', 'rtl')}
-                        >
-                          {t('Right-to-Left')}
-                          {settings.layoutDirection === "rtl" && (
-                            <Check className="h-4 w-4 ml-2" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Mode Section */}
                   <div className="space-y-4">
                     <div className="flex items-center">
@@ -535,7 +495,6 @@ export default function BrandSettings({ userSettings, auth }: BrandSettingsProps
                   customColor={settings.customColor}
                   sidebarVariant={settings.sidebarVariant}
                   sidebarStyle={settings.sidebarStyle}
-                  layoutDirection={settings.layoutDirection}
                   themeMode={settings.themeMode}
                 />
 

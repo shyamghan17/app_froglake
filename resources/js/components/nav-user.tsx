@@ -61,29 +61,40 @@ export function NavUser({
 
   if (inHeader) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <LanguageSwitcher />
 
         <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="flex items-center gap-2 h-8 px-3 rounded-md">
-            <Avatar className="h-8 w-8 rounded-full">
+          <Button variant="ghost" className="flex items-center gap-2 h-9 px-2 rounded-lg hover:bg-accent transition-colors">
+            <Avatar className="h-8 w-8 rounded-full ring-2 ring-gray-200 dark:ring-gray-700">
               {(user as any).avatar && <AvatarImage src={getImagePath((user as any).avatar)} alt={user.name} />}
-              <AvatarFallback className="bg-muted rounded-full">{user.name?.charAt(0)?.toUpperCase()}</AvatarFallback>
+              <AvatarFallback className="bg-primary/10 text-primary rounded-full font-semibold">{user.name?.charAt(0)?.toUpperCase()}</AvatarFallback>
             </Avatar>
+            <div className="hidden md:flex flex-col items-start">
+              <span className="text-sm font-medium leading-none">{user.name}</span>
+              <span className="text-xs text-muted-foreground leading-none mt-0.5">{(user as any).type || 'User'}</span>
+            </div>
+            <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium">{user.name}</p>
-              <p className="text-xs text-muted-foreground">{user.email}</p>
+        <DropdownMenuContent align="end" className="w-64 rounded-xl shadow-lg border-gray-200/50 dark:border-gray-700/50">
+          <DropdownMenuLabel className="pb-2">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10 rounded-full ring-2 ring-gray-200 dark:ring-gray-700">
+                {(user as any).avatar && <AvatarImage src={getImagePath((user as any).avatar)} alt={user.name} />}
+                <AvatarFallback className="bg-primary/10 text-primary rounded-full font-semibold">{user.name?.charAt(0)?.toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-semibold">{user.name}</p>
+                <p className="text-xs text-muted-foreground">{user.email}</p>
+              </div>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             {auth.user?.permissions?.includes('manage-profile') && (
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className="cursor-pointer">
                 <Link href={route('profile.edit')}>
                   <BadgeCheck className="mr-2 h-4 w-4" />
                   {t('Edit Profile')}
@@ -92,7 +103,7 @@ export function NavUser({
             )}
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
+          <DropdownMenuItem asChild className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20">
             <Link
               className="w-full"
               href={route("logout")}

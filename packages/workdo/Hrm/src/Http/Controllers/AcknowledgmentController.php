@@ -65,8 +65,6 @@ class AcknowledgmentController extends Controller
         if (Auth::user()->can('create-acknowledgments')) {
             $validated = $request->validated();
 
-
-
             $acknowledgment = new Acknowledgment();
             $acknowledgment->employee_id = $validated['employee_id'];
             $acknowledgment->document_id = $validated['document_id'];
@@ -99,9 +97,9 @@ class AcknowledgmentController extends Controller
 
             UpdateAcknowledgment::dispatch($request, $acknowledgment);
 
-            return redirect()->back()->with('success', __('The acknowledgment details are updated successfully.'));
+            return back()->with('success', __('The acknowledgment details are updated successfully.'));
         } else {
-            return redirect()->route('hrm.acknowledgments.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 
@@ -111,9 +109,9 @@ class AcknowledgmentController extends Controller
             DestroyAcknowledgment::dispatch($acknowledgment);
             $acknowledgment->delete();
 
-            return redirect()->back()->with('success', __('The acknowledgment has been deleted.'));
+            return back()->with('success', __('The acknowledgment has been deleted.'));
         } else {
-            return redirect()->route('hrm.acknowledgments.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 

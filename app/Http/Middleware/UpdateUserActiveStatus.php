@@ -14,7 +14,7 @@ class UpdateUserActiveStatus
     {
         if ($this->isInstalled() && Auth::check()) {
             $user = Auth::user();
-            $user->update(['active_status' => 1]);
+            $user->update(['active_status' => 1, 'last_seen_at' => now()]);
 
             // Cache user as online for 5 minutes
             Cache::put("user_online_{$user->id}", true, now()->addMinutes(5));

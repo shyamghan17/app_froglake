@@ -11,7 +11,5 @@ class DestroySalarySlip
     use Dispatchable, SerializesModels;
 
     public function __construct(public PayrollEntry $payrollEntry)
-    {
-        //
-    }
+    {}
 }

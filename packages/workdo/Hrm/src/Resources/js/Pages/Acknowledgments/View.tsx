@@ -44,8 +44,8 @@ export default function View({ acknowledgment }: ViewProps) {
                     
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Status')}</label>
-                        <div className="bg-gray-50 p-2 rounded">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        <div className="p-1 rounded">
+                            <span className={`px-2 py-1 rounded-full text-sm ${
                                 acknowledgment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                 acknowledgment.status === 'acknowledged' ? 'bg-green-100 text-green-800' :
                                 'bg-gray-100 text-gray-800'

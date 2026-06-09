@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import AuthenticatedLayout from "@/layouts/authenticated-layout";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,27 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LineChart, PieChart, BarChart } from '@/components/charts';
 import CalendarView from "@/components/calendar-view";
-import { 
-    Users, 
-    UserCheck, 
-    UserX, 
-    Clock, 
-    Calendar, 
-    DollarSign, 
-    TrendingUp, 
-    TrendingDown,
-    Award,
-    AlertTriangle,
-    FileText,
-    Building,
-    Briefcase,
-    CalendarDays,
-    CreditCard,
-    ArrowUpRight,
-    ArrowDownRight,
-    MoreHorizontal,
-    User as UserIcon
-} from 'lucide-react';
+import { Users,UserCheck,UserX,Clock,Calendar,TrendingUp, TrendingDown,AlertTriangle,FileText,Building,Briefcase,CalendarDays,CreditCard,ArrowUpRight,ArrowDownRight,User as UserIcon } from 'lucide-react';
 import { getImagePath,formatDate, formatTime,formatDateTime } from '@/utils/helpers';
 
 interface HrmProps {
@@ -99,7 +79,7 @@ export default function HrmIndex({ message, stats }: HrmProps) {
             <div className="space-y-6">
                 {/* Key Metrics Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div onClick={() => window.location.href = route('hrm.employees.index')} className="cursor-pointer">
+                    <div onClick={() => router.visit(route('hrm.employees.index'))} className="cursor-pointer">
                         <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-semibold text-blue-700">{t('Total Employees')}</CardTitle>
@@ -114,7 +94,7 @@ export default function HrmIndex({ message, stats }: HrmProps) {
                         </Card>
                     </div>
                     
-                    <div onClick={() => window.location.href = route('hrm.attendances.index')} className="cursor-pointer">
+                    <div onClick={() => router.visit(route('hrm.attendances.index'))} className="cursor-pointer">
                         <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-semibold text-green-700">{t('Present Today')}</CardTitle>
@@ -129,7 +109,7 @@ export default function HrmIndex({ message, stats }: HrmProps) {
                         </Card>
                     </div>
                     
-                    <div onClick={() => window.location.href = route('hrm.attendances.index')} className="cursor-pointer">
+                    <div onClick={() => router.visit(route('hrm.attendances.index'))} className="cursor-pointer">
                         <Card className="bg-gradient-to-r from-red-50 to-red-100 border-red-200">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-semibold text-red-700">{t('Absent Today')}</CardTitle>
@@ -149,7 +129,7 @@ export default function HrmIndex({ message, stats }: HrmProps) {
                         </Card>
                     </div>
                     
-                    <div onClick={() => window.location.href = route('hrm.leave-applications.index')} className="cursor-pointer">
+                    <div onClick={() => router.visit(route('hrm.leave-applications.index'))} className="cursor-pointer">
                         <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-semibold text-purple-700">{t('On Leave')}</CardTitle>
@@ -167,7 +147,7 @@ export default function HrmIndex({ message, stats }: HrmProps) {
 
                 {/* Secondary Metrics Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div onClick={() => window.location.href = route('hrm.branches.index')} className="cursor-pointer">
+                    <div onClick={() => router.visit(route('hrm.branches.index'))} className="cursor-pointer">
                         <Card className="bg-gradient-to-r from-teal-50 to-teal-100 border-teal-200">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-semibold text-teal-700">{t('Total Branch')}</CardTitle>
@@ -182,7 +162,7 @@ export default function HrmIndex({ message, stats }: HrmProps) {
                         </Card>
                     </div>
                     
-                    <div onClick={() => window.location.href = route('hrm.departments.index')} className="cursor-pointer">
+                    <div onClick={() => router.visit(route('hrm.departments.index'))} className="cursor-pointer">
                         <Card className="bg-gradient-to-r from-indigo-50 to-indigo-100 border-indigo-200">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-semibold text-indigo-700">{t('Total Department')}</CardTitle>
@@ -197,7 +177,7 @@ export default function HrmIndex({ message, stats }: HrmProps) {
                         </Card>
                     </div>
                     
-                    <div onClick={() => window.location.href = route('hrm.promotions.index')} className="cursor-pointer">
+                    <div onClick={() => router.visit(route('hrm.promotions.index'))} className="cursor-pointer">
                         <Card className="bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-semibold text-emerald-700">{t('Total Promotions')}</CardTitle>
@@ -212,7 +192,7 @@ export default function HrmIndex({ message, stats }: HrmProps) {
                         </Card>
                     </div>
                     
-                    <div onClick={() => window.location.href = route('hrm.terminations.index')} className="cursor-pointer">
+                    <div onClick={() => router.visit(route('hrm.terminations.index'))} className="cursor-pointer">
                         <Card className="bg-gradient-to-r from-rose-50 to-rose-100 border-rose-200">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-semibold text-rose-700">{t('Terminations')}</CardTitle>
@@ -227,41 +207,6 @@ export default function HrmIndex({ message, stats }: HrmProps) {
                         </Card>
                     </div>
                 </div>
-
-                {/* Attendance Trends Chart */}
-                {/* <Card>
-                    <CardHeader>
-                        <CardTitle>{t('Attendance Trends')}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <LineChart
-                            data={[
-                                { month: 'Jan', present: 230, absent: 17, leave: 15 },
-                                { month: 'Feb', present: 235, absent: 12, leave: 18 },
-                                { month: 'Mar', present: 240, absent: 7, leave: 20 },
-                                { month: 'Apr', present: 238, absent: 9, leave: 16 },
-                                { month: 'May', present: 242, absent: 5, leave: 14 },
-                                { month: 'Jun', present: 234, absent: 13, leave: 18 },
-                                { month: 'Jul', present: 245, absent: 8, leave: 12 },
-                                { month: 'Aug', present: 241, absent: 6, leave: 16 },
-                                { month: 'Sep', present: 239, absent: 11, leave: 19 },
-                                { month: 'Oct', present: 243, absent: 4, leave: 15 },
-                                { month: 'Nov', present: 237, absent: 10, leave: 17 },
-                                { month: 'Dec', present: 234, absent: 13, leave: 18 }
-                            ]}
-                            height={300}
-                            showTooltip={true}
-                            showGrid={true}
-                            lines={[
-                                { dataKey: 'present', color: '#10b981', name: 'Present' },
-                                { dataKey: 'absent', color: '#ef4444', name: 'Absent' },
-                                { dataKey: 'leave', color: '#f59e0b', name: 'On Leave' }
-                            ]}
-                            xAxisKey="month"
-                            showLegend={true}
-                        />
-                    </CardContent>
-                </Card> */}
 
                 {/* Charts and Analytics */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -311,8 +256,6 @@ export default function HrmIndex({ message, stats }: HrmProps) {
                         </CardContent>
                     </Card>
 
-
-
                     {/* Quick Actions */}
                     <Card>
                         <CardHeader>
@@ -322,71 +265,105 @@ export default function HrmIndex({ message, stats }: HrmProps) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 space-y-3 pr-2">
-                                <Button 
-                                    className="w-full justify-start" 
-                                    variant="outline"
-                                    onClick={() => window.location.href = route('hrm.employees.create')}
-                                >
-                                    <Users className="h-4 w-4 mr-2" />
-                                    {t('Add New Employee')}
-                                </Button>
-                                <Button 
-                                    className="w-full justify-start" 
-                                    variant="outline"
-                                    onClick={() => window.location.href = route('hrm.attendances.index')}
-                                >
-                                    <Clock className="h-4 w-4 mr-2" />
-                                    {t('Mark Attendance')}
-                                </Button>
-                                <Button 
-                                    className="w-full justify-start" 
-                                    variant="outline"
-                                    onClick={() => window.location.href = route('hrm.leave-applications.index')}
-                                >
-                                    <Calendar className="h-4 w-4 mr-2" />
-                                    {t('Apply for Leave')}
-                                </Button>
-                                <Button 
-                                    className="w-full justify-start" 
-                                    variant="outline"
-                                    onClick={() => window.location.href = route('hrm.payrolls.index')}
-                                >
-                                    <CreditCard className="h-4 w-4 mr-2" />
-                                    {t('Process Payroll')}
-                                </Button>
-                                <Button 
-                                    className="w-full justify-start" 
-                                    variant="outline"
-                                    onClick={() => window.location.href = route('hrm.promotions.index')}
-                                >
-                                    <TrendingUp className="h-4 w-4 mr-2" />
-                                    {t('Create Promotion')}
-                                </Button>
-                                <Button 
-                                    className="w-full justify-start" 
-                                    variant="outline"
-                                    onClick={() => window.location.href = route('hrm.resignations.index')}
-                                >
-                                    <TrendingDown className="h-4 w-4 mr-2" />
-                                    {t('Create Resignation')}
-                                </Button>
-                                <Button 
-                                    className="w-full justify-start" 
-                                    variant="outline"
-                                    onClick={() => window.location.href = route('hrm.holidays.index')}
-                                >
-                                    <CalendarDays className="h-4 w-4 mr-2" />
-                                    {t('Create Holiday')}
-                                </Button>
-                                <Button 
-                                    className="w-full justify-start" 
-                                    variant="outline"
-                                    onClick={() => window.location.href = route('hrm.warnings.index')}
-                                >
-                                    <AlertTriangle className="h-4 w-4 mr-2" />
-                                    {t('Create Warning')}
-                                </Button>
+                            <div className="h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 grid grid-cols-2 gap-3 pr-2 content-start">
+                                {[
+                                    {
+                                        label: t('Add New Employee'),
+                                        icon: Users,
+                                        route: 'hrm.employees.create',
+                                        lightColor: 'bg-blue-50',
+                                        textColor: 'text-blue-600',
+                                        borderColor: 'border-blue-200',
+                                        hoverBorder: 'hover:border-blue-300',
+                                        hoverBg: 'hover:bg-blue-50/50',
+                                    },
+                                    {
+                                        label: t('Mark Attendance'),
+                                        icon: Clock,
+                                        route: 'hrm.attendances.index',
+                                        lightColor: 'bg-emerald-50',
+                                        textColor: 'text-emerald-600',
+                                        borderColor: 'border-emerald-200',
+                                        hoverBorder: 'hover:border-emerald-300',
+                                        hoverBg: 'hover:bg-emerald-50/50',
+                                    },
+                                    {
+                                        label: t('Apply for Leave'),
+                                        icon: Calendar,
+                                        route: 'hrm.leave-applications.index',
+                                        lightColor: 'bg-purple-50',
+                                        textColor: 'text-purple-600',
+                                        borderColor: 'border-purple-200',
+                                        hoverBorder: 'hover:border-purple-300',
+                                        hoverBg: 'hover:bg-purple-50/50',
+                                    },
+                                    {
+                                        label: t('Process Payroll'),
+                                        icon: CreditCard,
+                                        route: 'hrm.payrolls.index',
+                                        lightColor: 'bg-amber-50',
+                                        textColor: 'text-amber-600',
+                                        borderColor: 'border-amber-200',
+                                        hoverBorder: 'hover:border-amber-300',
+                                        hoverBg: 'hover:bg-amber-50/50',
+                                    },
+                                    {
+                                        label: t('Create Promotion'),
+                                        icon: TrendingUp,
+                                        route: 'hrm.promotions.index',
+                                        lightColor: 'bg-teal-50',
+                                        textColor: 'text-teal-600',
+                                        borderColor: 'border-teal-200',
+                                        hoverBorder: 'hover:border-teal-300',
+                                        hoverBg: 'hover:bg-teal-50/50',
+                                    },
+                                    {
+                                        label: t('Create Resignation'),
+                                        icon: TrendingDown,
+                                        route: 'hrm.resignations.index',
+                                        lightColor: 'bg-rose-50',
+                                        textColor: 'text-rose-600',
+                                        borderColor: 'border-rose-200',
+                                        hoverBorder: 'hover:border-rose-300',
+                                        hoverBg: 'hover:bg-rose-50/50',
+                                    },
+                                    {
+                                        label: t('Create Holiday'),
+                                        icon: CalendarDays,
+                                        route: 'hrm.holidays.index',
+                                        lightColor: 'bg-indigo-50',
+                                        textColor: 'text-indigo-600',
+                                        borderColor: 'border-indigo-200',
+                                        hoverBorder: 'hover:border-indigo-300',
+                                        hoverBg: 'hover:bg-indigo-50/50',
+                                    },
+                                    {
+                                        label: t('Create Warning'),
+                                        icon: AlertTriangle,
+                                        route: 'hrm.warnings.index',
+                                        lightColor: 'bg-orange-50',
+                                        textColor: 'text-orange-600',
+                                        borderColor: 'border-orange-200',
+                                        hoverBorder: 'hover:border-orange-300',
+                                        hoverBg: 'hover:bg-orange-50/50',
+                                    },
+                                ].map((action, index) => {
+                                    const Icon = action.icon;
+                                    return (
+                                        <div
+                                            key={index}
+                                            onClick={() => router.visit(route(action.route))}
+                                            className={`group flex flex-col items-center text-center gap-2.5 p-3.5 rounded-xl border ${action.borderColor} ${action.hoverBorder} ${action.hoverBg} bg-white cursor-pointer transition-all duration-200 hover:shadow-md`}
+                                        >
+                                            <div className={`w-10 h-10 rounded-xl ${action.lightColor} flex items-center justify-center transition-transform duration-200 group-hover:scale-110`}>
+                                                <Icon className={`h-5 w-5 ${action.textColor}`} />
+                                            </div>
+                                            <p className="text-xs font-semibold text-gray-800 group-hover:text-gray-900 transition-colors leading-tight">
+                                                {action.label}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </CardContent>
                     </Card>

@@ -18,7 +18,7 @@ import CookieConsent from "@/components/cookie-consent";
 import { useFavicon } from "@/hooks/use-favicon";
 import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
-import { UserX } from "lucide-react";
+import { UserX, Bot } from "lucide-react";
 import { useFormFields } from '@/hooks/useFormFields';
 import { getImagePath } from '@/utils/helpers';
 
@@ -41,6 +41,9 @@ function AuthenticatedLayoutContent({
     useFavicon();
 
     const generalAlerts = useFormFields('generalAlert', {}, () => {}, {});
+
+    // Check if current page is AI Agent chat page
+    const isAIAgentPage = window.location.pathname.includes('/ai-agent/chat');
 
 
     return (
@@ -70,7 +73,7 @@ function AuthenticatedLayoutContent({
                 dir={settings.layoutDirection === 'rtl' ? 'rtl' : 'ltr'}
             >
                 <header
-                    className={`bg-background flex h-12 shrink-0 items-center gap-2 px-4 py-1 border-b mb-2 justify-between`}
+                    className={`bg-background/95 backdrop-blur-md flex h-14 shrink-0 items-center gap-2 px-6 py-2 border-b shadow-sm mb-2 justify-between`}
                     >
                     {/* Sidebar + Breadcrumb */}
                     <div className={`flex items-center gap-2 ${ settings.layoutDirection === "rtl" ? "order-2 flex-row-reverse" : "order-1" }`} >
@@ -82,7 +85,7 @@ function AuthenticatedLayoutContent({
 
                         {/* Breadcrumb */}
                         <Breadcrumb className={`${ settings.layoutDirection === "rtl" ? "order-1" : "order-3" }`} >
-                            <BreadcrumbList className={`flex ${ settings.layoutDirection === "rtl" ? "justify-end" : "justify-start" }`} >
+                            <BreadcrumbList className={`flex text-sm ${ settings.layoutDirection === "rtl" ? "justify-end" : "justify-start" }`} >
                             <BreadcrumbItem>
                                 <BreadcrumbLink asChild>
                                     <Link href={route("dashboard")}>{t('Dashboard')}</Link>
@@ -108,7 +111,7 @@ function AuthenticatedLayoutContent({
 
                     {/* NavUser */}
                     <div
-                        className={`flex items-center gap-2 ${
+                        className={`flex items-center gap-3 ${
                         settings.layoutDirection === "rtl" ? "order-1 flex-row-reverse" : "order-2"
                         }`}
                     >
@@ -130,8 +133,8 @@ function AuthenticatedLayoutContent({
 
                 <main className="p-4 md:pt-0 h-full">
                     {pageTitle && (
-                        <div className="flex items-center mb-4" dir={settings.layoutDirection}>
-                            <h1 className="text-xl font-semibold flex-1">{pageTitle}</h1>
+                        <div className="flex items-center mb-6" dir={settings.layoutDirection}>
+                            <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex-1">{pageTitle}</h1>
                             <div className="flex-shrink-0">{pageActions}</div>
                         </div>
                     )}
@@ -143,6 +146,18 @@ function AuthenticatedLayoutContent({
         {generalAlerts.map((alert) => (
             <div key={alert.id}>{alert.component}</div>
         ))}
+        
+        {/* Floating AI Agent Button */}
+        {auth.user?.permissions?.includes('manage-ai-agent') && !isAIAgentPage && (
+            <div className="fixed bottom-8 right-8 z-50 animate-bounce" style={{ animationDuration: '2s' }}>
+                <Button
+                    onClick={() => router.visit(route('ai-agent.chat.page'))}
+                    className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow duration-200 bg-primary hover:bg-primary/90 p-0 [&_svg]:!size-7"
+                >
+                    <Bot className="text-primary-foreground" strokeWidth={2} />
+                </Button>
+            </div>
+        )}
         </div>
         </>
     );

@@ -71,17 +71,17 @@ export default function Footer({ settings }: FooterProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const sectionData = settings?.config_sections?.sections?.footer || {};
-    const variant = sectionData.variant || 'footer1';
+    const variant = sectionData.variant;
     const config = FOOTER_VARIANTS[variant as keyof typeof FOOTER_VARIANTS] || FOOTER_VARIANTS.footer1;
 
-    const companyName = settings?.company_name || 'WorkDo Dash';
-    const description = sectionData.description || 'The complete business management solution for modern enterprises.';
-    const contactEmail = settings?.contact_email || 'support@workdodash.com';
-    const phone = settings?.contact_phone || '+1 (555) 123-4567';
-    const newsletterTitle = sectionData.newsletter_title || 'Join Our Community';
-    const newsletterDescription = sectionData.newsletter_description || 'We build modern web tools to help you jump-start your daily business work.';
-    const newsletterButtonText = sectionData.newsletter_button_text || 'Subscribe';
-    const copyrightText = sectionData.copyright_text || `© 2026 ${companyName}. All rights reserved.`;
+    const companyName = settings?.company_name;
+    const description = sectionData.description;
+    const contactEmail = settings?.contact_email;
+    const phone = settings?.contact_phone;
+    const newsletterTitle = sectionData.newsletter_title;
+    const newsletterDescription = sectionData.newsletter_description;
+    const newsletterButtonText = sectionData.newsletter_button_text;
+    const copyrightText = sectionData.copyright_text;
     const colors = settings?.config_sections?.colors || { primary: '#10b981', secondary: '#059669', accent: '#f59e0b' };
 
     const handleNewsletterSubmit = async (e: React.FormEvent) => {
@@ -109,10 +109,10 @@ export default function Footer({ settings }: FooterProps) {
             const data = await response.json();
 
             if (data.success) {
-                toast.success(data.message || 'Thank you for subscribing to our newsletter!');
+                toast.success(data.message);
                 setEmailInput('');
             } else {
-                toast.error(data.message || 'Failed to subscribe. Please try again.');
+                toast.error(data.message);
             }
         } catch (error) {
             toast.error('An error occurred. Please try again.');
@@ -150,11 +150,11 @@ export default function Footer({ settings }: FooterProps) {
                     <p className={config.description}>{description}</p>
                     <div className="flex flex-col space-y-2">
                         <div className="flex items-center text-sm">
-                            <Mail className="h-4 w-4 mr-2 text-gray-500" />
+                            <Mail className="h-4 w-4 me-2 text-gray-500" />
                             <span className="text-slate-700">{contactEmail}</span>
                         </div>
                         <div className="flex items-center text-sm">
-                            <Phone className="h-4 w-4 mr-2 text-gray-500" />
+                            <Phone className="h-4 w-4 me-2 text-gray-500" />
                             <span className="text-slate-700">{phone}</span>
                         </div>
                     </div>
@@ -177,7 +177,7 @@ export default function Footer({ settings }: FooterProps) {
                 <div className={`space-y-4 ${config.layout === 'centered' ? 'flex flex-col items-center' : ''}`}>
                     <div className="flex items-center">
                         <Mail
-                            className={config.layout === 'centered' || config.layout === 'modern' ? 'mr-4' : 'h-5 w-5 mr-3'}
+                            className={config.layout === 'centered' || config.layout === 'modern' ? 'me-4' : 'h-5 w-5 me-3'}
                             style={{
                                 color: 'white',
                                 width: config.layout === 'centered' || config.layout === 'modern' ? '24px' : '20px',
@@ -192,7 +192,7 @@ export default function Footer({ settings }: FooterProps) {
                     </div>
                     <div className="flex items-center">
                         <Phone
-                            className={config.layout === 'centered' || config.layout === 'modern' ? 'mr-4' : 'h-5 w-5 mr-3'}
+                            className={config.layout === 'centered' || config.layout === 'modern' ? 'me-4' : 'h-5 w-5 me-3'}
                             style={{
                                 color: 'white',
                                 width: config.layout === 'centered' || config.layout === 'modern' ? '24px' : '20px',
@@ -330,7 +330,7 @@ export default function Footer({ settings }: FooterProps) {
                     <h3 className={config.newsletterTitle}>{newsletterTitle}</h3>
                     <p className="text-slate-700 text-sm">{newsletterDescription}</p>
                     <div className="flex items-center space-x-3">
-                        <form onSubmit={handleNewsletterSubmit} className="flex items-center space-x-3">
+                        <form onSubmit={handleNewsletterSubmit} className="flex items-center gap-3">
                             <input
                                 type="email"
                                 placeholder="Enter email"

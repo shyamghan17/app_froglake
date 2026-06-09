@@ -25,7 +25,4 @@ class EmployeeDocumentType extends Model
         ];
     }
 
-
-
-
 }

@@ -76,6 +76,36 @@ class PermissionTableSeeder extends Seeder
             ['name' => 'edit-lead-tasks', 'module' => 'lead-tasks', 'label' => 'Edit Lead Tasks'],
             ['name' => 'delete-lead-tasks', 'module' => 'lead-tasks', 'label' => 'Delete Lead Tasks'],
 
+            // Lead User management
+            ['name' => 'manage-lead-users', 'module' => 'lead-users', 'label' => 'Manage Lead Users'],
+            ['name' => 'create-lead-users', 'module' => 'lead-users', 'label' => 'Create Lead Users'],
+            ['name' => 'delete-lead-users', 'module' => 'lead-users', 'label' => 'Delete Lead Users'],
+
+            // Lead Product management
+            ['name' => 'manage-lead-products', 'module' => 'lead-products', 'label' => 'Manage Lead Products'],
+            ['name' => 'create-lead-products', 'module' => 'lead-products', 'label' => 'Create Lead Products'],
+            ['name' => 'delete-lead-products', 'module' => 'lead-products', 'label' => 'Delete Lead Products'],
+
+            // Lead Sources management
+            ['name' => 'manage-lead-sources', 'module' => 'lead-sources', 'label' => 'Manage Lead Sources'],
+            ['name' => 'create-lead-sources', 'module' => 'lead-sources', 'label' => 'Create Lead Sources'],
+            ['name' => 'delete-lead-sources', 'module' => 'lead-sources', 'label' => 'Delete Lead Sources'],
+
+            // Lead File management
+            ['name' => 'manage-lead-files', 'module' => 'lead-files', 'label' => 'Manage Lead Files'],
+            ['name' => 'create-lead-files', 'module' => 'lead-files', 'label' => 'Create Lead Files'],
+            ['name' => 'view-lead-files', 'module' => 'lead-files', 'label' => 'View Lead Files'],
+            ['name' => 'delete-lead-files', 'module' => 'lead-files', 'label' => 'Delete Lead Files'],
+
+            // Lead Calls management
+            ['name' => 'manage-lead-calls', 'module' => 'lead-calls', 'label' => 'Manage Lead Calls'],
+            ['name' => 'create-lead-calls', 'module' => 'lead-calls', 'label' => 'Create Lead Calls'],
+            ['name' => 'edit-lead-calls', 'module' => 'lead-calls', 'label' => 'Edit Lead Calls'],
+            ['name' => 'delete-lead-calls', 'module' => 'lead-calls', 'label' => 'Delete Lead Calls'],
+
+            // Lead Activity management
+            ['name' => 'manage-lead-activity', 'module' => 'lead-activity', 'label' => 'Manage Lead Activity'],
+
             // Deal management
             ['name' => 'manage-deals', 'module' => 'deals', 'label' => 'Manage Deals'],
             ['name' => 'manage-any-deals', 'module' => 'deals', 'label' => 'Manage All Deals'],
@@ -97,6 +127,42 @@ class PermissionTableSeeder extends Seeder
             // Report management
             ['name' => 'manage-reports', 'module' => 'reports', 'label' => 'Manage Reports'],
             ['name' => 'view-reports', 'module' => 'reports', 'label' => 'View Reports'],
+
+            // Deal User management
+            ['name' => 'manage-deal-users', 'module' => 'deal-users', 'label' => 'Manage Deal Users'],
+            ['name' => 'create-deal-users', 'module' => 'deal-users', 'label' => 'Create Deal Users'],
+            ['name' => 'delete-deal-users', 'module' => 'deal-users', 'label' => 'Delete Deal Users'],
+
+            // Deal Product management
+            ['name' => 'manage-deal-products', 'module' => 'deal-products', 'label' => 'Manage Deal Products'],
+            ['name' => 'create-deal-products', 'module' => 'deal-products', 'label' => 'Create Deal Products'],
+            ['name' => 'delete-deal-products', 'module' => 'deal-products', 'label' => 'Delete Deal Products'],
+
+            // Deal Sources management
+            ['name' => 'manage-deal-sources', 'module' => 'deal-sources', 'label' => 'Manage Deal Sources'],
+            ['name' => 'create-deal-sources', 'module' => 'deal-sources', 'label' => 'Create Deal Sources'],
+            ['name' => 'delete-deal-sources', 'module' => 'deal-sources', 'label' => 'Delete Deal Sources'],
+
+            // Deal File management
+            ['name' => 'manage-deal-files', 'module' => 'deal-files', 'label' => 'Manage Deal Files'],
+            ['name' => 'create-deal-files', 'module' => 'deal-files', 'label' => 'Create Deal Files'],
+            ['name' => 'view-deal-files', 'module' => 'deal-files', 'label' => 'View Deal Files'],
+            ['name' => 'delete-deal-files', 'module' => 'deal-files', 'label' => 'Delete Deal Files'],
+
+            // Deal Calls management
+            ['name' => 'manage-deal-calls', 'module' => 'deal-calls', 'label' => 'Manage Deal Calls'],
+            ['name' => 'create-deal-calls', 'module' => 'deal-calls', 'label' => 'Create Deal Calls'],
+            ['name' => 'edit-deal-calls', 'module' => 'deal-calls', 'label' => 'Edit Deal Calls'],
+            ['name' => 'delete-deal-calls', 'module' => 'deal-calls', 'label' => 'Delete Deal Calls'],
+
+            // Deal Client management
+            ['name' => 'manage-deal-clients', 'module' => 'deal-clients', 'label' => 'Manage Deal Clients'],
+            ['name' => 'create-deal-clients', 'module' => 'deal-clients', 'label' => 'Create Deal Clients'],
+            ['name' => 'delete-deal-clients', 'module' => 'deal-clients', 'label' => 'Delete Deal Clients'],
+
+            // Deal Activity management
+            ['name' => 'manage-deal-activity', 'module' => 'deal-activity', 'label' => 'Manage Deal Activity'],
+
         ];
 
         $company_role = Role::where('name', 'company')->first();

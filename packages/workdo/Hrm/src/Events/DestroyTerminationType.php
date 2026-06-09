@@ -13,7 +13,5 @@ class DestroyTerminationType
     public function __construct(
           public TerminationType $terminationType
     )
-    {
-        //
-    }
+   {}
 }

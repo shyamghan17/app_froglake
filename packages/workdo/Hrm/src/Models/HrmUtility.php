@@ -88,7 +88,7 @@ class HrmUtility extends Model
             // Awards
             'manage-awards',
             'manage-any-awards',
-            'create-awards',
+            'create-awards', 
             'edit-awards',
             'delete-awards',
 

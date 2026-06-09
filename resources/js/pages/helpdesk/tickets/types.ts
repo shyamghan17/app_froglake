@@ -95,6 +95,22 @@ export interface EditHelpdeskTicketProps {
     onSuccess: () => void;
 }
 
+export interface TodayTicketsProps {
+    tickets: HelpdeskTicket[];
+    stats: {
+        total: number;
+        urgent: number;
+        high: number;
+        medium: number;
+        low: number;
+        open: number;
+        in_progress: number;
+    };
+    categories: HelpdeskCategory[];
+    auth: AuthContext;
+    [key: string]: unknown;
+}
+
 export interface ShowHelpdeskTicketProps {
     ticket: HelpdeskTicket;
     auth: AuthContext;

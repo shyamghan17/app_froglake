@@ -66,48 +66,68 @@ export default function LabelView({ lead, onSuccess }: LabelViewProps) {
         });
     };
 
+    const selectedCount = Object.keys(selectedLabels).filter(k => selectedLabels[parseInt(k)]).length;
+
     return (
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg">
             <DialogHeader className="pb-4 border-b">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                        <Tag className="h-5 w-5 text-purple-600" />
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-purple-100 rounded-lg">
+                            <Tag className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div>
+                            <DialogTitle className="text-base font-semibold">{t('Lead Labels')}</DialogTitle>
+                            <p className="text-sm text-muted-foreground">{lead.name}</p>
+                        </div>
                     </div>
-                    <div>
-                        <DialogTitle className="text-xl font-semibold">{t('Lead Labels')}</DialogTitle>
-                        <p className="text-sm text-muted-foreground">{lead.name}</p>
-                    </div>
+                    {selectedCount > 0 && (
+                        <span className="text-xs bg-purple-100 text-purple-700 font-medium px-2 py-1 rounded-full mr-6">
+                            {selectedCount} {t('selected')}
+                        </span>
+                    )}
                 </div>
             </DialogHeader>
-            
-            <div className="overflow-y-auto flex-1 p-6">
-                <div className="space-y-4">
-                    {pipelineLabels.map((label) => (
-                        <div key={label.id} className="flex items-center space-x-3">
-                            <Checkbox
-                                id={`label-${label.id}`}
-                                checked={selectedLabels[label.id] || false}
-                                onCheckedChange={(checked) => handleLabelChange(label.id, !!checked)}
-                            />
-                            <label htmlFor={`label-${label.id}`} className="text-sm font-medium cursor-pointer">
-                                <div 
-                                    className="px-3 py-1 rounded text-white text-sm font-medium" 
+
+            <div className="max-h-72 overflow-y-auto py-2">
+                {pipelineLabels.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-10 text-center">
+                        <Tag className="h-10 w-10 text-muted-foreground mb-3" />
+                        <p className="text-sm font-medium text-muted-foreground">{t('No labels available for this pipeline')}</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 gap-1">
+                        {pipelineLabels.map((label) => (
+                            <label
+                                key={label.id}
+                                htmlFor={`label-${label.id}`}
+                                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors hover:bg-gray-50 ${
+                                    selectedLabels[label.id] ? 'bg-gray-50' : ''
+                                }`}
+                            >
+                                <Checkbox
+                                    id={`label-${label.id}`}
+                                    checked={selectedLabels[label.id] || false}
+                                    onCheckedChange={(checked) => handleLabelChange(label.id, !!checked)}
+                                />
+                                <span
+                                    className="px-3 py-1 rounded-full text-white text-xs font-medium"
                                     style={{ backgroundColor: label.color }}
                                 >
                                     {label.name}
-                                </div>
+                                </span>
                             </label>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
-            <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={onSuccess}>
+            <div className="flex justify-end gap-2 pt-2 border-t">
+                <Button variant="outline" size="sm" onClick={onSuccess}>
                     {t('Cancel')}
                 </Button>
-                <Button onClick={handleSave} disabled={processing}>
-                    {t('Save')}
+                <Button size="sm" onClick={handleSave} disabled={processing || pipelineLabels.length === 0}>
+                    {processing ? t('Assigning...') : t('Assign')}
                 </Button>
             </div>
         </DialogContent>

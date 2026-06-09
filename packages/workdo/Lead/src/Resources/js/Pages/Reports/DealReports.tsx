@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Calendar } from 'lucide-react';
 import { formatDate } from '@/utils/helpers';
 import { DatePicker } from "@/components/ui/date-picker";
@@ -77,7 +77,7 @@ export default function DealReports() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>{t('This Week Deal Status')}</CardTitle>
+                                <CardTitle className="text-lg">{t('This Week Deal Status')}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <ResponsiveContainer width="100%" height={300}>
@@ -87,8 +87,7 @@ export default function DealReports() {
                                             cx="50%"
                                             cy="50%"
                                             labelLine={false}
-                                            label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                            outerRadius={80}
+                                            outerRadius={100}
                                             fill="#8884d8"
                                             dataKey="value"
                                         >
@@ -96,7 +95,17 @@ export default function DealReports() {
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                        <Tooltip />
+                                        <Tooltip formatter={(value, name) => [value, name]} />
+                                        <Legend
+                                            layout="vertical"
+                                            align="right"
+                                            verticalAlign="middle"
+                                            formatter={(value, entry: any) => (
+                                                <span className="text-sm text-gray-700">
+                                                    {value}: {entry.payload?.value} ({entry.payload?.percent !== undefined ? (entry.payload.percent * 100).toFixed(0) : 0}%)
+                                                </span>
+                                            )}
+                                        />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </CardContent>
@@ -104,7 +113,7 @@ export default function DealReports() {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>{t('Deal Sources Conversion')}</CardTitle>
+                                <CardTitle className="text-lg">{t('Deal Sources Conversion')}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <ResponsiveContainer width="100%" height={300}>
@@ -122,7 +131,7 @@ export default function DealReports() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>{t('Per Month Deal')}</CardTitle>
+                            <CardTitle  className="text-lg">{t('Per Month Deal')}</CardTitle>
                             <Select value={selectedMonth} onValueChange={(value) => setSelectedMonth(value)}>
                                 <SelectTrigger className="w-40">
                                     <SelectValue />
@@ -217,7 +226,7 @@ export default function DealReports() {
                 <TabsContent value="client" className="space-y-6">
                     <Card>
                     <CardHeader>
-                            <CardTitle>{t('Clients')}</CardTitle>
+                            <CardTitle className="text-lg">{t('Clients')}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={400}>
@@ -236,7 +245,7 @@ export default function DealReports() {
                 <TabsContent value="pipeline" className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>{t('Pipelines')}</CardTitle>
+                            <CardTitle className="text-lg">{t('Pipelines')}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={400}>

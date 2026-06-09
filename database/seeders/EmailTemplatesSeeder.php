@@ -24,7 +24,10 @@ class EmailTemplatesSeeder extends Seeder
             'Purchase Invoice',
             'Purchase Invoice Return',
             'Helpdesk Ticket',
-            'Helpdesk Ticket Reply',
+            'Helpdesk Ticket Reply', 
+            'Proposal Sent', 
+            'Proposal Approval', 
+            'Plan Purchase', 
         ];
 
         $defaultTemplate = [
@@ -39,37 +42,744 @@ class EmailTemplatesSeeder extends Seeder
                     "Password": "password"
                   }',
                   'lang' => [
-                    'ar' => '<p>مرحبا،&nbsp;<br>مرحبا بك في {app_name}.</p><p><b>البريد الإلكتروني </b>: {email}<br><b>كلمه السر</b> : {password}</p><p>{app_url}</p><p>شكر،<br>{company_name}</p><p>{app_name}</p>',
-                    'da' => '<p>Hej,&nbsp;<br>Velkommen til {app_name}.</p><p><b>E-mail </b>: {email}<br><b>Adgangskode</b> : {password}</p><p>{app_url}</p><p>Tak,<br>{company_name}</p><p>{app_name}</p>',
-                    'de' => '<p>Hallo,&nbsp;<br>Willkommen zu {app_name}.</p><p><b>Email </b>: {email}<br><b>Passwort</b> : {password}</p><p>{app_url}</p><p>Vielen Dank,<br>{company_name}</p><p>{app_name}</p>',
-                    'en' => '<p>Hello,&nbsp;<br />Welcome to {app_name}</p>
-                    <p><strong>Email </strong>: {email}<br /><strong>Password</strong> : {password}</p>
-                    <p>{app_url}</p>
-                    <p>Thanks,<br />{company_name}</p><p>{app_name}</p>',
-                    'es' => '<p>Hola,&nbsp;<br>Bienvenido a {app_name}.</p><p><b>Correo electrónico </b>: {email}<br><b>Contraseña</b> : {password}</p><p>{app_url}</p><p>Gracias,<br>{company_name}</p><p>{app_name}</p>',
-                    'fr' => '<p>Bonjour,&nbsp;<br>Bienvenue à {app_name}.</p><p><b>Email </b>: {email}<br><b>Mot de passe</b> : {password}</p><p>{app_url}</p><p>Merci,<br>{company_name}</p><p>{app_name}</p>',
-                    'it' => "<p>Ciao,&nbsp;<br>Benvenuto a {app_name}.</p><p><b>E-mail </b>: {email}<br><b>Parola d'ordine</b> : {password}</p><p>{app_url}</p><p>Grazie,<br>{company_name}</p><p>{app_name}</p>",
-                    'ja' => '<p>こんにちは、&nbsp;<br>へようこそ {app_name}.</p><p><b>Eメール </b>: {email}<br><b>パスワード</b> : {password}</p><p>{app_url}</p><p>おかげで、<br>{company_name}</p><p>{app_name}</p>',
-                    'nl' => '<p>Hallo,&nbsp;<br>Welkom bij {app_name}.</p><p><b>E-mail </b>: {email}<br><b>Wachtwoord</b> : {password}</p><p>{app_url}</p><p>Bedankt,<br>{company_name}</p><p>{app_name}</p>',
-                    'pl' => '<p>Witaj,&nbsp;<br>Witamy w {app_name}.</p><p><b>E-mail </b>: {email}<br><b>Hasło</b> : {password}</p><p>{app_url}</p><p>Dzięki,<br>{company_name}</p><p>{app_name}</p>',
-                    'pt' => '<p>Ol&aacute;, Bem-vindo a {app_name}.</p>
-                    <p>E-mail: {email}</p>
-                    <p>Senha: {password}</p>
-                    <p>{app_url}</p>
-                    <p>&nbsp;</p>
-                    <p>Obrigado,</p>
-                    <p>{app_name}</p>',
-                    'pt-BR' => '<p>Ol&aacute;, Bem-vindo a {app_name}.</p>
-                    <p>E-mail: {email}</p>
-                    <p>Senha: {password}</p>
-                    <p>{app_url}</p>
-                    <p>&nbsp;</p>
-                    <p>Obrigado,</p>
-                    <p>{app_name}</p>',
-                    'ru' => '<p>Привет,&nbsp;<br>Добро пожаловать в {app_name}.</p><p><b>Электронная почта </b>: {email}<br><b>Пароль</b> : {password}</p><p>{app_url}</p><p>Спасибо,<br>{company_name}</p><p>{app_name}</p>',
-                    'he' => '<p>שלום,<br />ברוך הבא אל {app_name}</p><p><strong>אימייל </strong>: {email}<br /><strong>סיסמה</strong> : {password}</p><p>{app_url}</p><p>תודה,<br />{company_name}</p><p>{app_name}</p>',
-                    'tr' => '<p>Merhaba,<br />{app_name} uygulamasına hoş geldiniz</p><p><strong>E-posta </strong>: {email}<br /><strong>Şifre</strong> : {password}</p><p>{app_url}</p><p>Teşekkürler,<br />{company_name}</p><p>{app_name}</p>',
-                    'zh' => '<p>您好，<br />欢迎使用 {app_name}</p><p><strong>邮箱 </strong>: {email}<br /><strong>密码</strong> : {password}</p><p>{app_url}</p><p>谢谢,<br />{company_name}</p><p>{app_name}</p>',
+                    'ar' => '<div style="font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px 20px;">
+                        <div style="max-width:700px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+                            
+                            <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:30px 20px;text-align:center;color:#ffffff;">
+                                <h1 style="margin:0;font-size:24px;">مرحبًا بك في {app_name} 👋</h1>
+                                <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">
+                                    تمت إضافتك إلى {company_name}
+                                </p>
+                            </div>
+
+                            <div style="padding:30px 25px;color:#374151;line-height:1.6;direction:rtl;text-align:right;">
+                                <p style="margin:0 0 15px;font-size:15px;">مرحبًا <strong>{name}</strong>،</p>
+
+                                <p style="margin:0 0 20px;font-size:14px;">
+                                    تمت إضافتك كمستخدم في <strong>{company_name}</strong>. فيما يلي تفاصيل تسجيل الدخول الخاصة بك:
+                                </p>
+
+                                <div style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;padding:20px;margin:20px 0;">
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>🌐 رابط التطبيق:</strong><br>
+                                        <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                                    </p>
+
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>📧 البريد الإلكتروني:</strong><br>
+                                        {email}
+                                    </p>
+
+                                    <p style="margin:0;font-size:14px;">
+                                        <strong>🔐 كلمة المرور:</strong><br>
+                                        {password}
+                                    </p>
+                                </div>
+
+                                <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">
+                                    يرجى تسجيل الدخول وتغيير كلمة المرور بعد أول تسجيل دخول.
+                                </p>
+                            </div>
+
+                            <div style="text-align:center;padding:20px;">
+                                <a href="{app_url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 25px;border-radius:8px;font-size:14px;font-weight:500;">
+                                    تسجيل الدخول إلى النظام
+                                </a>
+                            </div>
+                        </div>
+                    </div>',
+                    'da' => '<div style="font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px 20px;">
+                        <div style="max-width:700px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+                            
+                            <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:30px 20px;text-align:center;color:#ffffff;">
+                                <h1 style="margin:0;font-size:24px;">Velkommen til {app_name} 👋</h1>
+                                <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">
+                                    Du er blevet tilføjet til {company_name}
+                                </p>
+                            </div>
+
+                            <div style="padding:30px 25px;color:#374151;line-height:1.6;">
+                                <p style="margin:0 0 15px;font-size:15px;">Hej <strong>{name}</strong>,</p>
+
+                                <p style="margin:0 0 20px;font-size:14px;">
+                                    Du er blevet tilføjet som bruger i <strong>{company_name}</strong>. Her er dine loginoplysninger:
+                                </p>
+
+                                <div style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;padding:20px;margin:20px 0;">
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>🌐 App URL:</strong><br>
+                                        <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                                    </p>
+
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>📧 Email:</strong><br>
+                                        {email}
+                                    </p>
+
+                                    <p style="margin:0;font-size:14px;">
+                                        <strong>🔐 Adgangskode:</strong><br>
+                                        {password}
+                                    </p>
+                                </div>
+
+                                <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">
+                                    Log venligst ind og ændr din adgangskode efter første login.
+                                </p>
+                            </div>
+
+                            <div style="text-align:center;padding:20px;">
+                                <a href="{app_url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 25px;border-radius:8px;font-size:14px;font-weight:500;">
+                                    Log ind på systemet
+                                </a>
+                            </div>
+                        </div>
+                    </div>',
+                    'de' => '<div style="font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px 20px;">
+                        <div style="max-width:700px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+                            
+                            <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:30px 20px;text-align:center;color:#ffffff;">
+                                <h1 style="margin:0;font-size:24px;">Willkommen bei {app_name} 👋</h1>
+                                <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">
+                                    Sie wurden zu {company_name} hinzugefügt
+                                </p>
+                            </div>
+
+                            <div style="padding:30px 25px;color:#374151;line-height:1.6;">
+                                <p style="margin:0 0 15px;font-size:15px;">Hallo <strong>{name}</strong>,</p>
+
+                                <p style="margin:0 0 20px;font-size:14px;">
+                                    Sie wurden als Benutzer zu <strong>{company_name}</strong> hinzugefügt. Hier sind Ihre Zugangsdaten:
+                                </p>
+
+                                <div style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;padding:20px;margin:20px 0;">
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>🌐 App URL:</strong><br>
+                                        <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                                    </p>
+
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>📧 E-Mail:</strong><br>
+                                        {email}
+                                    </p>
+
+                                    <p style="margin:0;font-size:14px;">
+                                        <strong>🔐 Passwort:</strong><br>
+                                        {password}
+                                    </p>
+                                </div>
+
+                                <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">
+                                    Bitte melden Sie sich an und ändern Sie Ihr Passwort nach der ersten Anmeldung.
+                                </p>
+                            </div>
+
+                            <div style="text-align:center;padding:20px;">
+                                <a href="{app_url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 25px;border-radius:8px;font-size:14px;font-weight:500;">
+                                    Zum System anmelden
+                                </a>
+                            </div>
+                        </div>
+                    </div>',
+                    'en' => '<div style="font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px 20px;">
+                        <div style="max-width:700px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+                            
+                            <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:30px 20px;text-align:center;color:#ffffff;">
+                                <h1 style="margin:0;font-size:24px;">Welcome to {app_name} 👋</h1>
+                                <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">
+                                    You have been added to {company_name}
+                                </p>
+                            </div>
+
+                            <div style="padding:30px 25px;color:#374151;line-height:1.6;">
+                                <p style="margin:0 0 15px;font-size:15px;">Hello <strong>{name}</strong>,</p>
+
+                                <p style="margin:0 0 20px;font-size:14px;">
+                                    You have been added as a user in <strong>{company_name}</strong>. 
+                                    Below are your login details to access the system:
+                                </p>
+
+                                <div style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;padding:20px;margin:20px 0;">
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>🌐 App URL:</strong><br>
+                                        <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                                    </p>
+
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>📧 Email:</strong><br>
+                                        {email}
+                                    </p>
+
+                                    <p style="margin:0;font-size:14px;">
+                                        <strong>🔐 Password:</strong><br>
+                                        {password}
+                                    </p>
+                                </div>
+
+                                <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">
+                                    Please login using the above credentials and update your password after first login.
+                                </p>
+                            </div>
+
+                            <div style="text-align:center;padding:20px;">
+                                <a href="{app_url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 25px;border-radius:8px;font-size:14px;font-weight:500;">
+                                    Login to System
+                                </a>
+                            </div>
+                        </div>
+                    </div>',
+
+                    'es' => '<div style="font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px 20px;">
+                        <div style="max-width:700px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+                            
+                            <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:30px 20px;text-align:center;color:#ffffff;">
+                                <h1 style="margin:0;font-size:24px;">Bienvenido a {app_name} 👋</h1>
+                                <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">
+                                    Has sido agregado a {company_name}
+                                </p>
+                            </div>
+
+                            <div style="padding:30px 25px;color:#374151;line-height:1.6;">
+                                <p style="margin:0 0 15px;font-size:15px;">Hola <strong>{name}</strong>,</p>
+
+                                <p style="margin:0 0 20px;font-size:14px;">
+                                    Has sido agregado como usuario en <strong>{company_name}</strong>. A continuación, tus datos de acceso:
+                                </p>
+
+                                <div style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;padding:20px;margin:20px 0;">
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>🌐 URL de la aplicación:</strong><br>
+                                        <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                                    </p>
+
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>📧 Correo electrónico:</strong><br>
+                                        {email}
+                                    </p>
+
+                                    <p style="margin:0;font-size:14px;">
+                                        <strong>🔐 Contraseña:</strong><br>
+                                        {password}
+                                    </p>
+                                </div>
+
+                                <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">
+                                    Por favor, inicia sesión y cambia tu contraseña después del primer acceso.
+                                </p>
+                            </div>
+
+                            <div style="text-align:center;padding:20px;">
+                                <a href="{app_url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 25px;border-radius:8px;font-size:14px;font-weight:500;">
+                                    Iniciar sesión
+                                </a>
+                            </div>
+                        </div>
+                    </div>',
+                    'fr' => '<div style="font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px 20px;">
+                        <div style="max-width:700px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+                            
+                            <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:30px 20px;text-align:center;color:#ffffff;">
+                                <h1 style="margin:0;font-size:24px;">Bienvenue sur {app_name} 👋</h1>
+                                <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">
+                                    Vous avez été ajouté à {company_name}
+                                </p>
+                            </div>
+
+                            <div style="padding:30px 25px;color:#374151;line-height:1.6;">
+                                <p style="margin:0 0 15px;font-size:15px;">Bonjour <strong>{name}</strong>,</p>
+
+                                <p style="margin:0 0 20px;font-size:14px;">
+                                    Vous avez été ajouté en tant qu\'utilisateur dans <strong>{company_name}</strong>. Voici vos informations de connexion :
+                                </p>
+
+                                <div style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;padding:20px;margin:20px 0;">
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>🌐 URL de l\'application :</strong><br>
+                                        <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                                    </p>
+
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>📧 Email :</strong><br>
+                                        {email}
+                                    </p>
+
+                                    <p style="margin:0;font-size:14px;">
+                                        <strong>🔐 Mot de passe :</strong><br>
+                                        {password}
+                                    </p>
+                                </div>
+
+                                <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">
+                                    Veuillez vous connecter et modifier votre mot de passe après la première connexion.
+                                </p>
+                            </div>
+
+                            <div style="text-align:center;padding:20px;">
+                                <a href="{app_url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 25px;border-radius:8px;font-size:14px;font-weight:500;">
+                                    Se connecter au système
+                                </a>
+                            </div>
+                        </div>
+                    </div>',
+                    'it' => '<div style="font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px 20px;">
+                        <div style="max-width:700px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+                            
+                            <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:30px 20px;text-align:center;color:#ffffff;">
+                                <h1 style="margin:0;font-size:24px;">Benvenuto su {app_name} 👋</h1>
+                                <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">
+                                    Sei stato aggiunto a {company_name}
+                                </p>
+                            </div>
+
+                            <div style="padding:30px 25px;color:#374151;line-height:1.6;">
+                                <p style="margin:0 0 15px;font-size:15px;">Ciao <strong>{name}</strong>,</p>
+
+                                <p style="margin:0 0 20px;font-size:14px;">
+                                    Sei stato aggiunto come utente in <strong>{company_name}</strong>. Di seguito i tuoi dati di accesso:
+                                </p>
+
+                                <div style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;padding:20px;margin:20px 0;">
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>🌐 URL dell\'app:</strong><br>
+                                        <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                                    </p>
+
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>📧 Email:</strong><br>
+                                        {email}
+                                    </p>
+
+                                    <p style="margin:0;font-size:14px;">
+                                        <strong>🔐 Password:</strong><br>
+                                        {password}
+                                    </p>
+                                </div>
+
+                                <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">
+                                    Effettua l\'accesso e modifica la password dopo il primo accesso.
+                                </p>
+                            </div>
+
+                            <div style="text-align:center;padding:20px;">
+                                <a href="{app_url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 25px;border-radius:8px;font-size:14px;font-weight:500;">
+                                    Accedi al sistema
+                                </a>
+                            </div>
+                        </div>
+                    </div>',
+                    'ja' => '<div style="font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px 20px;">
+                        <div style="max-width:700px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+                            
+                            <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:30px 20px;text-align:center;color:#ffffff;">
+                                <h1 style="margin:0;font-size:24px;">{app_name}へようこそ 👋</h1>
+                                <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">
+                                    {company_name} に追加されました
+                                </p>
+                            </div>
+
+                            <div style="padding:30px 25px;color:#374151;line-height:1.6;">
+                                <p style="margin:0 0 15px;font-size:15px;">こんにちは <strong>{name}</strong>様、</p>
+
+                                <p style="margin:0 0 20px;font-size:14px;">
+                                    あなたは <strong>{company_name}</strong> のユーザーとして追加されました。以下がログイン情報です：
+                                </p>
+
+                                <div style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;padding:20px;margin:20px 0;">
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>🌐 アプリURL:</strong><br>
+                                        <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                                    </p>
+
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>📧 メールアドレス:</strong><br>
+                                        {email}
+                                    </p>
+
+                                    <p style="margin:0;font-size:14px;">
+                                        <strong>🔐 パスワード:</strong><br>
+                                        {password}
+                                    </p>
+                                </div>
+
+                                <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">
+                                    初回ログイン後にパスワードを変更してください。
+                                </p>
+                            </div>
+
+                            <div style="text-align:center;padding:20px;">
+                                <a href="{app_url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 25px;border-radius:8px;font-size:14px;font-weight:500;">
+                                    システムにログイン
+                                </a>
+                            </div>
+                        </div>
+                    </div>',
+                    'nl' => '<div style="font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px 20px;">
+                        <div style="max-width:700px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+                            
+                            <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:30px 20px;text-align:center;color:#ffffff;">
+                                <h1 style="margin:0;font-size:24px;">Welkom bij {app_name} 👋</h1>
+                                <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">
+                                    Je bent toegevoegd aan {company_name}
+                                </p>
+                            </div>
+
+                            <div style="padding:30px 25px;color:#374151;line-height:1.6;">
+                                <p style="margin:0 0 15px;font-size:15px;">Hallo <strong>{name}</strong>,</p>
+
+                                <p style="margin:0 0 20px;font-size:14px;">
+                                    Je bent toegevoegd als gebruiker in <strong>{company_name}</strong>. Hieronder staan je inloggegevens:
+                                </p>
+
+                                <div style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;padding:20px;margin:20px 0;">
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>🌐 App URL:</strong><br>
+                                        <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                                    </p>
+
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>📧 E-mail:</strong><br>
+                                        {email}
+                                    </p>
+
+                                    <p style="margin:0;font-size:14px;">
+                                        <strong>🔐 Wachtwoord:</strong><br>
+                                        {password}
+                                    </p>
+                                </div>
+
+                                <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">
+                                    Log in en wijzig je wachtwoord na de eerste keer inloggen.
+                                </p>
+                            </div>
+
+                            <div style="text-align:center;padding:20px;">
+                                <a href="{app_url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 25px;border-radius:8px;font-size:14px;font-weight:500;">
+                                    Inloggen op het systeem
+                                </a>
+                            </div>
+                        </div>
+                    </div>',
+                    'pl' => '<div style="font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px 20px;">
+                        <div style="max-width:700px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+                            
+                            <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:30px 20px;text-align:center;color:#ffffff;">
+                                <h1 style="margin:0;font-size:24px;">Witamy w {app_name} 👋</h1>
+                                <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">
+                                    Zostałeś dodany do {company_name}
+                                </p>
+                            </div>
+
+                            <div style="padding:30px 25px;color:#374151;line-height:1.6;">
+                                <p style="margin:0 0 15px;font-size:15px;">Cześć <strong>{name}</strong>,</p>
+
+                                <p style="margin:0 0 20px;font-size:14px;">
+                                    Zostałeś dodany jako użytkownik w <strong>{company_name}</strong>. Poniżej znajdują się Twoje dane logowania:
+                                </p>
+
+                                <div style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;padding:20px;margin:20px 0;">
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>🌐 URL aplikacji:</strong><br>
+                                        <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                                    </p>
+
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>📧 Email:</strong><br>
+                                        {email}
+                                    </p>
+
+                                    <p style="margin:0;font-size:14px;">
+                                        <strong>🔐 Hasło:</strong><br>
+                                        {password}
+                                    </p>
+                                </div>
+
+                                <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">
+                                    Zaloguj się i zmień hasło po pierwszym logowaniu.
+                                </p>
+                            </div>
+
+                            <div style="text-align:center;padding:20px;">
+                                <a href="{app_url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 25px;border-radius:8px;font-size:14px;font-weight:500;">
+                                    Zaloguj się do systemu
+                                </a>
+                            </div>
+                        </div>
+                    </div>',
+                    'pt' => '<div style="font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px 20px;">
+                        <div style="max-width:700px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+                            
+                            <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:30px 20px;text-align:center;color:#ffffff;">
+                                <h1 style="margin:0;font-size:24px;">Bem-vindo ao {app_name} 👋</h1>
+                                <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">
+                                    Você foi adicionado à {company_name}
+                                </p>
+                            </div>
+
+                            <div style="padding:30px 25px;color:#374151;line-height:1.6;">
+                                <p style="margin:0 0 15px;font-size:15px;">Olá <strong>{name}</strong>,</p>
+
+                                <p style="margin:0 0 20px;font-size:14px;">
+                                    Você foi adicionado como usuário em <strong>{company_name}</strong>. Abaixo estão seus dados de acesso:
+                                </p>
+
+                                <div style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;padding:20px;margin:20px 0;">
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>🌐 URL do aplicativo:</strong><br>
+                                        <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                                    </p>
+
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>📧 Email:</strong><br>
+                                        {email}
+                                    </p>
+
+                                    <p style="margin:0;font-size:14px;">
+                                        <strong>🔐 Senha:</strong><br>
+                                        {password}
+                                    </p>
+                                </div>
+
+                                <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">
+                                    Faça login e altere sua senha após o primeiro acesso.
+                                </p>
+                            </div>
+
+                            <div style="text-align:center;padding:20px;">
+                                <a href="{app_url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 25px;border-radius:8px;font-size:14px;font-weight:500;">
+                                    Acessar o sistema
+                                </a>
+                            </div>
+                        </div>
+                    </div>',
+                    'pt-BR' => '<div style="font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px 20px;">
+                        <div style="max-width:700px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+                            
+                            <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:30px 20px;text-align:center;color:#ffffff;">
+                                <h1 style="margin:0;font-size:24px;">Bem-vindo ao {app_name} 👋</h1>
+                                <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">
+                                    Você foi adicionado à {company_name}
+                                </p>
+                            </div>
+
+                            <div style="padding:30px 25px;color:#374151;line-height:1.6;">
+                                <p style="margin:0 0 15px;font-size:15px;">Olá <strong>{name}</strong>,</p>
+
+                                <p style="margin:0 0 20px;font-size:14px;">
+                                    Você foi adicionado como usuário em <strong>{company_name}</strong>. Veja abaixo seus dados de acesso:
+                                </p>
+
+                                <div style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;padding:20px;margin:20px 0;">
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>🌐 URL do aplicativo:</strong><br>
+                                        <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                                    </p>
+
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>📧 Email:</strong><br>
+                                        {email}
+                                    </p>
+
+                                    <p style="margin:0;font-size:14px;">
+                                        <strong>🔐 Senha:</strong><br>
+                                        {password}
+                                    </p>
+                                </div>
+
+                                <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">
+                                    Faça login e altere sua senha após o primeiro acesso.
+                                </p>
+                            </div>
+
+                            <div style="text-align:center;padding:20px;">
+                                <a href="{app_url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 25px;border-radius:8px;font-size:14px;font-weight:500;">
+                                    Acessar o sistema
+                                </a>
+                            </div>
+                        </div>
+                    </div>',
+                    'ru' => '<div style="font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px 20px;">
+                        <div style="max-width:700px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+                            
+                            <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:30px 20px;text-align:center;color:#ffffff;">
+                                <h1 style="margin:0;font-size:24px;">Добро пожаловать в {app_name} 👋</h1>
+                                <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">
+                                    Вы были добавлены в {company_name}
+                                </p>
+                            </div>
+
+                            <div style="padding:30px 25px;color:#374151;line-height:1.6;">
+                                <p style="margin:0 0 15px;font-size:15px;">Здравствуйте, <strong>{name}</strong>,</p>
+
+                                <p style="margin:0 0 20px;font-size:14px;">
+                                    Вы были добавлены как пользователь в <strong>{company_name}</strong>. Ниже приведены ваши данные для входа:
+                                </p>
+
+                                <div style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;padding:20px;margin:20px 0;">
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>🌐 URL приложения:</strong><br>
+                                        <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                                    </p>
+
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>📧 Электронная почта:</strong><br>
+                                        {email}
+                                    </p>
+
+                                    <p style="margin:0;font-size:14px;">
+                                        <strong>🔐 Пароль:</strong><br>
+                                        {password}
+                                    </p>
+                                </div>
+
+                                <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">
+                                    Пожалуйста, войдите в систему и измените пароль после первого входа.
+                                </p>
+                            </div>
+
+                            <div style="text-align:center;padding:20px;">
+                                <a href="{app_url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 25px;border-radius:8px;font-size:14px;font-weight:500;">
+                                    Войти в систему
+                                </a>
+                            </div>
+                        </div>
+                    </div>',
+                    'he' => '<div style="font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px 20px;">
+                        <div style="max-width:700px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+                            
+                            <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:30px 20px;text-align:center;color:#ffffff;">
+                                <h1 style="margin:0;font-size:24px;">ברוך הבא ל-{app_name} 👋</h1>
+                                <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">
+                                    נוספת ל-{company_name}
+                                </p>
+                            </div>
+
+                            <div style="padding:30px 25px;color:#374151;line-height:1.6;direction:rtl;text-align:right;">
+                                <p style="margin:0 0 15px;font-size:15px;">שלום <strong>{name}</strong>,</p>
+
+                                <p style="margin:0 0 20px;font-size:14px;">
+                                    נוספת כמשתמש ב-<strong>{company_name}</strong>. להלן פרטי ההתחברות שלך:
+                                </p>
+
+                                <div style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;padding:20px;margin:20px 0;">
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>🌐 קישור לאפליקציה:</strong><br>
+                                        <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                                    </p>
+
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>📧 אימייל:</strong><br>
+                                        {email}
+                                    </p>
+
+                                    <p style="margin:0;font-size:14px;">
+                                        <strong>🔐 סיסמה:</strong><br>
+                                        {password}
+                                    </p>
+                                </div>
+
+                                <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">
+                                    אנא התחבר ושנה את הסיסמה לאחר הכניסה הראשונה.
+                                </p>
+                            </div>
+
+                            <div style="text-align:center;padding:20px;">
+                                <a href="{app_url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 25px;border-radius:8px;font-size:14px;font-weight:500;">
+                                    כניסה למערכת
+                                </a>
+                            </div>
+                        </div>
+                    </div>',
+                    'tr' => '<div style="font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px 20px;">
+                        <div style="max-width:700px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+                            
+                            <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:30px 20px;text-align:center;color:#ffffff;">
+                                <h1 style="margin:0;font-size:24px;">{app_name}\'e Hoş Geldiniz 👋</h1>
+                                <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">
+                                    {company_name}\'e eklendiniz
+                                </p>
+                            </div>
+
+                            <div style="padding:30px 25px;color:#374151;line-height:1.6;">
+                                <p style="margin:0 0 15px;font-size:15px;">Merhaba <strong>{name}</strong>,</p>
+
+                                <p style="margin:0 0 20px;font-size:14px;">
+                                    <strong>{company_name}</strong> sistemine kullanıcı olarak eklendiniz. Aşağıda giriş bilgileriniz bulunmaktadır:
+                                </p>
+
+                                <div style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;padding:20px;margin:20px 0;">
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>🌐 Uygulama URL:</strong><br>
+                                        <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                                    </p>
+
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>📧 E-posta:</strong><br>
+                                        {email}
+                                    </p>
+
+                                    <p style="margin:0;font-size:14px;">
+                                        <strong>🔐 Şifre:</strong><br>
+                                        {password}
+                                    </p>
+                                </div>
+
+                                <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">
+                                    Lütfen giriş yaptıktan sonra şifrenizi değiştirin.
+                                </p>
+                            </div>
+
+                            <div style="text-align:center;padding:20px;">
+                                <a href="{app_url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 25px;border-radius:8px;font-size:14px;font-weight:500;">
+                                    Sisteme Giriş Yap
+                                </a>
+                            </div>
+                        </div>
+                    </div>',
+                    'zh' => '<div style="font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px 20px;">
+                        <div style="max-width:700px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+                            
+                            <div style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:30px 20px;text-align:center;color:#ffffff;">
+                                <h1 style="margin:0;font-size:24px;">欢迎使用 {app_name} 👋</h1>
+                                <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">
+                                    您已被添加到 {company_name}
+                                </p>
+                            </div>
+
+                            <div style="padding:30px 25px;color:#374151;line-height:1.6;">
+                                <p style="margin:0 0 15px;font-size:15px;">您好，<strong>{name}</strong>，</p>
+
+                                <p style="margin:0 0 20px;font-size:14px;">
+                                    您已被添加为 <strong>{company_name}</strong> 的用户。以下是您的登录信息：
+                                </p>
+
+                                <div style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;padding:20px;margin:20px 0;">
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>🌐 应用地址：</strong><br>
+                                        <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                                    </p>
+
+                                    <p style="margin:0 0 10px;font-size:14px;">
+                                        <strong>📧 邮箱：</strong><br>
+                                        {email}
+                                    </p>
+
+                                    <p style="margin:0;font-size:14px;">
+                                        <strong>🔐 密码：</strong><br>
+                                        {password}
+                                    </p>
+                                </div>
+
+                                <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">
+                                    请登录后尽快修改您的密码。
+                                </p>
+                            </div>
+
+                            <div style="text-align:center;padding:20px;">
+                                <a href="{app_url}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 25px;border-radius:8px;font-size:14px;font-weight:500;">
+                                    登录系统
+                                </a>
+                            </div>
+                        </div>
+                    </div>',
                 ],
             ],
             'Sales Invoice' => [
@@ -1369,8 +2079,8 @@ class EmailTemplatesSeeder extends Seeder
                     "Invoice Number": "invoice_number",
                     "Vandor Name": "purchase_vendor_name",
                     "Warehouse Name": "warehouse_name",
-                    "Total Amount": "total_amount"
-                    "Discount Amount": "discount_amount",
+                    "Total Amount": "total_amount",
+                    "Discount Amount": "discount_amount"
                   }',
                 'lang' => [
                     'ar' => '<p style="font-size:15px;color:#333;margin-bottom:10px;">
@@ -1876,7 +2586,7 @@ class EmailTemplatesSeeder extends Seeder
                     </p>
 
                     <p style="font-size:15px;color:#333;line-height:1.6;">
-                    نود إعلامك بأنه تم بنجاح معالجة <strong>إرجاع فاتورة المبيعات</strong> في <strong>{app_name}</strong>.
+                    نود إعلامك بأنه تم بنجاح معالجة <strong>إرجاع فاتورة الشراء</strong> في <strong>{app_name}</strong>.
                     يرجى الاطلاع على تفاصيل الإرجاع أدناه.
                     </p>
 
@@ -1934,7 +2644,7 @@ class EmailTemplatesSeeder extends Seeder
                     </p>
 
                     <p style="font-size:15px;color:#333;line-height:1.6;">
-                    Vi vil gerne informere dig om, at en <strong>Salgsfaktura-retur</strong> er blevet behandlet med succes i <strong>{app_name}</strong>.
+                    Vi vil gerne informere dig om, at en <strong>Retur af købsfaktura</strong> er blevet behandlet med succes i <strong>{app_name}</strong>.
                     Se venligst returdetaljerne nedenfor.
                     </p>
 
@@ -1991,7 +2701,7 @@ class EmailTemplatesSeeder extends Seeder
                     </p>
 
                     <p style="font-size:15px;color:#333;line-height:1.6;">
-                    Wir möchten Sie darüber informieren, dass eine <strong>Verkaufsrechnungsrückgabe</strong> erfolgreich in <strong>{app_name}</strong> verarbeitet wurde.
+                    Wir möchten Sie darüber informieren, dass eine <strong>Rückgabe der Einkaufsrechnung</strong> erfolgreich in <strong>{app_name}</strong> verarbeitet wurde.
                     Bitte finden Sie unten die Rückgabedetails.
                     </p>
 
@@ -2105,7 +2815,7 @@ class EmailTemplatesSeeder extends Seeder
                     </p>
 
                     <p style="font-size:15px;color:#333;line-height:1.6;">
-                    Nos gustaría informarle que una <strong>Devolución de Factura de Venta</strong> ha sido procesada con éxito en <strong>{app_name}</strong>.
+                    Nos gustaría informarle que una <strong>Devolución de factura de compra</strong> ha sido procesada con éxito en <strong>{app_name}</strong>.
                     Por favor, encuentre los detalles de la devolución a continuación.
                     </p>
 
@@ -2163,7 +2873,7 @@ class EmailTemplatesSeeder extends Seeder
                     </p>
 
                     <p style="font-size:15px;color:#333;line-height:1.6;">
-                    Nous souhaitons vous informer qu\'un <strong>Retour de facture de vente</strong> a été traité avec succès dans <strong>{app_name}</strong>.
+                    Nous souhaitons vous informer qu\'un <strong>Retour de facture d\achat</strong> a été traité avec succès dans <strong>{app_name}</strong>.
                     Veuillez trouver les détails du retour ci-dessous.
                     </p>
 
@@ -2220,7 +2930,7 @@ class EmailTemplatesSeeder extends Seeder
                     Ciao <strong>{purchase_vendor_name}</strong>,
                     </p>
                     <p style="font-size:15px;color:#333;line-height:1.6;">
-                    Ti informiamo che un <strong>Reso della fattura di vendita</strong> è stato elaborato con successo in <strong>{app_name}</strong>.
+                    Ti informiamo che un <strong>Reso della fattura di acquisto</strong> è stato elaborato con successo in <strong>{app_name}</strong>.
                     </p>
                     <table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin-top:18px;font-size:14px;color:#333;">
                     <thead>
@@ -2272,7 +2982,7 @@ class EmailTemplatesSeeder extends Seeder
                     </p>
 
                     <p style="font-size:15px;color:#333;line-height:1.6;">
-                    <strong>{app_name}</strong> にて <strong>販売請求書返品</strong> が正常に処理されたことをお知らせいたします。
+                    <strong>{app_name}</strong> にて <strong>仕入請求書返品</strong> が正常に処理されたことをお知らせいたします。
                     以下に返品の詳細をご確認ください。
                     </p>
 
@@ -2330,7 +3040,7 @@ class EmailTemplatesSeeder extends Seeder
                     </p>
 
                     <p style="font-size:15px;color:#333;line-height:1.6;">
-                    Wij willen u informeren dat een <strong>Verkoopfactuur Retour</strong> succesvol is verwerkt in <strong>{app_name}</strong>.
+                    Wij willen u informeren dat een <strong>Retour inkoopfactuur</strong> succesvol is verwerkt in <strong>{app_name}</strong>.
                     Bekijk hieronder de retourdetails.
                     </p>
 
@@ -2388,7 +3098,7 @@ class EmailTemplatesSeeder extends Seeder
                     </p>
 
                     <p style="font-size:15px;color:#333;line-height:1.6;">
-                    Chcielibyśmy poinformować, że <strong>Zwrot Faktury Sprzedaży</strong> został pomyślnie przetworzony w <strong>{app_name}</strong>.
+                    Chcielibyśmy poinformować, że <strong>Zwrot faktury zakupu</strong> został pomyślnie przetworzony w <strong>{app_name}</strong>.
                     Poniżej znajdują się szczegóły zwrotu.
                     </p>
 
@@ -2445,7 +3155,7 @@ class EmailTemplatesSeeder extends Seeder
                     </p>
 
                     <p style="font-size:15px;color:#333;line-height:1.6;">
-                    Сообщаем вам, что <strong>возврат счета продажи</strong> был успешно обработан в <strong>{app_name}</strong>.
+                    Сообщаем вам, что <strong>Возврат счета-фактуры покупки</strong> был успешно обработан в <strong>{app_name}</strong>.
                     Пожалуйста, ознакомьтесь с деталями возврата ниже.
                     </p>
 
@@ -2502,7 +3212,7 @@ class EmailTemplatesSeeder extends Seeder
                     </p>
 
                     <p style="font-size:15px;color:#333;line-height:1.6;">
-                    Gostaríamos de informar que uma <strong>Devolução de Fatura de Venda</strong> foi processada com sucesso no <strong>{app_name}</strong>.
+                    Gostaríamos de informar que uma <strong>Devolução da fatura de compra</strong> foi processada com sucesso no <strong>{app_name}</strong>.
                     Por favor, veja os detalhes da devolução abaixo.
                     </p>
 
@@ -2560,7 +3270,7 @@ class EmailTemplatesSeeder extends Seeder
                     </p>
 
                     <p style="font-size:15px;color:#333;line-height:1.6;">
-                    Gostaríamos de informar que uma <strong>Devolução de Fatura de Venda</strong> foi processada com sucesso no <strong>{app_name}</strong>.
+                    Gostaríamos de informar que uma <strong>Devolução da fatura de compra</strong> foi processada com sucesso no <strong>{app_name}</strong>.
                     Por favor, veja os detalhes da devolução abaixo.
                     </p>
 
@@ -2618,7 +3328,7 @@ class EmailTemplatesSeeder extends Seeder
                     </p>
 
                     <p style="font-size:15px;color:#333;line-height:1.6;">
-                    ברצוננו להודיע לך כי <strong>החזרת חשבונית מכירה</strong> עובדה בהצלחה ב-<strong>{app_name}</strong>.
+                    ברצוננו להודיע לך כי <strong>החזרת חשבונית מכירה</strong>החזרת חשבונית רכישה<strong>{app_name}</strong>.
                     אנא עיין בפרטי ההחזרה להלן.
                     </p>
 
@@ -2675,7 +3385,7 @@ class EmailTemplatesSeeder extends Seeder
                     </p>
 
                     <p style="font-size:15px;color:#333;line-height:1.6;">
-                    <strong>{app_name}</strong> içinde bir <strong>Satış Faturası İadesi</strong> başarıyla işlendiğini size bildirmek isteriz.
+                    <strong>{app_name}</strong> içinde bir <strong>Satın Alma Faturası İadesi</strong> başarıyla işlendiğini size bildirmek isteriz.
                     Lütfen aşağıdaki iade detaylarını inceleyin.
                     </p>
 
@@ -2732,7 +3442,7 @@ class EmailTemplatesSeeder extends Seeder
                     </p>
 
                     <p style="font-size:15px;color:#333;line-height:1.6;">
-                    我们想通知您，在 <strong>{app_name}</strong> 中一笔<strong>销售发票退货</strong>已成功处理。
+                    我们想通知您，在 <strong>{app_name}</strong> 中一笔<strong>采购发票退回</strong>已成功处理。
                     请查看以下退货详情。
                     </p>
 
@@ -2797,7 +3507,7 @@ class EmailTemplatesSeeder extends Seeder
                         "Ticket URL" : "ticket_url",
                         "Ticket Description": "ticket_description",
                         "Ticket Category": "ticket_category",
-                        "Ticket Priority": "ticket_priority",
+                        "Ticket Priority": "ticket_priority"
                     }',
                     'lang' => [
                         'ar' => '<div style="font-family: Arial, Helvetica, sans-serif; background:#f7f8fc; padding:25px;">
@@ -4720,6 +5430,3027 @@ class EmailTemplatesSeeder extends Seeder
                     </div>',
                 ],
             ],
+            'Proposal Sent' => [
+                'subject' => 'Proposal Sent',
+                'variables' => '{
+                    "App Name": "app_name",
+                    "Company Name": "company_name",
+                    "App Url": "app_url",
+                    "Proposal Number": "proposal_number",
+                    "Customer Name": "sales_customer_name",
+                    "Total Amount ": "total_amount",
+                    "Discount Amount" : "discount_amount"
+                  }',
+                  'lang' => [
+                    'ar' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:620px;margin:auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 6px 18px rgba(0,0,0,0.05);">
+
+                    <div style="background:linear-gradient(90deg,#6676ef,#7f8cff);padding:18px 25px;color:#ffffff;font-size:18px;font-weight:600;">
+                    📄 إشعار عرض السعر
+                    </div>
+
+                    <div style="padding:25px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    👋 مرحبًا، {sales_customer_name}
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    تم إنشاء عرض سعر جديد لك في <strong>{app_name}</strong>.  
+                    يرجى مراجعة تفاصيل العرض أدناه.
+                    </p>
+
+                    <div style="background:#f6f7ff;border:1px solid #e6e8f0;padding:18px;margin:22px 0;border-radius:8px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 رقم عرض السعر:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 المبلغ الإجمالي:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷️ قيمة الخصم:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    إذا كان لديك أي أسئلة أو تحتاج إلى مساعدة إضافية، فلا تتردد في التواصل معنا في أي وقت.
+                    </p>
+
+                    <div style="margin:25px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#6676ef;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                    فتح التطبيق
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    شكرًا لك،<br>
+                    مع التحية،<br>
+                    <strong>{company_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#777;margin-top:10px;">
+                    <a href="{app_url}" style="color:#6676ef;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+
+                    'da' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:620px;margin:auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 6px 18px rgba(0,0,0,0.05);">
+
+                    <div style="background:linear-gradient(90deg,#6676ef,#7f8cff);padding:18px 25px;color:#ffffff;font-size:18px;font-weight:600;">
+                    📄 Tilbudsmeddelelse
+                    </div>
+
+                    <div style="padding:25px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    👋 Hej, {sales_customer_name}
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Et nyt tilbud er blevet oprettet til dig i <strong>{app_name}</strong>.  
+                    Se venligst tilbudsoplysningerne nedenfor.
+                    </p>
+
+                    <div style="background:#f6f7ff;border:1px solid #e6e8f0;padding:18px;margin:22px 0;border-radius:8px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Tilbudsnummer:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Samlet beløb:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷️ Rabatbeløb:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Hvis du har spørgsmål eller har brug for yderligere hjælp, er du velkommen til at kontakte os når som helst.
+                    </p>
+
+                    <div style="margin:25px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#6676ef;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                    Åbn applikation
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Tak,<br>
+                    Med venlig hilsen,<br>
+                    <strong>{company_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#777;margin-top:10px;">
+                    <a href="{app_url}" style="color:#6676ef;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+
+                    'de' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:620px;margin:auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 6px 18px rgba(0,0,0,0.05);">
+
+                    <div style="background:linear-gradient(90deg,#6676ef,#7f8cff);padding:18px 25px;color:#ffffff;font-size:18px;font-weight:600;">
+                    📄 Angebotsbenachrichtigung
+                    </div>
+
+                    <div style="padding:25px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    👋 Hallo, {sales_customer_name}
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Ein neues Angebot wurde für Sie in <strong>{app_name}</strong> erstellt.  
+                    Bitte überprüfen Sie die Angebotsdetails unten.
+                    </p>
+
+                    <div style="background:#f6f7ff;border:1px solid #e6e8f0;padding:18px;margin:22px 0;border-radius:8px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Angebotsnummer:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Gesamtbetrag:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷️ Rabattbetrag:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Wenn Sie Fragen haben oder weitere Unterstützung benötigen, können Sie uns jederzeit kontaktieren.
+                    </p>
+
+                    <div style="margin:25px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#6676ef;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                    Anwendung öffnen
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Danke,<br>
+                    Mit freundlichen Grüßen,<br>
+                    <strong>{company_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#777;margin-top:10px;">
+                    <a href="{app_url}" style="color:#6676ef;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+
+                   'en' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:620px;margin:auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 6px 18px rgba(0,0,0,0.05);">
+
+                    <div style="background:linear-gradient(90deg,#6676ef,#7f8cff);padding:18px 25px;color:#ffffff;font-size:18px;font-weight:600;">
+                    📄 Proposal Notification
+                    </div>
+
+                    <div style="padding:25px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    👋 Hi, {sales_customer_name}
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    A new proposal has been created for you in <strong>{app_name}</strong>.  
+                    Please review the proposal details below.
+                    </p>
+
+                    <div style="background:#f6f7ff;border:1px solid #e6e8f0;padding:18px;margin:22px 0;border-radius:8px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Proposal Number:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Total Amount:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷️ Discount Amount:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    If you have any questions or need further assistance, feel free to contact us anytime.
+                    </p>
+
+                    <div style="margin:25px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#6676ef;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                    Open Application
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Thank You,<br>
+                    Regards,<br>
+                    <strong>{company_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#777;margin-top:10px;">
+                    <a href="{app_url}" style="color:#6676ef;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    
+                    'es' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:620px;margin:auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 6px 18px rgba(0,0,0,0.05);">
+
+                    <div style="background:linear-gradient(90deg,#6676ef,#7f8cff);padding:18px 25px;color:#ffffff;font-size:18px;font-weight:600;">
+                    📄 Notificación de Propuesta
+                    </div>
+
+                    <div style="padding:25px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    👋 Hola, {sales_customer_name}
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Se ha creado una nueva propuesta para usted en <strong>{app_name}</strong>.  
+                    Por favor revise los detalles de la propuesta a continuación.
+                    </p>
+
+                    <div style="background:#f6f7ff;border:1px solid #e6e8f0;padding:18px;margin:22px 0;border-radius:8px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Número de Propuesta:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Monto Total:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷️ Monto de Descuento:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Si tiene alguna pregunta o necesita más ayuda, no dude en contactarnos en cualquier momento.
+                    </p>
+
+                    <div style="margin:25px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#6676ef;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                    Abrir Aplicación
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Gracias,<br>
+                    Saludos,<br>
+                    <strong>{company_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#777;margin-top:10px;">
+                    <a href="{app_url}" style="color:#6676ef;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+
+                    'fr' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:620px;margin:auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 6px 18px rgba(0,0,0,0.05);">
+
+                    <div style="background:linear-gradient(90deg,#6676ef,#7f8cff);padding:18px 25px;color:#ffffff;font-size:18px;font-weight:600;">
+                    📄 Notification de Proposition
+                    </div>
+
+                    <div style="padding:25px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    👋 Bonjour, {sales_customer_name}
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Une nouvelle proposition a été créée pour vous dans <strong>{app_name}</strong>.  
+                    Veuillez consulter les détails de la proposition ci-dessous.
+                    </p>
+
+                    <div style="background:#f6f7ff;border:1px solid #e6e8f0;padding:18px;margin:22px 0;border-radius:8px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Numéro de Proposition :</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Montant Total :</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷️ Montant de la Remise :</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Si vous avez des questions ou avez besoin d\aide supplémentaire, n\hésitez pas à nous contacter à tout moment.
+                    </p>
+
+                    <div style="margin:25px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#6676ef;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                    Ouvrir l\application
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Merci,<br>
+                    Cordialement,<br>
+                    <strong>{company_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#777;margin-top:10px;">
+                    <a href="{app_url}" style="color:#6676ef;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+
+                    'he' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:620px;margin:auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 6px 18px rgba(0,0,0,0.05);">
+
+                    <div style="background:linear-gradient(90deg,#6676ef,#7f8cff);padding:18px 25px;color:#ffffff;font-size:18px;font-weight:600;">
+                    📄 הודעת הצעה
+                    </div>
+
+                    <div style="padding:25px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    👋 שלום, {sales_customer_name}
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    נוצרה עבורך הצעה חדשה ב-<strong>{app_name}</strong>.  
+                    אנא בדוק את פרטי ההצעה למטה.
+                    </p>
+
+                    <div style="background:#f6f7ff;border:1px solid #e6e8f0;padding:18px;margin:22px 0;border-radius:8px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 מספר הצעה:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 סכום כולל:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷️ סכום הנחה:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    אם יש לך שאלות או שאתה זקוק לעזרה נוספת, אל תהסס לפנות אלינו בכל עת.
+                    </p>
+
+                    <div style="margin:25px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#6676ef;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                    פתח את האפליקציה
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    תודה,<br>
+                    בברכה,<br>
+                    <strong>{company_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#777;margin-top:10px;">
+                    <a href="{app_url}" style="color:#6676ef;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+
+                    'it' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:620px;margin:auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 6px 18px rgba(0,0,0,0.05);">
+
+                    <div style="background:linear-gradient(90deg,#6676ef,#7f8cff);padding:18px 25px;color:#ffffff;font-size:18px;font-weight:600;">
+                    📄 Notifica di Proposta
+                    </div>
+
+                    <div style="padding:25px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    👋 Ciao, {sales_customer_name}
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    È stata creata una nuova proposta per te in <strong>{app_name}</strong>.  
+                    Consulta i dettagli della proposta qui sotto.
+                    </p>
+
+                    <div style="background:#f6f7ff;border:1px solid #e6e8f0;padding:18px;margin:22px 0;border-radius:8px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Numero Proposta:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Importo Totale:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷️ Importo Sconto:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Se hai domande o hai bisogno di ulteriore assistenza, non esitare a contattarci in qualsiasi momento.
+                    </p>
+
+                    <div style="margin:25px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#6676ef;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                    Apri Applicazione
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Grazie,<br>
+                    Cordiali saluti,<br>
+                    <strong>{company_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#777;margin-top:10px;">
+                    <a href="{app_url}" style="color:#6676ef;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+
+                   'ja' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:620px;margin:auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 6px 18px rgba(0,0,0,0.05);">
+
+                    <div style="background:linear-gradient(90deg,#6676ef,#7f8cff);padding:18px 25px;color:#ffffff;font-size:18px;font-weight:600;">
+                    📄 提案通知
+                    </div>
+
+                    <div style="padding:25px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    👋 こんにちは、{sales_customer_name}
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    <strong>{app_name}</strong>で新しい提案が作成されました。  
+                    以下の提案詳細をご確認ください。
+                    </p>
+
+                    <div style="background:#f6f7ff;border:1px solid #e6e8f0;padding:18px;margin:22px 0;border-radius:8px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 提案番号:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 合計金額:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷️ 割引金額:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    ご質問や追加のサポートが必要な場合は、いつでもお気軽にお問い合わせください。
+                    </p>
+
+                    <div style="margin:25px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#6676ef;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                    アプリを開く
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    ありがとうございます。<br>
+                    よろしくお願いいたします。<br>
+                    <strong>{company_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#777;margin-top:10px;">
+                    <a href="{app_url}" style="color:#6676ef;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+
+                    'nl' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:620px;margin:auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 6px 18px rgba(0,0,0,0.05);">
+
+                    <div style="background:linear-gradient(90deg,#6676ef,#7f8cff);padding:18px 25px;color:#ffffff;font-size:18px;font-weight:600;">
+                    📄 Voorstelmelding
+                    </div>
+
+                    <div style="padding:25px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    👋 Hallo, {sales_customer_name}
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Er is een nieuw voorstel voor u aangemaakt in <strong>{app_name}</strong>.  
+                    Bekijk hieronder de details van het voorstel.
+                    </p>
+
+                    <div style="background:#f6f7ff;border:1px solid #e6e8f0;padding:18px;margin:22px 0;border-radius:8px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Voorstelnummer:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Totaalbedrag:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷️ Kortingsbedrag:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Als u vragen heeft of verdere hulp nodig heeft, neem dan gerust op elk moment contact met ons op.
+                    </p>
+
+                    <div style="margin:25px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#6676ef;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                    Applicatie openen
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Bedankt,<br>
+                    Met vriendelijke groet,<br>
+                    <strong>{company_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#777;margin-top:10px;">
+                    <a href="{app_url}" style="color:#6676ef;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+
+                    'pl' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:620px;margin:auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 6px 18px rgba(0,0,0,0.05);">
+
+                    <div style="background:linear-gradient(90deg,#6676ef,#7f8cff);padding:18px 25px;color:#ffffff;font-size:18px;font-weight:600;">
+                    📄 Powiadomienie o ofercie
+                    </div>
+
+                    <div style="padding:25px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    👋 Witaj, {sales_customer_name}
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Nowa oferta została utworzona dla Ciebie w <strong>{app_name}</strong>.  
+                    Prosimy o zapoznanie się z poniższymi szczegółami oferty.
+                    </p>
+
+                    <div style="background:#f6f7ff;border:1px solid #e6e8f0;padding:18px;margin:22px 0;border-radius:8px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Numer oferty:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Całkowita kwota:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷️ Kwota rabatu:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Jeśli masz jakiekolwiek pytania lub potrzebujesz dodatkowej pomocy, skontaktuj się z nami w dowolnym momencie.
+                    </p>
+
+                    <div style="margin:25px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#6676ef;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                    Otwórz aplikację
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Dziękujemy,<br>
+                    Z poważaniem,<br>
+                    <strong>{company_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#777;margin-top:10px;">
+                    <a href="{app_url}" style="color:#6676ef;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+
+
+                    'ru' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:620px;margin:auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 6px 18px rgba(0,0,0,0.05);">
+
+                    <div style="background:linear-gradient(90deg,#6676ef,#7f8cff);padding:18px 25px;color:#ffffff;font-size:18px;font-weight:600;">
+                    📄 Уведомление о предложении
+                    </div>
+
+                    <div style="padding:25px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    👋 Здравствуйте, {sales_customer_name}
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Для вас было создано новое предложение в <strong>{app_name}</strong>.  
+                    Пожалуйста, ознакомьтесь с деталями предложения ниже.
+                    </p>
+
+                    <div style="background:#f6f7ff;border:1px solid #e6e8f0;padding:18px;margin:22px 0;border-radius:8px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Номер предложения:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Общая сумма:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷️ Сумма скидки:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Если у вас есть вопросы или вам нужна дополнительная помощь, пожалуйста, свяжитесь с нами в любое время.
+                    </p>
+
+                    <div style="margin:25px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#6676ef;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                    Открыть приложение
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Спасибо,<br>
+                    С уважением,<br>
+                    <strong>{company_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#777;margin-top:10px;">
+                    <a href="{app_url}" style="color:#6676ef;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+
+
+                    'pt' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:620px;margin:auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 6px 18px rgba(0,0,0,0.05);">
+
+                    <div style="background:linear-gradient(90deg,#6676ef,#7f8cff);padding:18px 25px;color:#ffffff;font-size:18px;font-weight:600;">
+                    📄 Notificação de Proposta
+                    </div>
+
+                    <div style="padding:25px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    👋 Olá, {sales_customer_name}
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Uma nova proposta foi criada para você em <strong>{app_name}</strong>.  
+                    Por favor, revise os detalhes da proposta abaixo.
+                    </p>
+
+                    <div style="background:#f6f7ff;border:1px solid #e6e8f0;padding:18px;margin:22px 0;border-radius:8px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Número da Proposta:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Valor Total:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷️ Valor do Desconto:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Se você tiver alguma dúvida ou precisar de mais assistência, sinta-se à vontade para nos contatar a qualquer momento.
+                    </p>
+
+                    <div style="margin:25px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#6676ef;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                    Abrir Aplicação
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Obrigado,<br>
+                    Atenciosamente,<br>
+                    <strong>{company_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#777;margin-top:10px;">
+                    <a href="{app_url}" style="color:#6676ef;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+
+                    'pt-BR' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:620px;margin:auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 6px 18px rgba(0,0,0,0.05);">
+
+                    <div style="background:linear-gradient(90deg,#6676ef,#7f8cff);padding:18px 25px;color:#ffffff;font-size:18px;font-weight:600;">
+                    📄 Notificação de Proposta
+                    </div>
+
+                    <div style="padding:25px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    👋 Olá, {sales_customer_name}
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Uma nova proposta foi criada para você em <strong>{app_name}</strong>.  
+                    Por favor, revise os detalhes da proposta abaixo.
+                    </p>
+
+                    <div style="background:#f6f7ff;border:1px solid #e6e8f0;padding:18px;margin:22px 0;border-radius:8px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Número da Proposta:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Valor Total:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷️ Valor do Desconto:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Se você tiver alguma dúvida ou precisar de mais assistência, sinta-se à vontade para nos contatar a qualquer momento.
+                    </p>
+
+                    <div style="margin:25px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#6676ef;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                    Abrir Aplicação
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Obrigado,<br>
+                    Atenciosamente,<br>
+                    <strong>{company_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#777;margin-top:10px;">
+                    <a href="{app_url}" style="color:#6676ef;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+
+                    'tr' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:620px;margin:auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 6px 18px rgba(0,0,0,0.05);">
+
+                    <div style="background:linear-gradient(90deg,#6676ef,#7f8cff);padding:18px 25px;color:#ffffff;font-size:18px;font-weight:600;">
+                    📄 Teklif Bildirimi
+                    </div>
+
+                    <div style="padding:25px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    👋 Merhaba, {sales_customer_name}
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    <strong>{app_name}</strong> içinde sizin için yeni bir teklif oluşturuldu.  
+                    Lütfen aşağıdaki teklif detaylarını inceleyin.
+                    </p>
+
+                    <div style="background:#f6f7ff;border:1px solid #e6e8f0;padding:18px;margin:22px 0;border-radius:8px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Teklif Numarası:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Toplam Tutar:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷️ İndirim Tutarı:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Herhangi bir sorunuz varsa veya ek yardıma ihtiyacınız olursa, bizimle istediğiniz zaman iletişime geçebilirsiniz.
+                    </p>
+
+                    <div style="margin:25px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#6676ef;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                    Uygulamayı Aç
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Teşekkür ederiz,<br>
+                    Saygılarımızla,<br>
+                    <strong>{company_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#777;margin-top:10px;">
+                    <a href="{app_url}" style="color:#6676ef;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+
+                    'zh' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:620px;margin:auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 6px 18px rgba(0,0,0,0.05);">
+
+                    <div style="background:linear-gradient(90deg,#6676ef,#7f8cff);padding:18px 25px;color:#ffffff;font-size:18px;font-weight:600;">
+                    📄 提案通知
+                    </div>
+
+                    <div style="padding:25px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    👋 您好，{sales_customer_name}
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    系统已在 <strong>{app_name}</strong> 中为您创建了新的提案。  
+                    请查看下面的提案详情。
+                    </p>
+
+                    <div style="background:#f6f7ff;border:1px solid #e6e8f0;padding:18px;margin:22px 0;border-radius:8px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 提案编号：</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 总金额：</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷️ 折扣金额：</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    如果您有任何问题或需要进一步的帮助，请随时与我们联系。
+                    </p>
+
+                    <div style="margin:25px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#6676ef;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                    打开应用
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    谢谢，<br>
+                    此致敬礼，<br>
+                    <strong>{company_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#777;margin-top:10px;">
+                    <a href="{app_url}" style="color:#6676ef;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                ],
+            ],
+            'Proposal Approval' => [
+                'subject' => 'Proposal Approval',
+                'variables' => '{
+                    "App Name": "app_name",
+                    "Company Name": "company_name",
+                    "App Url": "app_url",
+                    "Proposal Number": "proposal_number",
+                    "Customer Name": "sales_customer_name",
+                    "Total Amount ": "total_amount",
+                    "Discount Amount" : "discount_amount",
+                    "Status": "status"
+                  }',
+                  'lang' => [
+                    'ar' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+
+                    <div style="background:linear-gradient(90deg,#5b6cff,#7f8cff);padding:20px 28px;color:#ffffff;font-size:20px;font-weight:600;">
+                    📊 إشعار حالة العرض
+                    </div>
+
+                    <div style="padding:28px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    مرحباً {company_name},
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    قام عميلك <strong>{sales_customer_name}</strong> بمراجعة العرض الذي تم إنشاؤه في <strong>{app_name}</strong>.
+                    </p>
+
+                    <div style="text-align:center;margin:25px 0;">
+                    <span style="display:inline-block;background:#f1f3ff;color:#444;border:1px solid #dcdff5;padding:10px 22px;border-radius:25px;font-size:14px;font-weight:600;">
+                    العرض: {status}
+                    </span>
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    فيما يلي تفاصيل العرض:
+                    </p>
+
+                    <div style="background:#f7f8ff;border:1px solid #e6e8f0;border-radius:10px;padding:20px;margin-top:18px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 رقم العرض:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>👤 اسم العميل:</strong> {sales_customer_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 المبلغ الإجمالي:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷 قيمة الخصم:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;margin-top:20px;">
+                    يمكنك فتح التطبيق لعرض المزيد من التفاصيل أو اتخاذ إجراء إضافي إذا لزم الأمر.
+                    </p>
+
+                    <div style="margin:30px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#5b6cff;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    فتح التطبيق
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    شكراً لك،<br>
+                    مع التحية،<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:8px;">
+                    <a href="{app_url}" style="color:#5b6cff;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'da' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+
+                    <div style="background:linear-gradient(90deg,#5b6cff,#7f8cff);padding:20px 28px;color:#ffffff;font-size:20px;font-weight:600;">
+                    📊 Forslagsstatus Meddelelse
+                    </div>
+
+                    <div style="padding:28px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    Hej {company_name},
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Din kunde <strong>{sales_customer_name}</strong> har gennemgået forslaget oprettet i <strong>{app_name}</strong>.
+                    </p>
+
+                    <div style="text-align:center;margin:25px 0;">
+                    <span style="display:inline-block;background:#f1f3ff;color:#444;border:1px solid #dcdff5;padding:10px 22px;border-radius:25px;font-size:14px;font-weight:600;">
+                    Forslag: {status}
+                    </span>
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Her er detaljerne for forslaget:
+                    </p>
+
+                    <div style="background:#f7f8ff;border:1px solid #e6e8f0;border-radius:10px;padding:20px;margin-top:18px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Forslagsnummer:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>👤 Kundenavn:</strong> {sales_customer_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Samlet beløb:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷 Rabatbeløb:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;margin-top:20px;">
+                    Du kan åbne applikationen for at se flere detaljer eller foretage yderligere handlinger.
+                    </p>
+
+                    <div style="margin:30px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#5b6cff;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    Åbn Applikation
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Tak,<br>
+                    Med venlig hilsen,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:8px;">
+                    <a href="{app_url}" style="color:#5b6cff;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'de' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+
+                    <div style="background:linear-gradient(90deg,#5b6cff,#7f8cff);padding:20px 28px;color:#ffffff;font-size:20px;font-weight:600;">
+                    📊 Benachrichtigung zum Angebotsstatus
+                    </div>
+
+                    <div style="padding:28px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    Hallo {company_name},
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Ihr Kunde <strong>{sales_customer_name}</strong> hat das in <strong>{app_name}</strong> erstellte Angebot überprüft.
+                    </p>
+
+                    <div style="text-align:center;margin:25px 0;">
+                    <span style="display:inline-block;background:#f1f3ff;color:#444;border:1px solid #dcdff5;padding:10px 22px;border-radius:25px;font-size:14px;font-weight:600;">
+                    Angebot: {status}
+                    </span>
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Nachfolgend finden Sie die Details des Angebots:
+                    </p>
+
+                    <div style="background:#f7f8ff;border:1px solid #e6e8f0;border-radius:10px;padding:20px;margin-top:18px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Angebotsnummer:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>👤 Kundenname:</strong> {sales_customer_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Gesamtbetrag:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷 Rabattbetrag:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;margin-top:20px;">
+                    Sie können die Anwendung öffnen, um weitere Details anzuzeigen oder bei Bedarf weitere Maßnahmen zu ergreifen.
+                    </p>
+
+                    <div style="margin:30px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#5b6cff;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    Anwendung öffnen
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Vielen Dank,<br>
+                    Mit freundlichen Grüßen,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:8px;">
+                    <a href="{app_url}" style="color:#5b6cff;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'en' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+
+                    <div style="background:linear-gradient(90deg,#5b6cff,#7f8cff);padding:20px 28px;color:#ffffff;font-size:20px;font-weight:600;">
+                    📊 Proposal Status Notification
+                    </div>
+
+                    <div style="padding:28px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    Hello {company_name},
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Your customer <strong>{sales_customer_name}</strong> has reviewed the proposal created in <strong>{app_name}</strong>.
+                    </p>
+
+                    <div style="text-align:center;margin:25px 0;">
+                    <span style="display:inline-block;background:#f1f3ff;color:#444;border:1px solid #dcdff5;padding:10px 22px;border-radius:25px;font-size:14px;font-weight:600;">
+                    Proposal: {status}
+                    </span>
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Below are the details of the proposal:
+                    </p>
+
+                    <div style="background:#f7f8ff;border:1px solid #e6e8f0;border-radius:10px;padding:20px;margin-top:18px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Proposal Number:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>👤 Customer Name:</strong> {sales_customer_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Total Amount:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷 Discount Amount:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;margin-top:20px;">
+                    You can open the application to view more details or take further action if required.
+                    </p>
+
+                    <div style="margin:30px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#5b6cff;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    Open Application
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Thank You,<br>
+                    Regards,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:8px;">
+                    <a href="{app_url}" style="color:#5b6cff;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'es' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+
+                    <div style="background:linear-gradient(90deg,#5b6cff,#7f8cff);padding:20px 28px;color:#ffffff;font-size:20px;font-weight:600;">
+                    📊 Notificación del Estado de la Propuesta
+                    </div>
+
+                    <div style="padding:28px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    Hola {company_name},
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Su cliente <strong>{sales_customer_name}</strong> ha revisado la propuesta creada en <strong>{app_name}</strong>.
+                    </p>
+
+                    <div style="text-align:center;margin:25px 0;">
+                    <span style="display:inline-block;background:#f1f3ff;color:#444;border:1px solid #dcdff5;padding:10px 22px;border-radius:25px;font-size:14px;font-weight:600;">
+                    Propuesta: {status}
+                    </span>
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    A continuación se muestran los detalles de la propuesta:
+                    </p>
+
+                    <div style="background:#f7f8ff;border:1px solid #e6e8f0;border-radius:10px;padding:20px;margin-top:18px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Número de Propuesta:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>👤 Nombre del Cliente:</strong> {sales_customer_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Importe Total:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷 Importe de Descuento:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;margin-top:20px;">
+                    Puede abrir la aplicación para ver más detalles o realizar acciones adicionales si es necesario.
+                    </p>
+
+                    <div style="margin:30px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#5b6cff;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    Abrir Aplicación
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Gracias,<br>
+                    Saludos,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:8px;">
+                    <a href="{app_url}" style="color:#5b6cff;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'fr' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+
+                    <div style="background:linear-gradient(90deg,#5b6cff,#7f8cff);padding:20px 28px;color:#ffffff;font-size:20px;font-weight:600;">
+                    📊 Notification du Statut de la Proposition
+                    </div>
+
+                    <div style="padding:28px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    Bonjour {company_name},
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Votre client <strong>{sales_customer_name}</strong> a examiné la proposition créée dans <strong>{app_name}</strong>.
+                    </p>
+
+                    <div style="text-align:center;margin:25px 0;">
+                    <span style="display:inline-block;background:#f1f3ff;color:#444;border:1px solid #dcdff5;padding:10px 22px;border-radius:25px;font-size:14px;font-weight:600;">
+                    Proposition : {status}
+                    </span>
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Vous trouverez ci-dessous les détails de la proposition :
+                    </p>
+
+                    <div style="background:#f7f8ff;border:1px solid #e6e8f0;border-radius:10px;padding:20px;margin-top:18px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Numéro de Proposition :</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>👤 Nom du Client :</strong> {sales_customer_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Montant Total :</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷 Montant de la Remise :</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;margin-top:20px;">
+                    Vous pouvez ouvrir l\application pour voir plus de détails ou effectuer d\autres actions si nécessaire.
+                    </p>
+
+                    <div style="margin:30px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#5b6cff;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    Ouvrir l’Application
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Merci,<br>
+                    Cordialement,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:8px;">
+                    <a href="{app_url}" style="color:#5b6cff;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'it' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+
+                    <div style="background:linear-gradient(90deg,#5b6cff,#7f8cff);padding:20px 28px;color:#ffffff;font-size:20px;font-weight:600;">
+                    📊 Notifica dello Stato della Proposta
+                    </div>
+
+                    <div style="padding:28px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    Ciao {company_name},
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Il tuo cliente <strong>{sales_customer_name}</strong> ha esaminato la proposta creata in <strong>{app_name}</strong>.
+                    </p>
+
+                    <div style="text-align:center;margin:25px 0;">
+                    <span style="display:inline-block;background:#f1f3ff;color:#444;border:1px solid #dcdff5;padding:10px 22px;border-radius:25px;font-size:14px;font-weight:600;">
+                    Proposta: {status}
+                    </span>
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Di seguito sono riportati i dettagli della proposta:
+                    </p>
+
+                    <div style="background:#f7f8ff;border:1px solid #e6e8f0;border-radius:10px;padding:20px;margin-top:18px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Numero della Proposta:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>👤 Nome Cliente:</strong> {sales_customer_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Importo Totale:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷 Importo dello Sconto:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;margin-top:20px;">
+                    Puoi aprire l\'applicazione per visualizzare maggiori dettagli o eseguire ulteriori azioni se necessario.
+                    </p>
+
+                    <div style="margin:30px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#5b6cff;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    Apri Applicazione
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Grazie,<br>
+                    Cordiali saluti,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:8px;">
+                    <a href="{app_url}" style="color:#5b6cff;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'ja' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+
+                    <div style="background:linear-gradient(90deg,#5b6cff,#7f8cff);padding:20px 28px;color:#ffffff;font-size:20px;font-weight:600;">
+                    📊 提案ステータス通知
+                    </div>
+
+                    <div style="padding:28px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    こんにちは {company_name} 様
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    お客様 <strong>{sales_customer_name}</strong> が <strong>{app_name}</strong> で作成された提案を確認しました。
+                    </p>
+
+                    <div style="text-align:center;margin:25px 0;">
+                    <span style="display:inline-block;background:#f1f3ff;color:#444;border:1px solid #dcdff5;padding:10px 22px;border-radius:25px;font-size:14px;font-weight:600;">
+                    提案: {status}
+                    </span>
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    以下は提案の詳細です:
+                    </p>
+
+                    <div style="background:#f7f8ff;border:1px solid #e6e8f0;border-radius:10px;padding:20px;margin-top:18px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 提案番号:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>👤 顧客名:</strong> {sales_customer_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 合計金額:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷 割引金額:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;margin-top:20px;">
+                    アプリケーションを開いて詳細を確認したり、必要に応じて追加の操作を行うことができます。
+                    </p>
+
+                    <div style="margin:30px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#5b6cff;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    アプリケーションを開く
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    ありがとうございます。<br>
+                    よろしくお願いいたします。<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:8px;">
+                    <a href="{app_url}" style="color:#5b6cff;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'nl' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+
+                    <div style="background:linear-gradient(90deg,#5b6cff,#7f8cff);padding:20px 28px;color:#ffffff;font-size:20px;font-weight:600;">
+                    📊 Voorstel Statusmelding
+                    </div>
+
+                    <div style="padding:28px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    Hallo {company_name},
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Uw klant <strong>{sales_customer_name}</strong> heeft het voorstel dat is aangemaakt in <strong>{app_name}</strong> beoordeeld.
+                    </p>
+
+                    <div style="text-align:center;margin:25px 0;">
+                    <span style="display:inline-block;background:#f1f3ff;color:#444;border:1px solid #dcdff5;padding:10px 22px;border-radius:25px;font-size:14px;font-weight:600;">
+                    Voorstel: {status}
+                    </span>
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Hieronder vindt u de details van het voorstel:
+                    </p>
+
+                    <div style="background:#f7f8ff;border:1px solid #e6e8f0;border-radius:10px;padding:20px;margin-top:18px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Voorstelnummer:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>👤 Klantnaam:</strong> {sales_customer_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Totaalbedrag:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷 Kortingsbedrag:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;margin-top:20px;">
+                    U kunt de applicatie openen om meer details te bekijken of verdere acties te ondernemen indien nodig.
+                    </p>
+
+                    <div style="margin:30px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#5b6cff;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    Applicatie Openen
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Bedankt,<br>
+                    Met vriendelijke groet,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:8px;">
+                    <a href="{app_url}" style="color:#5b6cff;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'pl' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+
+                    <div style="background:linear-gradient(90deg,#5b6cff,#7f8cff);padding:20px 28px;color:#ffffff;font-size:20px;font-weight:600;">
+                    📊 Powiadomienie o Statusie Oferty
+                    </div>
+
+                    <div style="padding:28px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    Witaj {company_name},
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Twój klient <strong>{sales_customer_name}</strong> sprawdził ofertę utworzoną w <strong>{app_name}</strong>.
+                    </p>
+
+                    <div style="text-align:center;margin:25px 0;">
+                    <span style="display:inline-block;background:#f1f3ff;color:#444;border:1px solid #dcdff5;padding:10px 22px;border-radius:25px;font-size:14px;font-weight:600;">
+                    Oferta: {status}
+                    </span>
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Poniżej znajdują się szczegóły oferty:
+                    </p>
+
+                    <div style="background:#f7f8ff;border:1px solid #e6e8f0;border-radius:10px;padding:20px;margin-top:18px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Numer Oferty:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>👤 Nazwa Klienta:</strong> {sales_customer_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Całkowita Kwota:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷 Kwota Rabatu:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;margin-top:20px;">
+                    Możesz otworzyć aplikację, aby zobaczyć więcej szczegółów lub podjąć dalsze działania w razie potrzeby.
+                    </p>
+
+                    <div style="margin:30px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#5b6cff;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    Otwórz Aplikację
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Dziękujemy,<br>
+                    Pozdrawiamy,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:8px;">
+                    <a href="{app_url}" style="color:#5b6cff;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'pt' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+
+                    <div style="background:linear-gradient(90deg,#5b6cff,#7f8cff);padding:20px 28px;color:#ffffff;font-size:20px;font-weight:600;">
+                    📊 Notificação de Status da Proposta
+                    </div>
+
+                    <div style="padding:28px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    Olá {company_name},
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Seu cliente <strong>{sales_customer_name}</strong> revisou a proposta criada em <strong>{app_name}</strong>.
+                    </p>
+
+                    <div style="text-align:center;margin:25px 0;">
+                    <span style="display:inline-block;background:#f1f3ff;color:#444;border:1px solid #dcdff5;padding:10px 22px;border-radius:25px;font-size:14px;font-weight:600;">
+                    Proposta: {status}
+                    </span>
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Abaixo estão os detalhes da proposta:
+                    </p>
+
+                    <div style="background:#f7f8ff;border:1px solid #e6e8f0;border-radius:10px;padding:20px;margin-top:18px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Número da Proposta:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>👤 Nome do Cliente:</strong> {sales_customer_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Valor Total:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷 Valor do Desconto:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;margin-top:20px;">
+                    Você pode abrir o aplicativo para ver mais detalhes ou tomar outras ações, se necessário.
+                    </p>
+
+                    <div style="margin:30px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#5b6cff;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    Abrir Aplicação
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Obrigado,<br>
+                    Atenciosamente,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:8px;">
+                    <a href="{app_url}" style="color:#5b6cff;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'pt-BR' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+
+                    <div style="background:linear-gradient(90deg,#5b6cff,#7f8cff);padding:20px 28px;color:#ffffff;font-size:20px;font-weight:600;">
+                    📊 Notificação de Status da Proposta
+                    </div>
+
+                    <div style="padding:28px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    Olá {company_name},
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Seu cliente <strong>{sales_customer_name}</strong> revisou a proposta criada em <strong>{app_name}</strong>.
+                    </p>
+
+                    <div style="text-align:center;margin:25px 0;">
+                    <span style="display:inline-block;background:#f1f3ff;color:#444;border:1px solid #dcdff5;padding:10px 22px;border-radius:25px;font-size:14px;font-weight:600;">
+                    Proposta: {status}
+                    </span>
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Abaixo estão os detalhes da proposta:
+                    </p>
+
+                    <div style="background:#f7f8ff;border:1px solid #e6e8f0;border-radius:10px;padding:20px;margin-top:18px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Número da Proposta:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>👤 Nome do Cliente:</strong> {sales_customer_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Valor Total:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷 Valor do Desconto:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;margin-top:20px;">
+                    Você pode abrir o aplicativo para ver mais detalhes ou tomar outras ações, se necessário.
+                    </p>
+
+                    <div style="margin:30px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#5b6cff;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    Abrir Aplicação
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Obrigado,<br>
+                    Atenciosamente,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:8px;">
+                    <a href="{app_url}" style="color:#5b6cff;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'ru' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+
+                    <div style="background:linear-gradient(90deg,#5b6cff,#7f8cff);padding:20px 28px;color:#ffffff;font-size:20px;font-weight:600;">
+                    📊 Уведомление о Статусе Предложения
+                    </div>
+
+                    <div style="padding:28px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    Здравствуйте, {company_name},
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Ваш клиент <strong>{sales_customer_name}</strong> просмотрел предложение, созданное в <strong>{app_name}</strong>.
+                    </p>
+
+                    <div style="text-align:center;margin:25px 0;">
+                    <span style="display:inline-block;background:#f1f3ff;color:#444;border:1px solid #dcdff5;padding:10px 22px;border-radius:25px;font-size:14px;font-weight:600;">
+                    Предложение: {status}
+                    </span>
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Ниже приведены детали предложения:
+                    </p>
+
+                    <div style="background:#f7f8ff;border:1px solid #e6e8f0;border-radius:10px;padding:20px;margin-top:18px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Номер Предложения:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>👤 Имя Клиента:</strong> {sales_customer_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Общая Сумма:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷 Сумма Скидки:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;margin-top:20px;">
+                    Вы можете открыть приложение, чтобы просмотреть дополнительные детали или выполнить дальнейшие действия при необходимости.
+                    </p>
+
+                    <div style="margin:30px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#5b6cff;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    Открыть Приложение
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Спасибо,<br>
+                    С уважением,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:8px;">
+                    <a href="{app_url}" style="color:#5b6cff;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'he' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+
+                    <div style="background:linear-gradient(90deg,#5b6cff,#7f8cff);padding:20px 28px;color:#ffffff;font-size:20px;font-weight:600;">
+                    📊 התראה על סטטוס ההצעה
+                    </div>
+
+                    <div style="padding:28px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    שלום {company_name},
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    הלקוח שלך <strong>{sales_customer_name}</strong> בדק את ההצעה שנוצרה ב־<strong>{app_name}</strong>.
+                    </p>
+
+                    <div style="text-align:center;margin:25px 0;">
+                    <span style="display:inline-block;background:#f1f3ff;color:#444;border:1px solid #dcdff5;padding:10px 22px;border-radius:25px;font-size:14px;font-weight:600;">
+                    הצעה: {status}
+                    </span>
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    להלן פרטי ההצעה:
+                    </p>
+
+                    <div style="background:#f7f8ff;border:1px solid #e6e8f0;border-radius:10px;padding:20px;margin-top:18px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 מספר הצעה:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>👤 שם הלקוח:</strong> {sales_customer_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 סכום כולל:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷 סכום הנחה:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;margin-top:20px;">
+                    באפשרותך לפתוח את האפליקציה כדי לצפות בפרטים נוספים או לבצע פעולות נוספות במידת הצורך.
+                    </p>
+
+                    <div style="margin:30px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#5b6cff;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    פתח את האפליקציה
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    תודה,<br>
+                    בברכה,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:8px;">
+                    <a href="{app_url}" style="color:#5b6cff;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                   'tr' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+
+                    <div style="background:linear-gradient(90deg,#5b6cff,#7f8cff);padding:20px 28px;color:#ffffff;font-size:20px;font-weight:600;">
+                    📊 Teklif Durumu Bildirimi
+                    </div>
+
+                    <div style="padding:28px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    Merhaba {company_name},
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Müşteriniz <strong>{sales_customer_name}</strong>, <strong>{app_name}</strong> içinde oluşturulan teklifi incelemiştir.
+                    </p>
+
+                    <div style="text-align:center;margin:25px 0;">
+                    <span style="display:inline-block;background:#f1f3ff;color:#444;border:1px solid #dcdff5;padding:10px 22px;border-radius:25px;font-size:14px;font-weight:600;">
+                    Teklif: {status}
+                    </span>
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Aşağıda teklifin detaylarını bulabilirsiniz:
+                    </p>
+
+                    <div style="background:#f7f8ff;border:1px solid #e6e8f0;border-radius:10px;padding:20px;margin-top:18px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 Teklif Numarası:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>👤 Müşteri Adı:</strong> {sales_customer_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 Toplam Tutar:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷 İndirim Tutarı:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;margin-top:20px;">
+                    Daha fazla ayrıntı görmek veya gerekli işlemleri yapmak için uygulamayı açabilirsiniz.
+                    </p>
+
+                    <div style="margin:30px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#5b6cff;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    Uygulamayı Aç
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    Teşekkür ederiz,<br>
+                    Saygılarımızla,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:8px;">
+                    <a href="{app_url}" style="color:#5b6cff;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+
+                    'zh' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:30px;">
+
+                    <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+
+                    <div style="background:linear-gradient(90deg,#5b6cff,#7f8cff);padding:20px 28px;color:#ffffff;font-size:20px;font-weight:600;">
+                    📊 提案状态通知
+                    </div>
+
+                    <div style="padding:28px;">
+
+                    <p style="font-size:20px;color:#333;margin-bottom:15px;font-weight:600;">
+                    您好 {company_name},
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    您的客户 <strong>{sales_customer_name}</strong> 已查看在 <strong>{app_name}</strong> 中创建的提案。
+                    </p>
+
+                    <div style="text-align:center;margin:25px 0;">
+                    <span style="display:inline-block;background:#f1f3ff;color:#444;border:1px solid #dcdff5;padding:10px 22px;border-radius:25px;font-size:14px;font-weight:600;">
+                    提案: {status}
+                    </span>
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    以下是提案的详细信息：
+                    </p>
+
+                    <div style="background:#f7f8ff;border:1px solid #e6e8f0;border-radius:10px;padding:20px;margin-top:18px;">
+
+                    <p style="margin:0;font-size:14px;color:#333;">
+                    <strong>📑 提案编号:</strong> {proposal_number}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>👤 客户名称:</strong> {sales_customer_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>💰 总金额:</strong> {total_amount}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:14px;color:#333;">
+                    <strong>🏷 折扣金额:</strong> {discount_amount}
+                    </p>
+
+                    </div>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;margin-top:20px;">
+                    您可以打开应用程序查看更多详细信息或根据需要采取进一步操作。
+                    </p>
+
+                    <div style="margin:30px 0;text-align:center;">
+                    <a href="{app_url}" style="background:#5b6cff;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    打开应用程序
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:25px 0;">
+
+                    <p style="font-size:14px;color:#333;">
+                    谢谢，<br>
+                    此致敬礼，<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:8px;">
+                    <a href="{app_url}" style="color:#5b6cff;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                ],
+            ],
+            'Plan Purchase' => [
+                'subject' => 'Plan Purchase',
+                'variables' => '{
+                    "App Name": "app_name",
+                    "Company Name": "company_name",
+                    "App Url": "app_url",
+                    "Plan Name": "plan_name",
+                    "Plan Price": "plan_price",
+                    "Plan Duration": "plan_duration"
+                  }',
+                  'lang' => [
+                    'ar' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px;">
+
+                    <div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 12px 30px rgba(0,0,0,0.08);">
+
+                    <div style="background:linear-gradient(90deg,#4f46e5,#6366f1);padding:22px 30px;color:#ffffff;font-size:22px;font-weight:600;">
+                    🚀 إشعار شراء خطة جديدة
+                    </div>
+
+                    <div style="padding:30px;">
+
+                    <p style="font-size:20px;color:#222;margin-bottom:12px;font-weight:600;">
+                    مرحباً مدير النظام،
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    أخبار رائعة! قامت شركة بالاشتراك بنجاح في خطة جديدة على <strong>{app_name}</strong>. فيما يلي تفاصيل عملية الشراء.
+                    </p>
+
+                    <div style="background:#f8f9ff;border:1px solid #e6e8f0;border-radius:12px;padding:22px;margin-top:22px;">
+
+                    <p style="margin:0;font-size:15px;color:#333;">
+                    <strong>🏢 اسم الشركة:</strong> {company_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>📦 اسم الخطة:</strong> {plan_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>💳 سعر الخطة:</strong> {plan_price}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>⏳ مدة الخطة:</strong> {plan_duration}
+                    </p>
+
+                    </div>
+
+                    <div style="margin-top:26px;padding:18px;background:#eef2ff;border-radius:10px;border:1px dashed #c7d2fe;">
+                    <p style="margin:0;font-size:14px;color:#444;line-height:1.6;">
+                    تم تسجيل عملية الشراء هذه بنجاح في النظام. يمكنك مراجعة حساب الشركة وإدارة تفاصيل الاشتراك من لوحة الإدارة.
+                    </p>
+                    </div>
+
+                    <div style="text-align:center;margin-top:30px;">
+                    <a href="{app_url}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 5px 14px rgba(0,0,0,0.12);">
+                    فتح لوحة الإدارة
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:30px 0;">
+
+                    <p style="font-size:14px;color:#444;">
+                    شكراً لك،<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:6px;">
+                    <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'da' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px;">
+
+                    <div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 12px 30px rgba(0,0,0,0.08);">
+
+                    <div style="background:linear-gradient(90deg,#4f46e5,#6366f1);padding:22px 30px;color:#ffffff;font-size:22px;font-weight:600;">
+                    🚀 Ny plan købsmeddelelse
+                    </div>
+
+                    <div style="padding:30px;">
+
+                    <p style="font-size:20px;color:#222;margin-bottom:12px;font-weight:600;">
+                    Hej Super Admin,
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Gode nyheder! En virksomhed har med succes abonneret på en ny plan på <strong>{app_name}</strong>. Nedenfor er detaljerne for købet.
+                    </p>
+
+                    <div style="background:#f8f9ff;border:1px solid #e6e8f0;border-radius:12px;padding:22px;margin-top:22px;">
+
+                    <p style="margin:0;font-size:15px;color:#333;">
+                    <strong>🏢 Firmanavn:</strong> {company_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>📦 Plan navn:</strong> {plan_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>💳 Plan pris:</strong> {plan_price}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>⏳ Plan varighed:</strong> {plan_duration}
+                    </p>
+
+                    </div>
+
+                    <div style="margin-top:26px;padding:18px;background:#eef2ff;border-radius:10px;border:1px dashed #c7d2fe;">
+                    <p style="margin:0;font-size:14px;color:#444;line-height:1.6;">
+                    Dette køb er blevet registreret i systemet. Du kan gennemgå virksomhedens konto og administrere abonnementsdetaljer fra adminpanelet.
+                    </p>
+                    </div>
+
+                    <div style="text-align:center;margin-top:30px;">
+                    <a href="{app_url}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;">
+                    Åbn adminpanel
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:30px 0;">
+
+                    <p style="font-size:14px;color:#444;">
+                    Tak,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:6px;">
+                    <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'de' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px;">
+                    <div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 12px 30px rgba(0,0,0,0.08);">
+
+                    <div style="background:linear-gradient(90deg,#4f46e5,#6366f1);padding:22px 30px;color:#ffffff;font-size:22px;font-weight:600;">
+                    🚀 Neue Plan-Kaufbenachrichtigung
+                    </div>
+
+                    <div style="padding:30px;">
+
+                    <p style="font-size:20px;color:#222;margin-bottom:12px;font-weight:600;">
+                    Hallo Super Admin,
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Großartige Neuigkeiten! Ein Unternehmen hat erfolgreich einen neuen Plan auf <strong>{app_name}</strong> abonniert. Unten finden Sie die Details des Kaufs.
+                    </p>
+
+                    <p><strong>🏢 Firmenname:</strong> {company_name}</p>
+                    <p><strong>📦 Planname:</strong> {plan_name}</p>
+                    <p><strong>💳 Planpreis:</strong> {plan_price}</p>
+                    <p><strong>⏳ Plandauer:</strong> {plan_duration}</p>
+
+                    <div style="text-align:center;margin-top:30px;">
+                    <a href="{app_url}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;">
+                    Admin-Panel öffnen
+                    </a>
+                    </div>
+
+                    <hr>
+
+                    <p>Vielen Dank,<br><strong>{app_name}</strong></p>
+
+                    <p>
+                    <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'en' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px;">
+
+                    <div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 12px 30px rgba(0,0,0,0.08);">
+
+                    <div style="background:linear-gradient(90deg,#4f46e5,#6366f1);padding:22px 30px;color:#ffffff;font-size:22px;font-weight:600;">
+                    🚀 New Plan Purchase Notification
+                    </div>
+
+                    <div style="padding:30px;">
+
+                    <p style="font-size:20px;color:#222;margin-bottom:12px;font-weight:600;">
+                    Hello Super Admin,
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Great news! A company has successfully subscribed to a new plan on <strong>{app_name}</strong>. Below are the details of the purchase.
+                    </p>
+
+                    <div style="background:#f8f9ff;border:1px solid #e6e8f0;border-radius:12px;padding:22px;margin-top:22px;">
+
+                    <p style="margin:0;font-size:15px;color:#333;">
+                    <strong>🏢 Company Name:</strong> {company_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>📦 Plan Name:</strong> {plan_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>💳 Plan Price:</strong> {plan_price}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>⏳ Plan Duration:</strong> {plan_duration}
+                    </p>
+
+                    </div>
+
+                    <div style="margin-top:26px;padding:18px;background:#eef2ff;border-radius:10px;border:1px dashed #c7d2fe;">
+                    <p style="margin:0;font-size:14px;color:#444;line-height:1.6;">
+                    This purchase has been recorded successfully in the system. You can review the company account and manage subscription details from the admin panel.
+                    </p>
+                    </div>
+
+                    <div style="text-align:center;margin-top:30px;">
+                    <a href="{app_url}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;box-shadow:0 5px 14px rgba(0,0,0,0.12);">
+                    Open Admin Panel
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:30px 0;">
+
+                    <p style="font-size:14px;color:#444;">
+                    Thank You,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:6px;">
+                    <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'es' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px;">
+
+                    <div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 12px 30px rgba(0,0,0,0.08);">
+
+                    <div style="background:linear-gradient(90deg,#4f46e5,#6366f1);padding:22px 30px;color:#ffffff;font-size:22px;font-weight:600;">
+                    🚀 Notificación de compra de nuevo plan
+                    </div>
+
+                    <div style="padding:30px;">
+
+                    <p style="font-size:20px;color:#222;margin-bottom:12px;font-weight:600;">
+                    Hola Super Admin,
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    ¡Buenas noticias! Una empresa se ha suscrito con éxito a un nuevo plan en <strong>{app_name}</strong>. A continuación se muestran los detalles de la compra.
+                    </p>
+
+                    <p><strong>🏢 Nombre de la empresa:</strong> {company_name}</p>
+                    <p><strong>📦 Nombre del plan:</strong> {plan_name}</p>
+                    <p><strong>💳 Precio del plan:</strong> {plan_price}</p>
+                    <p><strong>⏳ Duración del plan:</strong> {plan_duration}</p>
+
+                    <div style="text-align:center;margin-top:30px;">
+                    <a href="{app_url}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;">
+                    Abrir panel de administración
+                    </a>
+                    </div>
+
+                    <hr>
+
+                    <p>Gracias,<br><strong>{app_name}</strong></p>
+
+                    <p>
+                    <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'fr' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px;">
+
+                    <div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 12px 30px rgba(0,0,0,0.08);">
+
+                    <div style="background:linear-gradient(90deg,#4f46e5,#6366f1);padding:22px 30px;color:#ffffff;font-size:22px;font-weight:600;">
+                    🚀 Notification d\'achat d\'un nouveau plan
+                    </div>
+
+                    <div style="padding:30px;">
+
+                    <p style="font-size:20px;color:#222;margin-bottom:12px;font-weight:600;">
+                    Bonjour Super Admin,
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Excellente nouvelle ! Une entreprise s\'est abonnée avec succès à un nouveau plan sur <strong>{app_name}</strong>. Voici les détails de l\'achat.
+                    </p>
+
+                    <div style="background:#f8f9ff;border:1px solid #e6e8f0;border-radius:12px;padding:22px;margin-top:22px;">
+
+                    <p style="margin:0;font-size:15px;color:#333;">
+                    <strong>🏢 Nom de l\'entreprise :</strong> {company_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>📦 Nom du plan :</strong> {plan_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>💳 Prix du plan :</strong> {plan_price}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>⏳ Durée du plan :</strong> {plan_duration}
+                    </p>
+
+                    </div>
+
+                    <div style="margin-top:26px;padding:18px;background:#eef2ff;border-radius:10px;border:1px dashed #c7d2fe;">
+                    <p style="margin:0;font-size:14px;color:#444;line-height:1.6;">
+                    Cet achat a été enregistré avec succès dans le système. Vous pouvez consulter le compte de l\'entreprise et gérer les détails de l\'abonnement depuis le panneau d\'administration.
+                    </p>
+                    </div>
+
+                    <div style="text-align:center;margin-top:30px;">
+                    <a href="{app_url}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;">
+                    Ouvrir le panneau d\'administration
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:30px 0;">
+
+                    <p style="font-size:14px;color:#444;">
+                    Merci,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:6px;">
+                    <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'he' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px;">
+
+                    <div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 12px 30px rgba(0,0,0,0.08);">
+
+                    <div style="background:linear-gradient(90deg,#4f46e5,#6366f1);padding:22px 30px;color:#ffffff;font-size:22px;font-weight:600;">
+                    🚀 התראה על רכישת תוכנית חדשה
+                    </div>
+
+                    <div style="padding:30px;">
+
+                    <p style="font-size:20px;color:#222;margin-bottom:12px;font-weight:600;">
+                    שלום מנהל מערכת,
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    חדשות טובות! חברה נרשמה בהצלחה לתוכנית חדשה ב-<strong>{app_name}</strong>. להלן פרטי הרכישה.
+                    </p>
+
+                    <p><strong>🏢 שם החברה:</strong> {company_name}</p>
+                    <p><strong>📦 שם התוכנית:</strong> {plan_name}</p>
+                    <p><strong>💳 מחיר התוכנית:</strong> {plan_price}</p>
+                    <p><strong>⏳ משך התוכנית:</strong> {plan_duration}</p>
+
+                    <div style="text-align:center;margin-top:30px;">
+                    <a href="{app_url}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;">
+                    פתח את פאנל הניהול
+                    </a>
+                    </div>
+
+                    <hr>
+
+                    <p>תודה,<br><strong>{app_name}</strong></p>
+
+                    <p>
+                    <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+
+                    'it' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px;">
+
+                    <div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 12px 30px rgba(0,0,0,0.08);">
+
+                    <div style="background:linear-gradient(90deg,#4f46e5,#6366f1);padding:22px 30px;color:#ffffff;font-size:22px;font-weight:600;">
+                    🚀 Notifica di acquisto di un nuovo piano
+                    </div>
+
+                    <div style="padding:30px;">
+
+                    <p style="font-size:20px;color:#222;margin-bottom:12px;font-weight:600;">
+                    Ciao Super Admin,
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Ottime notizie! Un\azienda ha sottoscritto con successo un nuovo piano su <strong>{app_name}</strong>. Di seguito i dettagli dell\\acquisto.
+                    </p>
+
+                    <p><strong>🏢 Nome azienda:</strong> {company_name}</p>
+                    <p><strong>📦 Nome del piano:</strong> {plan_name}</p>
+                    <p><strong>💳 Prezzo del piano:</strong> {plan_price}</p>
+                    <p><strong>⏳ Durata del piano:</strong> {plan_duration}</p>
+
+                    <div style="text-align:center;margin-top:30px;">
+                    <a href="{app_url}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;">
+                    Apri pannello admin
+                    </a>
+                    </div>
+
+                    <hr>
+
+                    <p>Grazie,<br><strong>{app_name}</strong></p>
+
+                    <p>
+                    <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'ja' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px;">
+
+                    <div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 12px 30px rgba(0,0,0,0.08);">
+
+                    <div style="background:linear-gradient(90deg,#4f46e5,#6366f1);padding:22px 30px;color:#ffffff;font-size:22px;font-weight:600;">
+                    🚀 新しいプラン購入のお知らせ
+                    </div>
+
+                    <div style="padding:30px;">
+
+                    <p style="font-size:20px;color:#222;margin-bottom:12px;font-weight:600;">
+                    スーパー管理者様、
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    お知らせです！企業が <strong>{app_name}</strong> で新しいプランを正常に購入しました。以下に購入の詳細を示します。
+                    </p>
+
+                    <p><strong>🏢 会社名:</strong> {company_name}</p>
+                    <p><strong>📦 プラン名:</strong> {plan_name}</p>
+                    <p><strong>💳 プラン価格:</strong> {plan_price}</p>
+                    <p><strong>⏳ プラン期間:</strong> {plan_duration}</p>
+
+                    <div style="text-align:center;margin-top:30px;">
+                    <a href="{app_url}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;">
+                    管理パネルを開く
+                    </a>
+                    </div>
+
+                    <hr>
+
+                    <p>ありがとうございます、<br><strong>{app_name}</strong></p>
+
+                    <p>
+                    <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'nl' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px;">
+
+                    <div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 12px 30px rgba(0,0,0,0.08);">
+
+                    <div style="background:linear-gradient(90deg,#4f46e5,#6366f1);padding:22px 30px;color:#ffffff;font-size:22px;font-weight:600;">
+                    🚀 Nieuwe plan aankoopmelding
+                    </div>
+
+                    <div style="padding:30px;">
+
+                    <p style="font-size:20px;color:#222;margin-bottom:12px;font-weight:600;">
+                    Hallo Super Admin,
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Goed nieuws! Een bedrijf heeft succesvol een nieuw plan geabonneerd op <strong>{app_name}</strong>. Hieronder staan de details van de aankoop.
+                    </p>
+
+                    <div style="background:#f8f9ff;border:1px solid #e6e8f0;border-radius:12px;padding:22px;margin-top:22px;">
+
+                    <p style="margin:0;font-size:15px;color:#333;">
+                    <strong>🏢 Bedrijfsnaam:</strong> {company_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>📦 Plan naam:</strong> {plan_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>💳 Plan prijs:</strong> {plan_price}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>⏳ Plan duur:</strong> {plan_duration}
+                    </p>
+
+                    </div>
+
+                    <div style="margin-top:26px;padding:18px;background:#eef2ff;border-radius:10px;border:1px dashed #c7d2fe;">
+                    <p style="margin:0;font-size:14px;color:#444;line-height:1.6;">
+                    Deze aankoop is succesvol geregistreerd in het systeem. U kunt het bedrijfsaccount bekijken en abonnementsdetails beheren via het adminpaneel.
+                    </p>
+                    </div>
+
+                    <div style="text-align:center;margin-top:30px;">
+                    <a href="{app_url}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;">
+                    Adminpaneel openen
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:30px 0;">
+
+                    <p style="font-size:14px;color:#444;">
+                    Bedankt,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:6px;">
+                    <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'pl' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px;">
+
+                    <div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 12px 30px rgba(0,0,0,0.08);">
+
+                    <div style="background:linear-gradient(90deg,#4f46e5,#6366f1);padding:22px 30px;color:#ffffff;font-size:22px;font-weight:600;">
+                    🚀 Powiadomienie o zakupie nowego planu
+                    </div>
+
+                    <div style="padding:30px;">
+
+                    <p style="font-size:20px;color:#222;margin-bottom:12px;font-weight:600;">
+                    Witaj Super Adminie,
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Świetna wiadomość! Firma pomyślnie zasubskrybowała nowy plan w <strong>{app_name}</strong>. Poniżej znajdują się szczegóły zakupu.
+                    </p>
+
+                    <p><strong>🏢 Nazwa firmy:</strong> {company_name}</p>
+                    <p><strong>📦 Nazwa planu:</strong> {plan_name}</p>
+                    <p><strong>💳 Cena planu:</strong> {plan_price}</p>
+                    <p><strong>⏳ Czas trwania planu:</strong> {plan_duration}</p>
+
+                    <div style="text-align:center;margin-top:30px;">
+                    <a href="{app_url}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;">
+                    Otwórz panel administratora
+                    </a>
+                    </div>
+
+                    <hr>
+
+                    <p>Dziękujemy,<br><strong>{app_name}</strong></p>
+
+                    <p>
+                    <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                                        'pt-BR' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px;">
+
+                    <div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 12px 30px rgba(0,0,0,0.08);">
+
+                    <div style="background:linear-gradient(90deg,#4f46e5,#6366f1);padding:22px 30px;color:#ffffff;font-size:22px;font-weight:600;">
+                    🚀 Notificação de compra de novo plano
+                    </div>
+
+                    <div style="padding:30px;">
+
+                    <p style="font-size:20px;color:#222;margin-bottom:12px;font-weight:600;">
+                    Olá Super Admin,
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Boas notícias! Uma empresa assinou com sucesso um novo plano no <strong>{app_name}</strong>. Abaixo estão os detalhes da compra.
+                    </p>
+
+                    <p><strong>🏢 Nome da empresa:</strong> {company_name}</p>
+                    <p><strong>📦 Nome do plano:</strong> {plan_name}</p>
+                    <p><strong>💳 Preço do plano:</strong> {plan_price}</p>
+                    <p><strong>⏳ Duração do plano:</strong> {plan_duration}</p>
+
+                    <div style="text-align:center;margin-top:30px;">
+                    <a href="{app_url}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;">
+                    Abrir painel admin
+                    </a>
+                    </div>
+
+                    <hr>
+
+                    <p>Obrigado,<br><strong>{app_name}</strong></p>
+
+                    <p>
+                    <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'pt-BR' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px;">
+
+                    <div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 12px 30px rgba(0,0,0,0.08);">
+
+                    <div style="background:linear-gradient(90deg,#4f46e5,#6366f1);padding:22px 30px;color:#ffffff;font-size:22px;font-weight:600;">
+                    🚀 Notificação de compra de novo plano
+                    </div>
+
+                    <div style="padding:30px;">
+
+                    <p style="font-size:20px;color:#222;margin-bottom:12px;font-weight:600;">
+                    Olá Super Admin,
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Boas notícias! Uma empresa assinou com sucesso um novo plano no <strong>{app_name}</strong>. Abaixo estão os detalhes da compra.
+                    </p>
+
+                    <p><strong>🏢 Nome da empresa:</strong> {company_name}</p>
+                    <p><strong>📦 Nome do plano:</strong> {plan_name}</p>
+                    <p><strong>💳 Preço do plano:</strong> {plan_price}</p>
+                    <p><strong>⏳ Duração do plano:</strong> {plan_duration}</p>
+
+                    <div style="text-align:center;margin-top:30px;">
+                    <a href="{app_url}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;">
+                    Abrir painel admin
+                    </a>
+                    </div>
+
+                    <hr>
+
+                    <p>Obrigado,<br><strong>{app_name}</strong></p>
+
+                    <p>
+                    <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'ru' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px;">
+
+                    <div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 12px 30px rgba(0,0,0,0.08);">
+
+                    <div style="background:linear-gradient(90deg,#4f46e5,#6366f1);padding:22px 30px;color:#ffffff;font-size:22px;font-weight:600;">
+                    🚀 Уведомление о покупке нового плана
+                    </div>
+
+                    <div style="padding:30px;">
+
+                    <p style="font-size:20px;color:#222;margin-bottom:12px;font-weight:600;">
+                    Здравствуйте, Супер Администратор,
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Отличные новости! Компания успешно оформила подписку на новый план в <strong>{app_name}</strong>. Ниже приведены детали покупки.
+                    </p>
+
+                    <div style="background:#f8f9ff;border:1px solid #e6e8f0;border-radius:12px;padding:22px;margin-top:22px;">
+
+                    <p style="margin:0;font-size:15px;color:#333;">
+                    <strong>🏢 Название компании:</strong> {company_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>📦 Название плана:</strong> {plan_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>💳 Цена плана:</strong> {plan_price}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>⏳ Срок действия плана:</strong> {plan_duration}
+                    </p>
+
+                    </div>
+
+                    <div style="margin-top:26px;padding:18px;background:#eef2ff;border-radius:10px;border:1px dashed #c7d2fe;">
+                    <p style="margin:0;font-size:14px;color:#444;line-height:1.6;">
+                    Эта покупка была успешно зарегистрирована в системе. Вы можете просмотреть аккаунт компании и управлять деталями подписки через панель администратора.
+                    </p>
+                    </div>
+
+                    <div style="text-align:center;margin-top:30px;">
+                    <a href="{app_url}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;">
+                    Открыть панель администратора
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:30px 0;">
+
+                    <p style="font-size:14px;color:#444;">
+                    Спасибо,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:6px;">
+                    <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'tr' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px;">
+
+                    <div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 12px 30px rgba(0,0,0,0.08);">
+
+                    <div style="background:linear-gradient(90deg,#4f46e5,#6366f1);padding:22px 30px;color:#ffffff;font-size:22px;font-weight:600;">
+                    🚀 Yeni Plan Satın Alma Bildirimi
+                    </div>
+
+                    <div style="padding:30px;">
+
+                    <p style="font-size:20px;color:#222;margin-bottom:12px;font-weight:600;">
+                    Merhaba Süper Admin,
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    Harika haber! Bir şirket <strong>{app_name}</strong> üzerinde yeni bir plana başarıyla abone oldu. Satın alma detayları aşağıda verilmiştir.
+                    </p>
+
+                    <div style="background:#f8f9ff;border:1px solid #e6e8f0;border-radius:12px;padding:22px;margin-top:22px;">
+
+                    <p style="margin:0;font-size:15px;color:#333;">
+                    <strong>🏢 Şirket Adı:</strong> {company_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>📦 Plan Adı:</strong> {plan_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>💳 Plan Fiyatı:</strong> {plan_price}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>⏳ Plan Süresi:</strong> {plan_duration}
+                    </p>
+
+                    </div>
+
+                    <div style="margin-top:26px;padding:18px;background:#eef2ff;border-radius:10px;border:1px dashed #c7d2fe;">
+                    <p style="margin:0;font-size:14px;color:#444;line-height:1.6;">
+                    Bu satın alma işlemi sistemde başarıyla kaydedildi. Şirket hesabını inceleyebilir ve abonelik detaylarını yönetim panelinden yönetebilirsiniz.
+                    </p>
+                    </div>
+
+                    <div style="text-align:center;margin-top:30px;">
+                    <a href="{app_url}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;">
+                    Yönetim Panelini Aç
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:30px 0;">
+
+                    <p style="font-size:14px;color:#444;">
+                    Teşekkürler,<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:6px;">
+                    <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                    'zh' => '<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:40px;">
+
+                    <div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8f0;box-shadow:0 12px 30px rgba(0,0,0,0.08);">
+
+                    <div style="background:linear-gradient(90deg,#4f46e5,#6366f1);padding:22px 30px;color:#ffffff;font-size:22px;font-weight:600;">
+                    🚀 新套餐购买通知
+                    </div>
+
+                    <div style="padding:30px;">
+
+                    <p style="font-size:20px;color:#222;margin-bottom:12px;font-weight:600;">
+                    您好，超级管理员，
+                    </p>
+
+                    <p style="font-size:15px;color:#555;line-height:1.7;">
+                    好消息！某公司已成功在 <strong>{app_name}</strong> 上订阅了一个新套餐。以下是购买详情。
+                    </p>
+
+                    <div style="background:#f8f9ff;border:1px solid #e6e8f0;border-radius:12px;padding:22px;margin-top:22px;">
+
+                    <p style="margin:0;font-size:15px;color:#333;">
+                    <strong>🏢 公司名称：</strong> {company_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>📦 套餐名称：</strong> {plan_name}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>💳 套餐价格：</strong> {plan_price}
+                    </p>
+
+                    <p style="margin-top:10px;font-size:15px;color:#333;">
+                    <strong>⏳ 套餐时长：</strong> {plan_duration}
+                    </p>
+
+                    </div>
+
+                    <div style="margin-top:26px;padding:18px;background:#eef2ff;border-radius:10px;border:1px dashed #c7d2fe;">
+                    <p style="margin:0;font-size:14px;color:#444;line-height:1.6;">
+                    该购买已成功记录在系统中。您可以在管理面板中查看公司账户并管理订阅详情。
+                    </p>
+                    </div>
+
+                    <div style="text-align:center;margin-top:30px;">
+                    <a href="{app_url}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;">
+                    打开管理面板
+                    </a>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:30px 0;">
+
+                    <p style="font-size:14px;color:#444;">
+                    谢谢，<br>
+                    <strong>{app_name}</strong>
+                    </p>
+
+                    <p style="font-size:13px;color:#888;margin-top:6px;">
+                    <a href="{app_url}" style="color:#4f46e5;text-decoration:none;">{app_url}</a>
+                    </p>
+
+                    </div>
+                    </div>
+                    </div>',
+                ],
+            ],
+              
         ];
 
         foreach($emailTemplate as $eTemp)

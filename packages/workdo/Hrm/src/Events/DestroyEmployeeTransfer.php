@@ -13,7 +13,5 @@ class DestroyEmployeeTransfer
     public function __construct(
           public EmployeeTransfer $employeeTransfer
     )
-    {
-        //
-    }
+    {}
 }

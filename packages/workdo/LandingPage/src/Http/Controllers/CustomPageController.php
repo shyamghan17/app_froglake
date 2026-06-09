@@ -9,6 +9,8 @@ use Workdo\LandingPage\Models\CustomPage;
 use Workdo\LandingPage\Models\LandingPageSetting;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use Workdo\LandingPage\Http\Requests\StoreCustomPageRequest;
+use Workdo\LandingPage\Http\Requests\UpdateCustomPageRequest;
 
 class CustomPageController extends Controller
 {
@@ -49,17 +51,10 @@ class CustomPageController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(StoreCustomPageRequest $request)
     {
         if(Auth::user()->can('create-custom-pages')){
-            $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'slug' => 'nullable|string|unique:custom_pages,slug',
-                'content' => 'required|string',
-                'meta_title' => 'nullable|string|max:255',
-                'meta_description' => 'nullable|string',
-                'is_active' => 'boolean'
-            ]);
+            $validated = $request->validated();
 
             if (!$validated['slug']) {
                 $validated['slug'] = Str::slug($validated['title']);
@@ -87,18 +82,10 @@ class CustomPageController extends Controller
         }
     }
 
-    public function update(Request $request, CustomPage $customPage)
+    public function update(UpdateCustomPageRequest $request, CustomPage $customPage)
     {
-        if(Auth::user()->can('edit-custom-pages')){         
-            
-            $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'slug' => 'required|string|unique:custom_pages,slug,' . $customPage->id,
-                'content' => 'required|string',
-                'meta_title' => 'nullable|string|max:255',
-                'meta_description' => 'nullable|string',
-                'is_active' => 'boolean'
-            ]);
+        if(Auth::user()->can('edit-custom-pages')){
+            $validated = $request->validated();
 
             $customPage->update($validated);
 

@@ -32,9 +32,8 @@ class DemoAttendanceSeeder extends Seeder
             return;
         }
 
-        $months = [7, 8, 9, 10]; // July, August, September, October
-        $year = 2025;
-
+        $months = [Carbon::now()->month]; // Current month
+        $year = Carbon::now()->year; // Current year
         // Process month-wise for better organization
         foreach ($months as $month) {
             $startDate = Carbon::create($year, $month, 1);

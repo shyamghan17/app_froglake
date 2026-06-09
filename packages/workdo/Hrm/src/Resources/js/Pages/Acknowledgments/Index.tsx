@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Dialog } from "@/components/ui/dialog";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Plus, Edit as EditIcon, Trash2, Eye, FileCheck as FileCheckIcon, Download, FileImage, Play } from "lucide-react";
+import { Plus, Edit as EditIcon, Trash2, Eye, FileCheck as FileCheckIcon, Download, FileImage, Check } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FilterButton } from '@/components/ui/filter-button';
 import { Pagination } from "@/components/ui/pagination";
@@ -21,7 +21,6 @@ import { Badge } from '@/components/ui/badge';
 import Create from './Create';
 import EditAcknowledgment from './Edit';
 import View from './View';
-import StatusModal from './StatusModal';
 import NoRecordsFound from '@/components/no-records-found';
 import { Acknowledgment, AcknowledgmentsIndexProps, AcknowledgmentFilters, AcknowledgmentModalState } from './types';
 import { formatDate, formatTime, formatDateTime, formatCurrency, getImagePath } from '@/utils/helpers';
@@ -50,7 +49,6 @@ export default function Index() {
         data: null
     });
     const [viewingItem, setViewingItem] = useState<Acknowledgment | null>(null);
-    const [statusModalItem, setStatusModalItem] = useState<Acknowledgment | null>(null);
 
     const [showFilters, setShowFilters] = useState(false);
 
@@ -98,6 +96,17 @@ export default function Index() {
         setModalState({ isOpen: false, mode: '', data: null });
     };
 
+    const updateStatus = (acknowledgmentId: number) => {
+        router.put(route('hrm.acknowledgments.update-status', acknowledgmentId), {
+            status: 'acknowledged'
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                // Status updated successfully
+            }
+        });
+    };
+
     const tableColumns = [
         {
             key: 'employee.name',
@@ -136,7 +145,7 @@ export default function Index() {
                 };
                 const statusText = value === 'pending' ? 'Pending' : value === 'acknowledged' ? 'Acknowledged' : value;
                 return (
-                    <span className={`px-2 py-1 rounded-full text-sm font-medium ${statusColors[value as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'}`}>
+                    <span className={`px-2 py-1 rounded-full text-sm ${statusColors[value as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'}`}>
                         {t(statusText)}
                     </span>
                 );
@@ -149,15 +158,15 @@ export default function Index() {
                 <div className="flex gap-1">
                     <TooltipProvider>
 
-                        {auth.user?.permissions?.includes('manage-acknowledgment-status') && ackItem.status !== 'acknowledged' && (
+                        {auth.user?.permissions?.includes('manage-acknowledgment-status') && ackItem.status === 'pending' && (
                             <Tooltip delayDuration={0}>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" onClick={() => setStatusModalItem(ackItem)} className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700">
-                                        <Play className="h-4 w-4" />
+                                    <Button variant="ghost" size="sm" onClick={() => updateStatus(ackItem.id)} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
+                                        <Check className="h-4 w-4" />
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p>{t('Action')}</p>
+                                    <p>{t('Acknowledged')}</p>
                                 </TooltipContent>
                             </Tooltip>
                         )}
@@ -416,7 +425,7 @@ export default function Index() {
                                                     </div>
                                                     <div className="text-xs min-w-0">
                                                         <p className="text-muted-foreground mb-1 text-xs uppercase tracking-wide">{t('Status')}</p>
-                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
+                                                        <span className={`px-2 py-1 rounded-full text-xs inline-block ${
                                                             acknowledgment.status === 'acknowledged' ? 'bg-green-100 text-green-800' :
                                                             acknowledgment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                                             'bg-gray-100 text-gray-800'
@@ -429,15 +438,15 @@ export default function Index() {
 
                             <div className="flex justify-end gap-1 p-3 border-t bg-gray-50/50 flex-shrink-0 mt-auto">
                                 <TooltipProvider>
-                                        {auth.user?.permissions?.includes('manage-acknowledgment-status') && acknowledgment.status !== 'acknowledged' && (
+                                        {auth.user?.permissions?.includes('manage-acknowledgment-status') && acknowledgment.status === 'pending' && (
                                             <Tooltip delayDuration={300}>
                                                 <TooltipTrigger asChild>
-                                                    <Button variant="ghost" size="sm" onClick={() => setStatusModalItem(acknowledgment)} className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700">
-                                                        <Play className="h-4 w-4" />
+                                                    <Button variant="ghost" size="sm" onClick={() => updateStatus(acknowledgment.id)} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
+                                                        <Check className="h-4 w-4" />
                                                     </Button>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    <p>{t('Action')}</p>
+                                                    <p>{t('Acknowledged')}</p>
                                                 </TooltipContent>
                                             </Tooltip>
                                         )}
@@ -545,11 +554,6 @@ export default function Index() {
             <Dialog open={!!viewingItem} onOpenChange={() => setViewingItem(null)}>
                 {viewingItem && <View acknowledgment={viewingItem} />}
             </Dialog>
-
-            <StatusModal
-                acknowledgment={statusModalItem}
-                onClose={() => setStatusModalItem(null)}
-            />
 
             <ConfirmationDialog
                 open={deleteState.isOpen}

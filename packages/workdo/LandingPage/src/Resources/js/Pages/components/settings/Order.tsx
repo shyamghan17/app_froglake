@@ -22,7 +22,7 @@ export default function Order({ data, setData, updateSectionVisibility }: OrderP
                             <ArrowUpDown className="h-5 w-5 text-indigo-600" />
                         </div>
                         <div>
-                            <CardTitle>{t('Section Order')}</CardTitle>
+                            <CardTitle className="text-base">{t('Section Order')}</CardTitle>
                             <p className="text-sm text-gray-500">{t('Drag and drop to reorder sections on your landing page')}</p>
                         </div>
                     </div>

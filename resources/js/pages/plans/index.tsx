@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import AuthenticatedLayout from '@/layouts/authenticated-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Check, Plus, Edit, Trash2, X, Package, MoreVertical, Clock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -50,7 +49,6 @@ interface Props {
     bankTransferInstructions: string;
     userTrialInfo?: {
         is_trial_done: number;
-        trial_expire_date: string | null;
     };
 }
 
@@ -76,6 +74,8 @@ export default function PlansIndex({ plans, canCreate, activeModules, bankTransf
     const [deletingPlan, setDeletingPlan] = useState<Plan | null>(null);
     const [pricingPeriod, setPricingPeriod] = useState<'monthly' | 'yearly'>('monthly');
     const [selectedModules, setSelectedModules] = useState<string[]>([]);
+    const [isSavingModulePrice, setIsSavingModulePrice] = useState(false);
+    const [isSavingPlanPrice, setIsSavingPlanPrice] = useState(false);
 
     const handleDelete = (plan: Plan) => {
         setDeletingPlan(plan);
@@ -87,10 +87,6 @@ export default function PlansIndex({ plans, canCreate, activeModules, bankTransf
             setDeletingPlan(null);
         }
     };
-
-
-
-
 
     // Use active modules from AddOns
     const allModules = activeModules.sort((a, b) => a.alias.localeCompare(b.alias));
@@ -120,8 +116,12 @@ export default function PlansIndex({ plans, canCreate, activeModules, bankTransf
     };
 
     const handleSaveModulePrice = () => {
+        setIsSavingModulePrice(true);
         // Here you would make an API call to save the module price
-        setEditingModule(null);
+        setTimeout(() => {
+            setEditingModule(null);
+            setIsSavingModulePrice(false);
+        }, 500);
     };
 
     const handleModulePriceUpdate = (moduleId: string, data: { monthly: number; yearly: number; name?: string; imageFile?: File | null }) => {
@@ -208,9 +208,16 @@ export default function PlansIndex({ plans, canCreate, activeModules, bankTransf
 
     const handleSavePlanPrice = () => {
         if (editingPlan) {
+            setIsSavingPlanPrice(true);
             router.put(route('plans.update', editingPlan.id), planPricing, {
                 preserveState: true,
-                onSuccess: () => setEditingPlan(null)
+                onSuccess: () => {
+                    setEditingPlan(null);
+                    setIsSavingPlanPrice(false);
+                },
+                onError: () => {
+                    setIsSavingPlanPrice(false);
+                }
             });
         }
     };
@@ -237,14 +244,17 @@ export default function PlansIndex({ plans, canCreate, activeModules, bankTransf
         return isCompanyUser &&
                plan.trial &&
                plan.trial_days > 0 &&
-               (auth.user?.is_trial_done === 0 || auth.user?.is_trial_done === '0');
+               auth.user?.is_trial_done === 0;
     };
 
     const isCurrentlySubscribed = (plan: Plan) => {
         if (!isCompanyUser || !auth.user?.active_plan) return false;
+        // Check if it's a paid plan (not trial)
+        const isTrialActive = auth.user?.is_trial_done === 2;
         return auth.user.active_plan === plan.id &&
                auth.user.plan_expire_date &&
-               new Date(auth.user.plan_expire_date) > new Date();
+               new Date(auth.user.plan_expire_date) > new Date() &&
+               !isTrialActive; // Exclude trial from "currently subscribed"
     };
 
 
@@ -345,7 +355,7 @@ export default function PlansIndex({ plans, canCreate, activeModules, bankTransf
                             bankTransferEnabled={bankTransferEnabled === 'on'}
                             bankTransferInstructions={bankTransferInstructions}
                             planExpireDate={auth.user?.plan_expire_date}
-                            trialExpireDate={auth.user?.trial_expire_date}
+                            trialExpireDate={auth.user?.is_trial_done === 2 ? auth.user?.plan_expire_date : undefined}
                         />
                     ) : activePlans.length > 0 ? (
                             <div className="space-y-6">
@@ -426,11 +436,12 @@ export default function PlansIndex({ plans, canCreate, activeModules, bankTransf
                 ) : (
                     /* Pre-Package Subscription Layout */
                     activePlans.length > 0 ? (
-                    <div className="space-y-6 overflow-x-auto pt-6">
+                    <div className="space-y-6 pt-6">
+                        <div className="overflow-x-auto pb-2">
                         {/* Plans Header Cards */}
-                        <div className="grid gap-6" style={{ gridTemplateColumns: `300px repeat(${activePlans.length}, 280px)`, minWidth: `${300 + (activePlans.length * 280) + ((activePlans.length - 1) * 24)}px` }}>
+                        <div className="grid gap-6 pt-6" style={{ gridTemplateColumns: `300px repeat(${activePlans.length}, 280px)`, minWidth: `${300 + (activePlans.length * 280) + ((activePlans.length - 1) * 24)}px` }}>
                             {/* Features Header */}
-                            <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 border border-slate-200 dark:border-gray-700 sticky left-0 z-20">
+                            <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 border border-slate-200 dark:border-gray-700">
                                 <div className="flex items-center justify-center space-x-3">
                                     <h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('Features & Add-Ons')}</h3>
                                 </div>
@@ -537,10 +548,10 @@ export default function PlansIndex({ plans, canCreate, activeModules, bankTransf
                         </div>
 
                         {/* Features Comparison Cards */}
-                        <div className="space-y-4">
+                        <div className="space-y-4 mt-6">
                                 <div className="grid gap-6" style={{ gridTemplateColumns: `300px repeat(${activePlans.length}, 280px)`, minWidth: `${300 + (activePlans.length * 280) + ((activePlans.length - 1) * 24)}px` }}>
                                     {/* All Modules Card */}
-                                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 sticky left-0 z-20">
+                                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-center py-2 h-10 border-b border-gray-200 dark:border-gray-600 mb-3">
                                                 <span className="text-gray-900 dark:text-white font-semibold text-sm">
@@ -585,16 +596,26 @@ export default function PlansIndex({ plans, canCreate, activeModules, bankTransf
                                                 ))}
                                                 {isCompanyUser && (
                                                     <div className="pt-4 border-t space-y-2">
-                                                        {isCurrentlySubscribed(plan) ? (
+                                                        {/* Check trial first */}
+                                                        {auth.user?.is_trial_done === 2 && auth.user.active_plan === plan.id && auth.user.plan_expire_date && new Date(auth.user.plan_expire_date) > new Date() ? (
+                                                            <>
+                                                                <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                                                    <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                                                                        {t('Trial Expire On')} {formatDate(auth.user.plan_expire_date)}
+                                                                    </p>
+                                                                </div>
+                                                                <Button
+                                                                    className="w-full"
+                                                                    size="sm"
+                                                                    onClick={() => router.visit(route('plans.subscribe', plan.id))}
+                                                                >
+                                                                    {t('Subscribe to Plan')}
+                                                                </Button>
+                                                            </>
+                                                        ) : isCurrentlySubscribed(plan) ? (
                                                             <div className="text-center p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                                                                 <p className="text-xs text-green-600 dark:text-green-300">
                                                                     {t('Expires on')} {formatDate(auth.user.plan_expire_date)}
-                                                                </p>
-                                                            </div>
-                                                        ) : auth.user?.trial_expire_date && auth.user.active_plan === plan.id ? (
-                                                            <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                                                                <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
-                                                                    {t('Trial expires on')} {formatDate(auth.user.trial_expire_date)}
                                                                 </p>
                                                             </div>
                                                         ) : (
@@ -637,6 +658,7 @@ export default function PlansIndex({ plans, canCreate, activeModules, bankTransf
                                         );
                                     })}
                                 </div>
+                        </div>
                         </div>
                         </div>
                     ) : (
@@ -698,8 +720,8 @@ export default function PlansIndex({ plans, canCreate, activeModules, bankTransf
                             <Button variant="outline" onClick={() => setEditingModule(null)}>
                                 {t('Cancel')}
                             </Button>
-                            <Button onClick={handleSaveModulePrice}>
-                                {t('Save Price')}
+                            <Button onClick={handleSaveModulePrice} disabled={isSavingModulePrice}>
+                                {isSavingModulePrice ? t('Saving...') : t('Save Price')}
                             </Button>
                         </div>
                     </div>
@@ -785,8 +807,8 @@ export default function PlansIndex({ plans, canCreate, activeModules, bankTransf
                             <Button variant="outline" onClick={() => setEditingPlan(null)}>
                                 {t('Cancel')}
                             </Button>
-                            <Button onClick={handleSavePlanPrice}>
-                                {t('Save Pricing')}
+                            <Button onClick={handleSavePlanPrice} disabled={isSavingPlanPrice}>
+                                {isSavingPlanPrice ? t('Saving...') : t('Save Pricing')}
                             </Button>
                         </div>
                     </div>

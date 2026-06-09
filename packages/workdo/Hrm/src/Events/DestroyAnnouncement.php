@@ -13,7 +13,5 @@ class DestroyAnnouncement
     public function __construct(
           public Announcement $announcement
     )
-    {
-        //
-    }
+    {}
 }

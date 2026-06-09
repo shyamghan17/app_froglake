@@ -77,10 +77,10 @@ class EventTypeController extends Controller
 
             UpdateEventType::dispatch($request, $eventtype);
 
-            return redirect()->route('hrm.event-types.index')->with('success', __('The event type details are updated successfully.'));
+            return back()->with('success', __('The event type details are updated successfully.'));
         }
         else{
-            return redirect()->route('hrm.event-types.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 
@@ -90,10 +90,10 @@ class EventTypeController extends Controller
             DestroyEventType::dispatch($eventtype);
             $eventtype->delete();
 
-            return redirect()->route('hrm.event-types.index')->with('success', __('The event type has been deleted.'));
+            return back()->with('success', __('The event type has been deleted.'));
         }
         else{
-            return redirect()->route('hrm.event-types.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 

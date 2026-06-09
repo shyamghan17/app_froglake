@@ -59,8 +59,8 @@ export default function Modules({ settings }: ModulesProps) {
         return null;
     }
     
-    const title = sectionData.title || 'Complete Business Solutions';
-    const subtitle = sectionData.subtitle || 'Discover our comprehensive modules designed to streamline every aspect of your business operations';
+    const title = sectionData.title;
+    const subtitle = sectionData.subtitle;
     const colors = settings?.config_sections?.colors || { primary: '#10b981', secondary: '#059669', accent: '#f59e0b' };
     const [activeTab, setActiveTab] = useState(0);
     const [openAccordion, setOpenAccordion] = useState(0);

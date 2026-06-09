@@ -21,8 +21,8 @@ return new class extends Migration
                 $table->string('document')->nullable();
                 $table->foreignId('resolved_by')->nullable();
                 $table->date('resolution_date')->nullable();
-                $table->foreignId('creator_id')->nullable();
-                $table->foreignId('created_by');
+                $table->foreignId('creator_id')->nullable()->index();
+                $table->foreignId('created_by')->nullable()->index();
                 $table->timestamps();
 
                 $table->foreign('employee_id')->references('id')->on('users')->onDelete('cascade');

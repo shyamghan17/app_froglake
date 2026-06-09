@@ -307,6 +307,31 @@ class BankTransactionsService
         $this->updateBankBalance($bankAccountId, $amount);
     }
 
+    public function approvePosReturnPayment($posReturn, $bankAccountId)
+    {
+        $amount = $posReturn->total_amount ?? 0;
+
+        $lastTransaction = BankTransaction::where('bank_account_id', $bankAccountId)
+            ->orderBy('id', 'desc')
+            ->first();
+        $runningBalance = $lastTransaction ? $lastTransaction->running_balance - $amount : -$amount;
+
+        $bankTransaction = new BankTransaction();
+        $bankTransaction->bank_account_id = $bankAccountId;
+        $bankTransaction->transaction_date = now();
+        $bankTransaction->transaction_type = 'debit';
+        $bankTransaction->reference_number = $posReturn->return_number;
+        $bankTransaction->description = 'POS Return ' . $posReturn->return_number;
+        $bankTransaction->amount = $amount;
+        $bankTransaction->running_balance = $runningBalance;
+        $bankTransaction->transaction_status = 'cleared';
+        $bankTransaction->reconciliation_status = 'unreconciled';
+        $bankTransaction->created_by = creatorId();
+        $bankTransaction->save();
+
+        $this->updateBankBalance($bankAccountId, -$amount);
+    }
+
     public function createMobileServicePayment($payment)
     {
         if (!$payment->bank_account_id) {
@@ -932,5 +957,34 @@ class BankTransactionsService
         $bankTransaction->save();
 
         $this->updateBankBalance($pettyCash->bank_account_id, -$pettyCash->added_amount);
+    }
+
+    public function createProjectPayment($projectPayment)
+    {
+        if (!$projectPayment->bank_account_id) {
+            throw new \Exception("Bank account is required for project payment");
+        }
+
+        // Get current running balance for the bank account
+        $lastTransaction = BankTransaction::where('bank_account_id', $projectPayment->bank_account_id)
+            ->orderBy('id', 'desc')
+            ->first();
+        $runningBalance = $lastTransaction ? $lastTransaction->running_balance + $projectPayment->total_amount : $projectPayment->total_amount;
+
+        $bankTransaction = new BankTransaction();
+        $bankTransaction->bank_account_id = $projectPayment->bank_account_id;
+        $bankTransaction->transaction_date = now();
+        $bankTransaction->transaction_type = 'credit';
+        $bankTransaction->reference_number = $projectPayment->payment_number;
+        $bankTransaction->description = 'Project Payment #' . $projectPayment->payment_number . ' - ' . $projectPayment->customer->name;
+        $bankTransaction->amount = $projectPayment->total_amount;
+        $bankTransaction->running_balance = $runningBalance;
+        $bankTransaction->transaction_status = 'cleared';
+        $bankTransaction->reconciliation_status = 'unreconciled';
+        $bankTransaction->created_by = creatorId();
+        $bankTransaction->save();
+
+        // Update bank account balance
+        $this->updateBankBalance($projectPayment->bank_account_id, $projectPayment->total_amount);
     }
 }

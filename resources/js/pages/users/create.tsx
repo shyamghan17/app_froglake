@@ -100,7 +100,7 @@ export default function Create({ onSuccess, roles = {} }: CreateUserProps) {
                 <div className={`grid ${isSuperAdmin ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
                     {!isSuperAdmin && (
                         <div>
-                            <Label htmlFor="type">{t('Role')}</Label>
+                            <Label htmlFor="type" required>{t('Role')}</Label>
                             <Select value={data.type} onValueChange={(value) => setData('type', value)}>
                                 <SelectTrigger>
                                     <SelectValue />

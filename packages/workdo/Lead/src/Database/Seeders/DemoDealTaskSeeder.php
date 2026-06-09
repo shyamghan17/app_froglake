@@ -11,9 +11,6 @@ class DemoDealTaskSeeder extends Seeder
 {
     public function run($userId): void
     {
-        if (DealTask::where('created_by', $userId)->exists()) {
-            return;
-        }
         if (!empty($userId))
         {
             // Only get deals that are NOT converted from leads (they already have tasks)
@@ -27,6 +24,12 @@ class DemoDealTaskSeeder extends Seeder
                 ->get();
 
             if ($deals->isEmpty()) {
+                return;
+            }
+
+            // Skip if all non-converted deals already have tasks
+            $dealsNeedingTasks = $deals->filter(fn($d) => !DealTask::where('deal_id', $d->id)->exists());
+            if ($dealsNeedingTasks->isEmpty()) {
                 return;
             }
 

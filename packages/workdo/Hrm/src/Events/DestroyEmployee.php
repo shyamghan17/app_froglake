@@ -13,7 +13,5 @@ class DestroyEmployee
     public function __construct(
           public Employee $employee
     )
-    {
-        //
-    }
+    {}
 }

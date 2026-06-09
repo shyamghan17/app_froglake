@@ -13,7 +13,5 @@ class DestroyDeductionType
     public function __construct(
           public DeductionType $deductionType
     )
-    {
-        //
-    }
+    {}
 }

@@ -20,7 +20,6 @@ export default function View({ holiday }: ViewProps) {
                     </div>
                     <div>
                         <DialogTitle className="text-xl font-semibold">{t('Holiday Details')}</DialogTitle>
-                        <p className="text-sm text-muted-foreground">{holiday.name}</p>
                     </div>
                 </div>
             </DialogHeader>
@@ -45,8 +44,8 @@ export default function View({ holiday }: ViewProps) {
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Paid')}</label>
-                        <div className="bg-gray-50 p-2 rounded">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        <div className="p-1 rounded">
+                            <span className={`px-2 py-1 rounded-full text-sm font-medium ${
                                 holiday.is_paid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                             }`}>
                                 {holiday.is_paid ? t('Yes') : t('No')}

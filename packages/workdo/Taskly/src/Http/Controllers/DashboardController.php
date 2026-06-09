@@ -19,6 +19,7 @@ use Illuminate\Routing\Controller;
 use Workdo\Taskly\Models\Project;
 use Workdo\Taskly\Models\ProjectBug;
 use Workdo\Taskly\Models\ProjectTask;
+use Workdo\Taskly\Models\ProjectPayment;
 
 class DashboardController extends Controller
 {
@@ -178,6 +179,42 @@ class DashboardController extends Controller
             'resolved' => $resolvedBugsCount
         ];
 
+        // Payment Statistics
+        $totalPayments = ProjectPayment::where('created_by', $creatorId)->count();
+        $draftPayments = ProjectPayment::where('created_by', $creatorId)->where('status', 'draft')->count();
+        $postedPayments = ProjectPayment::where('created_by', $creatorId)->where('status', 'posted')->count();
+        $totalPaymentAmount = ProjectPayment::where('created_by', $creatorId)->sum('total_amount');
+        $totalBalanceAmount = ProjectPayment::where('created_by', $creatorId)->sum('balance_amount');
+        $paidAmount = $totalPaymentAmount - $totalBalanceAmount;
+
+        $paymentStats = [
+            'total_payments' => $totalPayments,
+            'draft_payments' => $draftPayments,
+            'posted_payments' => $postedPayments,
+            'total_amount' => $totalPaymentAmount,
+            'paid_amount' => $paidAmount,
+            'balance_amount' => $totalBalanceAmount
+        ];
+
+        // Recent Payments
+        $recentPayments = ProjectPayment::with(['project', 'customer'])
+            ->where('created_by', $creatorId)
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->map(function($payment) {
+                return [
+                    'id' => $payment->id,
+                    'payment_number' => $payment->payment_number,
+                    'project' => $payment->project->name ?? 'N/A',
+                    'customer' => $payment->customer->name ?? 'N/A',
+                    'total_amount' => $payment->total_amount,
+                    'balance_amount' => $payment->balance_amount,
+                    'status' => $payment->status,
+                    'payment_date' => $payment->payment_date
+                ];
+            });
+
         return Inertia::render('Taskly/Dashboard/CompanyDashboard', [
             'stats' => [
                 'total_projects' => $totalProjects,
@@ -194,7 +231,9 @@ class DashboardController extends Controller
             'taskPriority' => $taskPriority,
             'teamPerformance' => $teamPerformance,
             'monthlyProgress' => $monthlyProgress,
-            'bugStats' => $bugStats
+            'bugStats' => $bugStats,
+            'paymentStats' => $paymentStats,
+            'recentPayments' => $recentPayments
         ]);
     }
 
@@ -264,6 +303,43 @@ class DashboardController extends Controller
             ];
         });
 
+        // Client Payment Statistics
+        $clientPayments = ProjectPayment::where('created_by', $creatorId)
+            ->where('customer_id', $user->id)
+            ->get();
+
+        $totalClientPayments = $clientPayments->count();
+        $totalClientAmount = $clientPayments->sum('total_amount');
+        $totalClientBalance = $clientPayments->sum('balance_amount');
+        $paidClientAmount = $totalClientAmount - $totalClientBalance;
+
+        $clientPaymentStats = [
+            'total_payments' => $totalClientPayments,
+            'total_amount' => $totalClientAmount,
+            'paid_amount' => $paidClientAmount,
+            'balance_amount' => $totalClientBalance
+        ];
+
+        // Recent Client Payments
+        $recentClientPayments = ProjectPayment::with(['project'])
+            ->where('created_by', $creatorId)
+            ->where('customer_id', $user->id)
+            ->where('status', 'posted')
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->map(function($payment) {
+                return [
+                    'id' => $payment->id,
+                    'payment_number' => $payment->payment_number,
+                    'project' => $payment->project->name ?? 'N/A',
+                    'total_amount' => $payment->total_amount,
+                    'balance_amount' => $payment->balance_amount,
+                    'status' => $payment->status,
+                    'payment_date' => $payment->payment_date
+                ];
+            });
+
         return Inertia::render('Taskly/Dashboard/ClientDashboard', [
             'stats' => [
                 'total_projects' => $clientProjects->count(),
@@ -282,7 +358,9 @@ class DashboardController extends Controller
                     'start_date' => $project->start_date,
                     'end_date' => $project->end_date
                 ];
-            })
+            }),
+            'paymentStats' => $clientPaymentStats,
+            'recentPayments' => $recentClientPayments
         ]);
     }
 
@@ -360,9 +438,9 @@ class DashboardController extends Controller
         });
         return Inertia::render('Taskly/Dashboard/StaffDashboard', [
             'stats' => [
-                'total_tasks' => $personalTasks->count() > 0 ? $personalTasks->count() : 2,
+                'total_tasks' => $personalTasks->count() > 0 ? $personalTasks->count() : 0,
                 'completed_tasks' => $completedTasks,
-                'pending_tasks' => $pendingTasks > 0 ? $pendingTasks : 2,
+                'pending_tasks' => $pendingTasks > 0 ? $pendingTasks : 0,
                 'overdue_tasks' => $overdueTasks,
                 'completion_rate' => $personalTasks->count() > 0 ? round(($completedTasks / $personalTasks->count()) * 100) : 0
             ],

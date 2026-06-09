@@ -90,12 +90,8 @@ class DemoHolidaySeeder extends Seeder
 
             // Create boolean arrays for realistic distribution
             $isPaidArray = array_merge(array_fill(0, 22, true), array_fill(0, 8, false));
-            $isGoogleSyncArray = array_merge(array_fill(0, 12, true), array_fill(0, 18, false));
-            $isOutlookSyncArray = array_merge(array_fill(0, 10, true), array_fill(0, 20, false));
             
             shuffle($isPaidArray);
-            shuffle($isGoogleSyncArray);
-            shuffle($isOutlookSyncArray);
 
             $holidays = [];
             for ($i = 0; $i < 30; $i++) {
@@ -113,8 +109,6 @@ class DemoHolidaySeeder extends Seeder
                     'holiday_type_id' => $holidayTypes[$i % count($holidayTypes)],
                     'description' => $descriptions[$i],
                     'is_paid' => $isPaidArray[$i],
-                    'is_sync_google_calendar' => $isGoogleSyncArray[$i],
-                    'is_sync_outlook_calendar' => $isOutlookSyncArray[$i],
                     'created_at' => Carbon::now()->subDays($createdDaysAgo)->addHours(rand(8, 17))->addMinutes(rand(0, 59)),
                     'updated_at' => Carbon::now()->subDays($createdDaysAgo)->addHours(rand(8, 17))->addMinutes(rand(0, 59)),
                 ];

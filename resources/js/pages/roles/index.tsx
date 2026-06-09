@@ -185,7 +185,7 @@ export default function Index() {
                                 value={filters.name}
                                 onChange={(value) => setFilters({...filters, name: value})}
                                 onSearch={handleFilter}
-                                placeholder={t('Search roles...')}
+                                placeholder={t('Search name...')}
                             />
                         </div>
                         <div className="flex items-center gap-3">
@@ -251,7 +251,7 @@ export default function Index() {
                                                             {auth.user?.permissions?.includes('edit-roles') && (
                                                                 <Tooltip delayDuration={300}>
                                                                     <TooltipTrigger asChild>
-                                                                        <Button variant="ghost" size="sm" onClick={() => router.visit(route('roles.edit', role.id))} className="h-8 w-8 p-0 text-blue-600">
+                                                                        <Button variant="ghost" size="sm" onClick={() => router.visit(route('roles.edit', role.id))} className="h-8 w-8 p-0 text-blue-600 hover:text-blue-600 hover:bg-transparent">
                                                                             <Edit className="h-4 w-4" />
                                                                         </Button>
                                                                     </TooltipTrigger>
@@ -267,7 +267,7 @@ export default function Index() {
                                                                             variant="ghost"
                                                                             size="sm"
                                                                             onClick={() => openDeleteDialog(role.id)}
-                                                                            className="h-8 w-8 p-0 text-red-600"
+                                                                            className="h-8 w-8 p-0 text-red-600  hover:text-red-600 hover:bg-transparent"
                                                                         >
                                                                             <Trash2 className="h-4 w-4" />
                                                                         </Button>

@@ -69,8 +69,6 @@ class HolidayTypeController extends Controller
         if(Auth::user()->can('edit-holiday-types')){
             $validated = $request->validated();
 
-
-
             $holidaytype->holiday_type = $validated['holiday_type'];
 
             $holidaytype->save();

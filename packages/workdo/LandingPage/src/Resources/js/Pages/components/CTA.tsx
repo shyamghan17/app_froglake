@@ -55,10 +55,10 @@ export default function CTA({ settings }: CTAProps) {
     const variant = sectionData.variant || 'cta1';
     const config = CTA_VARIANTS[variant as keyof typeof CTA_VARIANTS] || CTA_VARIANTS.cta1;
     
-    const title = sectionData.title || 'Ready to Transform Your Business?';
-    const subtitle = sectionData.subtitle || 'Join thousands of businesses already using WorkDo Dash to streamline their operations.';
-    const primaryButton = sectionData.primary_button || 'Start Free Trial';
-    const secondaryButton = sectionData.secondary_button || 'Contact Sales';
+    const title = sectionData.title;
+    const subtitle = sectionData.subtitle;
+    const primaryButton = sectionData.primary_button ;
+    const secondaryButton = sectionData.secondary_button;
     const colors = settings?.config_sections?.colors || { primary: '#10b981', secondary: '#059669', accent: '#f59e0b' };
 
     const getBackgroundStyle = () => {
@@ -95,7 +95,7 @@ export default function CTA({ settings }: CTAProps) {
                     }}
                 >
                     {primaryButton}
-                    <ArrowRight className={`ml-2 ${config.layout === 'minimal' || config.layout === 'card' ? 'h-5 w-5' : 'h-5 w-5'}`} />
+                    <ArrowRight className={`ms-2 ${config.layout === 'minimal' || config.layout === 'card' ? 'h-5 w-5' : 'h-5 w-5'}`} />
                 </a>
                 <a 
                     href={secondaryLink}

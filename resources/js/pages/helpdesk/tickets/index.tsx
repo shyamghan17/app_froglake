@@ -140,7 +140,19 @@ export default function Index() {
         {
             key: 'category',
             header: t('Category'),
-            render: (_: any, ticket: any) => ticket.category?.name || '-'
+            render: (_: any, ticket: any) => (
+                ticket.category ? (
+                    <div className="flex items-center gap-1.5">
+                        {ticket.category.color && (
+                            <span 
+                                className="w-2 h-2 rounded-full flex-shrink-0" 
+                                style={{ backgroundColor: ticket.category.color }}
+                            />
+                        )}
+                        <span>{ticket.category.name}</span>
+                    </div>
+                ) : '-'
+            )
         },
         {
             key: 'priority',
@@ -208,8 +220,8 @@ export default function Index() {
 
     return (
         <AuthenticatedLayout
-            breadcrumbs={[{label: t('Support Tickets')}]}
-            pageTitle={t('Manage Support Tickets')}
+            breadcrumbs={[{label: t('Helpdesk')}, {label: t('All Tickets')}]}
+            pageTitle={t('Manage Tickets')}
             pageActions={
                 <div className="flex gap-2">
                     <TooltipProvider>
@@ -313,7 +325,15 @@ export default function Index() {
                                     <SelectContent>
                                         {categories?.map((category: any) => (
                                             <SelectItem key={category.id} value={category.id.toString()}>
-                                                {category.name}
+                                                <div className="flex items-center gap-2">
+                                                    {category.color && (
+                                                        <span 
+                                                            className="w-2 h-2 rounded-full flex-shrink-0" 
+                                                            style={{ backgroundColor: category.color }}
+                                                        />
+                                                    )}
+                                                    <span>{category.name}</span>
+                                                </div>
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -412,7 +432,19 @@ export default function Index() {
                                                     <div className="grid grid-cols-2 gap-2">
                                                         <div>
                                                             <p className="text-xs font-medium text-gray-600 mb-1">{t('Category')}</p>
-                                                            <p className="text-xs text-gray-900 truncate">{ticket.category?.name || '-'}</p>
+                                                            {ticket.category ? (
+                                                                <div className="flex items-center gap-1.5">
+                                                                    {ticket.category.color && (
+                                                                        <span 
+                                                                            className="w-2 h-2 rounded-full flex-shrink-0" 
+                                                                            style={{ backgroundColor: ticket.category.color }}
+                                                                        />
+                                                                    )}
+                                                                    <p className="text-xs text-gray-900 truncate">{ticket.category.name}</p>
+                                                                </div>
+                                                            ) : (
+                                                                <p className="text-xs text-gray-900">-</p>
+                                                            )}
                                                         </div>
                                                         <div>
                                                             <p className="text-xs font-medium text-gray-600 mb-1">{t('Created By')}</p>

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import InputError from "@/components/ui/input-error";
-import { useState } from 'react';
+import { CurrencyInput } from '@/components/ui/currency-input';
 
 
 interface AllowanceType {
@@ -94,18 +94,32 @@ export default function Edit({ allowance, allowanceTypes, onSuccess }: EditAllow
                 </div>
 
                 <div>
-                    <Label htmlFor="edit_amount" required>{t('Amount')}</Label>
-                    <Input
-                        id="edit_amount"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={data.amount}
-                        onChange={(e) => setData('amount', e.target.value)}
-                        placeholder={data.type === 'percentage' ? t('Enter percentage') : t('Enter amount')}
-                        required
-                    />
-                    <InputError message={errors.amount} />
+                    {data.type === 'percentage' ? (
+                        <>
+                            <Label htmlFor="edit_amount" required>{t('Percentage')}</Label>
+                            <Input
+                                id="edit_amount"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="100"
+                                value={data.amount}
+                                onChange={(e) => setData('amount', e.target.value)}
+                                placeholder={t('Enter percentage')}
+                                required
+                            />
+                            <InputError message={errors.amount} />
+                        </>
+                    ) : (
+                        <CurrencyInput
+                            label={t('Amount')}
+                            value={data.amount}
+                            onChange={(value) => setData('amount', value)}
+                            error={errors.amount}
+                            placeholder={t('Enter amount')}
+                            required
+                        />
+                    )}
                 </div>
 
                 <div className="flex justify-end gap-2">

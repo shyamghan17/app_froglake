@@ -13,7 +13,5 @@ class DestroyHolidayType
     public function __construct(
           public HolidayType $holidayType
     )
-    {
-        //
-    }
+    {}
 }

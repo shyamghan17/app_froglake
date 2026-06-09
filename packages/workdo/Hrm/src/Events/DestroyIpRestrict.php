@@ -13,7 +13,5 @@ class DestroyIpRestrict
     public function __construct(
           public IpRestrict $ipRestrict
     )
-    {
-        //
-    }
+    {}
 }

@@ -59,7 +59,6 @@ class PlanController extends Controller
             if (!$user->can('manage-any-plans')) {
                 $userTrialInfo = [
                     'is_trial_done' => $user->is_trial_done ?? 0,
-                    'trial_expire_date' => $user->trial_expire_date,
                 ];
             }
 
@@ -366,22 +365,19 @@ class PlanController extends Controller
     public function startTrial(Plan $plan)
     {
         $user = Auth::user();
-        // Check if trial already done
-        if ($user->is_trial_done == '1') {
+        // Check if trial already done or active
+        if ($user->is_trial_done == 1 || $user->is_trial_done == 2) {
             return back()->with('error', __('Your Plan trial already done.'));
         }
 
         $counter = [
             'user_counter' => $plan->number_of_users ?? '0',
-            'storage_limit' => $plan->storage_limit ?? '0',
+            'storage_limit' => ($plan->storage_limit ?? 0) / (1024 * 1024),
         ];
         try {
             // Use assignPlan method similar to old code
             $result = assignPlan($plan->id, 'Trial', implode(',', $plan->modules ?? []),$counter,  $user->id);
             if ($result['is_success']) {
-                $user->is_trial_done = 1;
-                $user->save();
-
                 return back()->with('success', __('Your trial has been started.'));
             } else {
                 return back()->with('error', $result['error'] ?? __('Failed to start trial.'));
@@ -399,10 +395,10 @@ class PlanController extends Controller
             return back()->with('error', __('This plan is not a free plan.'));
         }
 
-        $duration = $request->duration == 'Month';
+        $duration = $request->duration == 'Year' ? 'Year' : 'Month';
         $counter = [
             'user_counter' => $plan->number_of_users ?? '0',
-            'storage_limit' => $plan->storage_limit ?? '0',
+            'storage_limit' => ($plan->storage_limit ?? 0) / (1024 * 1024),
         ];
         $result = assignPlan($plan->id, $duration, implode(',', $plan->modules ?? []), $counter, $user->id);
         $orderID = strtoupper(substr(uniqid(), -12));

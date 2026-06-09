@@ -13,7 +13,5 @@ class DestroyLeaveType
     public function __construct(
           public LeaveType $leavetype
     )
-    {
-        //
-    }
+    {}
 }

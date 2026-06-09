@@ -24,12 +24,7 @@ export default function Index() {
     const { t } = useTranslation();
     const { labels, auth, pipelines } = usePage<LabelsIndexProps>().props;
 
-    // Filter pipelines that have labels
-    const pipelinesWithLabels = pipelines.filter((pipeline: any) => 
-        labels.some((label: Label) => label.pipeline_id === pipeline.id)
-    );
-
-    const [activePipeline, setActivePipeline] = useState<number>(pipelinesWithLabels[0]?.id || 0);
+    const [activePipeline, setActivePipeline] = useState<number>(pipelines[0]?.id || 0);
     const [modalState, setModalState] = useState<LabelModalState>({
         isOpen: false,
         mode: '',
@@ -147,78 +142,67 @@ export default function Index() {
                                     )}
                                 </div>
 
-                                {/* Pipeline Tabs - Only show pipelines with labels */}
-                                {pipelinesWithLabels.length > 0 && (
-                                    <div className="flex border-b border-gray-200 mb-6">
-                                        {pipelinesWithLabels.map((pipeline: any) => (
-                                            <button
-                                                key={pipeline.id}
-                                                onClick={() => setActivePipeline(pipeline.id)}
-                                                className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${
-                                                    activePipeline === pipeline.id
-                                                        ? 'text-white rounded-t-lg'
-                                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                                                }`}
-                                                style={activePipeline === pipeline.id ? {
-                                                    backgroundColor: 'hsl(var(--primary))',
-                                                    borderColor: 'hsl(var(--primary))'
-                                                } : {}}
-                                            >
-                                                {pipeline.name}
-                                            </button>
-                                        ))}
+                                {/* Pipeline Tabs */}
+                                {pipelines.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 border-b border-gray-200 mb-6">
+                                        {pipelines.map((pipeline: any) => {
+                                            const count = labels.filter((l: Label) => l.pipeline_id === pipeline.id).length;
+                                            return (
+                                                <button
+                                                    key={pipeline.id}
+                                                    onClick={() => setActivePipeline(pipeline.id)}
+                                                    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors flex items-center gap-2 ${
+                                                        activePipeline === pipeline.id
+                                                            ? 'border-primary text-primary'
+                                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    {pipeline.name}
+                                                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                                                        activePipeline === pipeline.id ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'
+                                                    }`}>{count}</span>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 )}
                                 <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 max-h-[75vh] rounded-none w-full">
                                     {filteredLabels.length > 0 ? (
-                                        <div className="space-y-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                             {filteredLabels.map((label: Label) => (
                                                 <div
                                                     key={label.id}
-                                                    className="flex items-center gap-3 p-4 border rounded-lg bg-white border-gray-200 hover:shadow-md transition-all"
+                                                    className="flex items-center justify-between p-3 border rounded-lg bg-white hover:shadow-md transition-all"
+                                                    style={{ borderLeftColor: label.color || '#FF6B6B', borderLeftWidth: 4 }}
                                                 >
-                                                    <div className="flex-1 flex items-center justify-between">
-                                                        <div className="flex items-center gap-3">
-                                                            <div 
-                                                                className="px-3 py-1 rounded text-white text-sm font-medium" 
-                                                                style={{ backgroundColor: label.color || '#FF6B6B' }}
-                                                            >
-                                                                {label.name}
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex gap-1">
-                                                            <TooltipProvider>
-                                                                {auth.user?.permissions?.includes('edit-labels') && (
-                                                                    <Tooltip delayDuration={0}>
-                                                                        <TooltipTrigger asChild>
-                                                                            <Button variant="ghost" size="sm" onClick={() => openModal('edit', label)} className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700">
-                                                                                <Edit className="h-4 w-4" />
-                                                                            </Button>
-                                                                        </TooltipTrigger>
-                                                                        <TooltipContent>
-                                                                            <p>{t('Edit')}</p>
-                                                                        </TooltipContent>
-                                                                    </Tooltip>
-                                                                )}
-                                                                {auth.user?.permissions?.includes('delete-labels') && (
-                                                                    <Tooltip delayDuration={0}>
-                                                                        <TooltipTrigger asChild>
-                                                                            <Button
-                                                                                variant="ghost"
-                                                                                size="sm"
-                                                                                onClick={() => openDeleteDialog(label.id)}
-                                                                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                                                                            >
-                                                                                <Trash2 className="h-4 w-4" />
-                                                                            </Button>
-                                                                        </TooltipTrigger>
-                                                                        <TooltipContent>
-                                                                            <p>{t('Delete')}</p>
-                                                                        </TooltipContent>
-                                                                    </Tooltip>
-                                                                )}
-                                                            </TooltipProvider>
-                                                        </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <div
+                                                            className="w-6 h-6 rounded-full flex-shrink-0"
+                                                            style={{ backgroundColor: label.color || '#FF6B6B' }}
+                                                        />
+                                                        <span className="text-sm font-medium text-gray-800">{label.name}</span>
+                                                    </div>
+                                                    <div className="flex gap-1">
+                                                        {auth.user?.permissions?.includes('edit-labels') && (
+                                                            <Tooltip delayDuration={0}>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button variant="ghost" size="sm" onClick={() => openModal('edit', label)} className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700">
+                                                                        <Edit className="h-3.5 w-3.5" />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent><p>{t('Edit')}</p></TooltipContent>
+                                                            </Tooltip>
+                                                        )}
+                                                        {auth.user?.permissions?.includes('delete-labels') && (
+                                                            <Tooltip delayDuration={0}>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(label.id)} className="h-7 w-7 p-0 text-red-600 hover:text-red-700">
+                                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent><p>{t('Delete')}</p></TooltipContent>
+                                                            </Tooltip>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}

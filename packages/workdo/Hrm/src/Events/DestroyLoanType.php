@@ -13,7 +13,5 @@ class DestroyLoanType
     public function __construct(
           public LoanType $loanType
     )
-    {
-        //
-    }
+    {}
 }

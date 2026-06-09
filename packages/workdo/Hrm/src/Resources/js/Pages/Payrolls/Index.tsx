@@ -54,6 +54,8 @@ export default function Index() {
 
 
     useFlashMessages();
+    const googleDriveButtons = usePageButtons('googleDriveBtn', { module: 'Payslip', settingKey: 'GoogleDrive Payslip' });
+    const oneDriveButtons = usePageButtons('oneDriveBtn', { module: 'Payslip', settingKey: 'OneDrive Payslip' });
     const dropboxButtons = usePageButtons('dropboxBtn', { module: 'Payslip', settingKey: 'Dropbox Payslip' });
     const boxButtons = usePageButtons('boxBtn', { module: 'Payslip', settingKey: 'Box Payslip' });
 
@@ -260,6 +262,12 @@ export default function Index() {
             pageActions={
                 <div className="flex gap-2">
                     <TooltipProvider>
+                            {googleDriveButtons.map((button) => (
+                                <div key={button.id}>{button.component}</div>
+                            ))}
+                            {oneDriveButtons.map((button) => (
+                                <div key={button.id}>{button.component}</div>
+                            ))}
                             {dropboxButtons.map((button) => (
                                 <div key={button.id}>{button.component}</div>
                             ))}

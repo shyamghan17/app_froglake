@@ -13,6 +13,8 @@ use App\Models\AddOn;
 use Spatie\Permission\Models\Role;
 use App\Services\DynamicStorageService;
 use App\Services\StorageConfigService;
+use App\Models\EmailTemplate;
+
 
 if (!function_exists('creatorId')) {
     function creatorId()
@@ -234,46 +236,47 @@ if (!function_exists('assignPlan')) {
              if ($oldplan && $oldplan->custom_plan == 1 && $user->plan_expire_date < date('Y-m-d')) {
                  UserActiveModule::where('user_id', $user->id)->delete();
                 $plan->number_of_users = $counter['user_counter'];
-                if (isset($counter['storage_counter'])) {
-                    $plan->storage_limit = $counter['storage_counter'] == 0 ? 0 : $counter['storage_counter'] * 1024 * 1024;
+                if (isset($counter['storage_limit'])) {
+                    $plan->storage_limit = $counter['storage_limit'] == 0 ? 0 : $counter['storage_limit'] * 1024 * 1024;
                 }
             }
             elseif ($counter != null && $oldplan && !empty($oldplan->custom_plan) == 1 && !empty($plan->custom_plan) == 1 && $user->plan_expire_date >= date('Y-m-d')) {
                 $plan->number_of_users = ($user->total_user == -1) ? $counter['user_counter'] : $user->total_user + $counter['user_counter'];
-                if (isset($counter['storage_counter'])) {
+                if (isset($counter['storage_limit'])) {
                     $currentStorageGB = $user->storage_limit / (1024 * 1024);
-                    $newStorageGB = $currentStorageGB + $counter['storage_counter'];
+                    $newStorageGB = $currentStorageGB + $counter['storage_limit'];
                     $plan->storage_limit = $newStorageGB == 0 ? 0 : $newStorageGB * 1024 * 1024;
                 }
             } elseif ($counter != null && $plan->custom_plan == 1) {
                 $plan->number_of_users = $counter['user_counter'];
-                if (isset($counter['storage_counter'])) {
-                    $plan->storage_limit = $counter['storage_counter'] == 0 ? 0 : $counter['storage_counter'] * 1024 * 1024;
+                if (isset($counter['storage_limit'])) {
+                    $plan->storage_limit = $counter['storage_limit'] == 0 ? 0 : $counter['storage_limit'] * 1024 * 1024;
                 }
             }
             $user->active_plan = $plan->id;
             if (!empty($duration)) {
                 if ($duration == 'Month') {
                     $user->plan_expire_date = \Carbon\Carbon::now()->addMonths(1)->isoFormat('YYYY-MM-DD');
+                    // Reset trial status when paid plan is assigned
+                    if ($user->is_trial_done == 2) {
+                        $user->is_trial_done = 1;
+                    }
                 } elseif ($duration == 'Year') {
                     $user->plan_expire_date = \Carbon\Carbon::now()->addYears(1)->isoFormat('YYYY-MM-DD');
-                } elseif ($duration == 'Trial') {
-                    $user->trial_expire_date = \Carbon\Carbon::now()->addDays((int)$plan->trial_days)->isoFormat('YYYY-MM-DD');
-                    if ($user->plan_expire_date) {
-                        $user->plan_expire_date = null;
+                    // Reset trial status when paid plan is assigned
+                    if ($user->is_trial_done == 2) {
+                        $user->is_trial_done = 1;
                     }
+                } elseif ($duration == 'Trial') {
+                    $user->plan_expire_date = \Carbon\Carbon::now()->addDays((int)$plan->trial_days)->isoFormat('YYYY-MM-DD');
+                    $user->is_trial_done = 2; // Set to 2 for active trial
                 } else {
                     $user->plan_expire_date = null;
                 }
             } else {
                 $user->plan_expire_date = null;
             }
-            // Handle modules assignment
-            if ($modules !== null) {
-                $modules_array = explode(',', $modules);
-            } else {
-                $modules_array = is_array($plan->modules) ? $plan->modules : [];
-            }
+            
            if(!empty($modules))
             {
                 $modules_array = explode(',',$modules);
@@ -319,8 +322,7 @@ if (!function_exists('assignPlan')) {
                     GivePermissionToRole::dispatch($staff_role->id, 'staff', $modules);
                 }
             }
-
-            $plan->save();
+            
             $user->total_user = $plan->number_of_users;
             $user->storage_limit = $plan->storage_limit;
             $user->save();
@@ -362,12 +364,28 @@ if (!function_exists('assignPlan')) {
                     }
                 }
             }
+            // Email to superadmin when plan assigned
+
+            $superAdmin = User::where('type', 'superadmin')->first();
+
+            if(admin_setting('Plan Purchase') == 'on') {
+                if ($superAdmin && $duration !== 'Trial') {
+                    $emailData = [
+                        'company_name' => $user->name,
+                        'plan_name'    => $plan->name,
+                        'plan_price'   => $duration == 'Month' ? $plan->package_price_monthly : $plan->package_price_yearly,
+                        'plan_duration' => $duration ?? 'Lifetime',
+                    ];
+
+                    EmailTemplate::sendEmailTemplate('Plan Purchase', [$superAdmin->email], $emailData, $superAdmin->id);
+                }
+            }
 
             return ['is_success' => true];
         } else {
             return [
                 'is_success' => false,
-                'error' => 'Plan is deleted.',
+                'error' => __('Plan is deleted.'),
             ];
         }
     }

@@ -9,23 +9,20 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Dialog } from "@/components/ui/dialog";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Plus, Edit as EditIcon, Trash2, Eye, FileText as FileTextIcon, Download, FileImage, Play, ChevronDown } from "lucide-react";
+import { Plus, Edit as EditIcon, Trash2, Eye, FileText as FileTextIcon, Download, FileImage, Check, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FilterButton } from '@/components/ui/filter-button';
 import { Pagination } from "@/components/ui/pagination";
 import { SearchInput } from "@/components/ui/search-input";
-
 import { PerPageSelector } from '@/components/ui/per-page-selector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
 import Create from './Create';
 import EditDocument from './Edit';
 import View from './View';
 import Action from './Action';
 import NoRecordsFound from '@/components/no-records-found';
 import { Document, DocumentsIndexProps, DocumentFilters, DocumentModalState } from './types';
-import { formatDate, formatTime, formatDateTime, formatCurrency, getImagePath, downloadFile } from '@/utils/helpers';
+import { formatDate, getImagePath } from '@/utils/helpers';
 import { usePageButtons } from '@/hooks/usePageButtons';
 
 export default function Index() {
@@ -156,29 +153,6 @@ export default function Index() {
                 const statusLabels = { 'pending': 'Pending', 'approve': 'Approved', 'reject': 'Rejected' };
                 const status = statusLabels[value] || value;
 
-                if (auth.user?.permissions?.includes('manage-hrm-documents-status') && value === 'pending') {
-                    return (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className={`px-2 py-1 rounded-full text-sm font-medium h-auto hover:bg-yellow-100 hover:text-yellow-800 ${statusColors[value] || 'bg-gray-100 text-gray-800'}`}>
-                                    {t(status)} <ChevronDown className="h-2 w-2 ml-1" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => updateStatus(row.id, 'pending')}>
-                                    {t('Pending')}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => updateStatus(row.id, 'approve')}>
-                                    {t('Approved')}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => updateStatus(row.id, 'reject')}>
-                                    {t('Rejected')}
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    );
-                }
-
                 return (
                     <span className={`px-2 py-1 rounded-full text-sm font-medium ${statusColors[value] || 'bg-gray-100 text-gray-800'}`}>
                         {t(status)}
@@ -196,7 +170,7 @@ export default function Index() {
                         {docItem.document && (
                             <Tooltip delayDuration={0}>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0 text-teal-600 hover:text-teal-700">
+                                    <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700">
                                         <a href={getImagePath(docItem.document)} target="_blank" rel="noopener noreferrer">
                                             <FileImage className="h-4 w-4" />
                                         </a>
@@ -208,6 +182,30 @@ export default function Index() {
                             </Tooltip>
                         )}
 
+                        {auth.user?.permissions?.includes('manage-hrm-documents-status') && docItem.status === 'pending' && (
+                            <>
+                                <Tooltip delayDuration={0}>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="sm" onClick={() => updateStatus(docItem.id, 'approve')} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
+                                            <Check className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{t('Approve')}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                                <Tooltip delayDuration={0}>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="sm" onClick={() => updateStatus(docItem.id, 'reject')} className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{t('Reject')}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </>
+                        )}
 
                         {docItem.document && (
                             <>

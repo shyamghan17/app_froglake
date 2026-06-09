@@ -1,4 +1,4 @@
-import { LayoutGrid, Users, Warehouse,ArrowRightLeft, Package, Tag, Tags, Shield, Settings, Image, CreditCard, Headphones, ShoppingCart, Kanban, Calendar, MessageCircle, Replace ,Receipt} from 'lucide-react';
+import { LayoutGrid, Users, Warehouse,ArrowRightLeft, Package, Tag, Tags, Shield, Settings, Image, CreditCard, Headphones, ShoppingCart, Kanban, Calendar, MessageCircle, Replace ,Receipt, Bot} from 'lucide-react';
 import { NavItem } from '@/types';
 
 export const getCompanyMenu = (t: (key: string) => string): NavItem[] => [
@@ -93,6 +93,13 @@ export const getCompanyMenu = (t: (key: string) => string): NavItem[] => [
         icon: MessageCircle,
         permission: 'manage-messenger',
         order: 2940,
+    },
+    {
+        title: t('AI Agent'),
+        href: route('ai-agent.chat.page'),
+        icon: Bot,
+        permission: 'manage-ai-agent',
+        order: 2945,
     },
     {
         title: t('Helpdesk'),

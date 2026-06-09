@@ -26,6 +26,10 @@ class DemoDealEmailDiscussionSeeder extends Seeder
                 return;
             }
 
+            if (empty($users)) {
+                $users = [$userId];
+            }
+
             $this->seedDealFiles($deals);
 
             // Deal email templates based on pipeline and stage
@@ -460,50 +464,45 @@ class DemoDealEmailDiscussionSeeder extends Seeder
                 $pipelineName = $deal->pipeline?->name ?? 'Sales';
                 $stageName = $deal->stage?->name ?? 'Initial Contact';
 
+                $dealCreatedAt = Carbon::parse($deal->created_at);
+
                 // Create 1-2 emails per deal
-                $emailCount = rand(1, 2);
+                $emailCount     = rand(1, 2);
                 $emailTemplates = $dealEmailTemplates[$pipelineName][$stageName] ?? $dealEmailTemplates['Sales']['Initial Contact'];
+                $totalSubjects  = count($emailTemplates['subjects']);
 
                 for ($i = 0; $i < $emailCount; $i++) {
-                    $templateIndex = $i % count($emailTemplates['subjects']);
-
-                    // Use client email if available, otherwise use a user email
+                    $templateIndex = rand(0, $totalSubjects - 1);
                     $recipientEmail = $clients->isNotEmpty() ? $clients->random()->email : 'client@example.com';
 
-                    if (!$deal->id || !$recipientEmail) {
-                        continue;
-                    }
+                    if (!$deal->id || !$recipientEmail) continue;
 
                     DealEmail::create([
-                        'deal_id' => $deal->id,
-                        'to' => $recipientEmail,
-                        'subject' => $emailTemplates['subjects'][$templateIndex],
+                        'deal_id'     => $deal->id,
+                        'to'          => $recipientEmail,
+                        'subject'     => $emailTemplates['subjects'][$templateIndex],
                         'description' => $emailTemplates['descriptions'][$templateIndex],
-                        'created_at' => $deal->created_at->addDays(rand(1, 14))->addHours(rand(1, 23)),
+                        'created_at'  => (clone $dealCreatedAt)->addDays(rand(1, 14))->addHours(rand(1, 23)),
                     ]);
                 }
 
                 // Create 1-2 discussions per deal
-                $discussionCount = rand(1, 2);
+                $discussionCount     = rand(1, 2);
                 $discussionTemplates = $dealDiscussionTemplates[$pipelineName][$stageName] ?? $dealDiscussionTemplates['Sales']['Initial Contact'];
+                $totalDiscussions    = count($discussionTemplates);
 
                 for ($i = 0; $i < $discussionCount; $i++) {
-                    if (empty($users)) {
-                        break;
-                    }
-                    $randomUser = $users[array_rand($users)];
-                    $templateIndex = $i % count($discussionTemplates);
+                    if (empty($users) || !$deal->id) break;
 
-                    if (!$deal->id || !$randomUser) {
-                        continue;
-                    }
+                    $randomUser    = $users[array_rand($users)];
+                    $templateIndex = rand(0, $totalDiscussions - 1);
 
                     DealDiscussion::create([
-                        'deal_id' => $deal->id,
-                        'comment' => $discussionTemplates[$templateIndex],
+                        'deal_id'    => $deal->id,
+                        'comment'    => $discussionTemplates[$templateIndex],
                         'creator_id' => $randomUser,
                         'created_by' => $userId,
-                        'created_at' => $deal->created_at->addDays(rand(3, 21))->addHours(rand(1, 23)),
+                        'created_at' => (clone $dealCreatedAt)->addDays(rand(3, 21))->addHours(rand(1, 23)),
                     ]);
                 }
             }
@@ -576,9 +575,9 @@ class DemoDealEmailDiscussionSeeder extends Seeder
 
         // Create files for each pipeline
         $pipelineFiles = [
-            'Sales' => array_slice($dealFilesData, 0, 17),
-            'Marketing' => array_slice($dealFilesData, 17, 17),
-            'Lead Qualification' => array_slice($dealFilesData, 34, 17)
+            'Marketing'          => array_slice($dealFilesData, 0, 17),
+            'Lead Qualification' => array_slice($dealFilesData, 17, 17),
+            'Sales'              => array_slice($dealFilesData, 34, 17),
         ];
 
         foreach ($deals as $deal) {

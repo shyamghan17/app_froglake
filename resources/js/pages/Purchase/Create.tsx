@@ -186,12 +186,13 @@ export default function Create() {
 
                             {/* Calendar Sync Field */}
                             <div className="mt-6">
-                                {/* Calendar Sync Fields */}
-                                {calendarFields.map((field) => (
-                                    <div className='m-3' key={field.id}>
-                                        {field.component}
-                                    </div>
-                                ))}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {calendarFields.map((field) => (
+                                        <div className='m-3' key={field.id}>
+                                            {field.component}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
                             {/* Custom Fields */}

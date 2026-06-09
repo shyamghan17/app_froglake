@@ -79,9 +79,9 @@ class EmployeeDocumentTypeController extends Controller
 
             UpdateEmployeeDocumentType::dispatch($request, $employeedocumenttype);
 
-            return redirect()->route('hrm.employee-document-types.index')->with('success', __('The document type has been updated successfully.'));
+            return back()->with('success', __('The document type has been updated successfully.'));
         } else {
-            return redirect()->route('hrm.employee-document-types.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 
@@ -91,9 +91,9 @@ class EmployeeDocumentTypeController extends Controller
             DestroyEmployeeDocumentType::dispatch($employeedocumenttype);
             $employeedocumenttype->delete();
 
-            return redirect()->route('hrm.employee-document-types.index')->with('success', __('The document type has been deleted.'));
+            return back()->with('success', __('The document type has been deleted.'));
         } else {
-            return redirect()->route('hrm.employee-document-types.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 }

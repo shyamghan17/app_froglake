@@ -70,9 +70,9 @@ class BranchController extends Controller
 
             UpdateBranch::dispatch($request, $branch);
 
-            return redirect()->route('hrm.branches.index')->with('success', __('The branch details are updated successfully.'));
+            return back()->with('success', __('The branch details are updated successfully.'));
         } else {
-            return redirect()->route('hrm.branches.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 
@@ -82,9 +82,9 @@ class BranchController extends Controller
             DestroyBranch::dispatch($branch);
             $branch->delete();
 
-            return redirect()->route('hrm.branches.index')->with('success', __('The branch has been deleted.'));
+            return back()->with('success', __('The branch has been deleted.'));
         } else {
-            return redirect()->route('hrm.branches.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 }

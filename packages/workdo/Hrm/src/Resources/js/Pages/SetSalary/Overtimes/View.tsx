@@ -64,7 +64,7 @@ export default function View({ overtime }: ViewOvertimeProps) {
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Status')}</label>
-                        <div className="bg-gray-50 p-2 rounded">
+                        <div className="p-2 rounded">
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                 overtime.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                             }`}>

@@ -13,7 +13,5 @@ class DestroyPayroll
     public function __construct(
           public Payroll $payroll
     )
-    {
-        //
-    }
+    {}
 }

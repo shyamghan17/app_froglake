@@ -13,7 +13,5 @@ class DestroyWarning
     public function __construct(
           public Warning $warning
     )
-    {
-        //
-    }
+    {}
 }

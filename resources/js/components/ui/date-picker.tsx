@@ -27,6 +27,7 @@ interface DatePickerProps {
   showMonthDropdown?: boolean
   style?: React.CSSProperties
   disabled?: boolean
+  filterDate?: (date: Date) => boolean
 }
 
 export function DatePicker({
@@ -41,7 +42,8 @@ export function DatePicker({
   showYearDropdown = true,
   showMonthDropdown = true,
   style,
-  disabled = false
+  disabled = false,
+  filterDate
 }: DatePickerProps) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false)
@@ -106,6 +108,7 @@ export function DatePicker({
               showMonthDropdown={showMonthDropdown}
               dropdownMode="select"
               yearDropdownItemNumber={100}
+              filterDate={filterDate}
             />
           </div>
         </PopoverContent>

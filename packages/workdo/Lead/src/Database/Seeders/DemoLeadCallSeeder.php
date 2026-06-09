@@ -309,12 +309,12 @@ class DemoLeadCallSeeder extends Seeder
 
             foreach ($leads as $lead) {
                 $pipelineName = $lead->pipeline->name ?? 'Sales';
-                $stageName = $lead->stage->name ?? 'Initial Contact';
+                $stageName    = $lead->stage->name ?? 'Draft';
 
-                // Get assigned users for this lead
+                // Get assigned users for this lead, fallback to userId
                 $assignedUsers = $lead->userLeads->pluck('user_id')->toArray();
                 if (empty($assignedUsers)) {
-                    continue; // Skip leads with no assigned users
+                    $assignedUsers = [$userId];
                 }
 
                 // Generate 1-2 calls per lead

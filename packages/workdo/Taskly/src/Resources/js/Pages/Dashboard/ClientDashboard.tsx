@@ -3,8 +3,8 @@ import { Head, usePage, router } from "@inertiajs/react";
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from '@/utils/helpers';
-import { FolderKanban, ListTodo, CheckSquare, Clock } from 'lucide-react';
+import { formatDate, formatCurrency } from '@/utils/helpers';
+import { FolderKanban, ListTodo, CheckSquare, Clock, Receipt, DollarSign } from 'lucide-react';
 
 
 interface Task {
@@ -46,11 +46,26 @@ interface ClientDashboardProps {
     recentTasks: Task[];
     projectProgress: ProjectProgress[];
     clientProjects: Project[];
+    paymentStats: {
+        total_payments: number;
+        total_amount: number;
+        paid_amount: number;
+        balance_amount: number;
+    };
+    recentPayments: Array<{
+        id: number;
+        payment_number: string;
+        project: string;
+        total_amount: number;
+        balance_amount: number;
+        status: string;
+        payment_date: string;
+    }>;
 }
 
 export default function ClientDashboard() {
     const { t } = useTranslation();
-    const { stats, recentTasks, projectProgress, clientProjects } = usePage<ClientDashboardProps>().props;
+    const { stats, recentTasks, projectProgress, clientProjects, paymentStats, recentPayments } = usePage<ClientDashboardProps>().props;
 
     const getPriorityColor = (priority: string) => {
         switch (priority.toLowerCase()) {
@@ -70,7 +85,7 @@ export default function ClientDashboard() {
         }
     };
 
-    const StatCard = ({ title, value, subtitle, color = "blue", icon: Icon }: any) => {
+    const StatCard = ({ title, value, subtitle, color = "blue", icon: Icon, extraStats }: any) => {
         const colorClasses = {
             blue: "bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200",
             green: "bg-gradient-to-r from-green-50 to-green-100 border-green-200",
@@ -94,6 +109,16 @@ export default function ClientDashboard() {
                     {subtitle && (
                         <p className={`text-xs ${textColors[color as keyof typeof textColors]} opacity-80 mt-1`}>{subtitle}</p>
                     )}
+                    {extraStats && (
+                        <div className="mt-3 pt-3 border-t border-current/20 grid grid-cols-2 gap-2">
+                            {extraStats.map((stat: any, idx: number) => (
+                                <div key={idx}>
+                                    <p className={`text-xs ${textColors[color as keyof typeof textColors]} opacity-70`}>{stat.label}</p>
+                                    <p className={`text-sm font-semibold ${textColors[color as keyof typeof textColors]}`}>{stat.value}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         );
@@ -112,30 +137,46 @@ export default function ClientDashboard() {
                     <StatCard
                         title={t('Projects')}
                         value={stats.total_projects}
-                        subtitle="Active projects"
+                        subtitle={t('Active projects')}
                         color="blue"
                         icon={FolderKanban}
+                        extraStats={[
+                            { label: t('Total Tasks'), value: stats.total_tasks },
+                            { label: t('Progress'), value: `${stats.completion_rate}%` }
+                        ]}
                     />
                     <StatCard
-                        title={t('Total Tasks')}
-                        value={stats.total_tasks}
-                        subtitle="All project tasks"
-                        color="purple"
-                        icon={ListTodo}
-                    />
-                    <StatCard
-                        title={t('Completed')}
+                        title={t('Task Status')}
                         value={stats.completed_tasks}
-                        subtitle="Tasks finished"
+                        subtitle={t('Tasks completed')}
                         color="green"
                         icon={CheckSquare}
+                        extraStats={[
+                            { label: t('Pending'), value: stats.pending_tasks },
+                            { label: t('Completion'), value: `${stats.completion_rate}%` }
+                        ]}
                     />
                     <StatCard
-                        title={t('Pending')}
-                        value={stats.pending_tasks}
-                        subtitle="Tasks remaining"
+                        title={t('Payments')}
+                        value={paymentStats ? paymentStats.total_payments : 0}
+                        subtitle={t('Payment invoices')}
+                        color="purple"
+                        icon={Receipt}
+                        extraStats={paymentStats ? [
+                            { label: t('Total'), value: formatCurrency(paymentStats.total_amount / 1000) + 'K' },
+                            { label: t('Balance'), value: formatCurrency(paymentStats.balance_amount / 1000) + 'K' }
+                        ] : []}
+                    />
+                    <StatCard
+                        title={t('Payment Status')}
+                        value={paymentStats ? formatCurrency(paymentStats.paid_amount / 1000) + 'K' : formatCurrency(0)}
+                        subtitle={t('Amount paid')}
                         color="orange"
-                        icon={Clock}
+                        icon={DollarSign}
+                        extraStats={paymentStats ? [
+                            { label: t('Paid %'), value: paymentStats.total_amount > 0 ? `${Math.round((paymentStats.paid_amount / paymentStats.total_amount) * 100)}%` : '0%' },
+                            { label: t('Due'), value: formatCurrency(paymentStats.balance_amount / 1000) + 'K' }
+                        ] : []}
                     />
                 </div>
 
@@ -268,6 +309,55 @@ export default function ClientDashboard() {
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* Recent Payments */}
+                {recentPayments && recentPayments.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg">{t('Recent Payments')}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b">
+                                            <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">{t('Payment #')}</th>
+                                            <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">{t('Project')}</th>
+                                            <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">{t('Total')}</th>
+                                            <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">{t('Balance')}</th>
+                                            <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">{t('Status')}</th>
+                                            <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">{t('Date')}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {recentPayments.map((payment) => (
+                                            <tr key={payment.id} className="border-b hover:bg-gray-50 cursor-pointer" onClick={() => router.get(route('project-payments.show', payment.id))}>
+                                                <td className="py-3 px-4 text-sm font-medium text-blue-600">{payment.payment_number}</td>
+                                                <td className="py-3 px-4 text-sm">{payment.project}</td>
+                                                <td className="py-3 px-4 text-sm text-right font-medium">{formatCurrency(payment.total_amount)}</td>
+                                                <td className="py-3 px-4 text-sm text-right font-medium text-orange-600">{formatCurrency(payment.balance_amount)}</td>
+                                                <td className="py-3 px-4">
+                                                    <div className="flex justify-center">
+                                                        <Badge 
+                                                            size="sm" 
+                                                            className={payment.status === 'posted' 
+                                                                ? '!bg-blue-500 !text-white hover:!bg-blue-500' 
+                                                                : '!bg-gray-500 !text-white hover:!bg-gray-500'
+                                                            }
+                                                        >
+                                                            {t(payment.status.charAt(0).toUpperCase() + payment.status.slice(1))}
+                                                        </Badge>
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-4 text-sm text-muted-foreground">{new Date(payment.payment_date).toLocaleDateString()}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </AuthenticatedLayout>
     );

@@ -30,6 +30,7 @@ use Workdo\Taskly\Models\ProjectBug;
 use Workdo\Taskly\Models\ProjectClient;
 use Workdo\Taskly\Models\ProjectUser;
 use Workdo\Taskly\Models\ProjectFile;
+use App\Models\EmailTemplate;
 
 class ProjectController extends Controller
 {
@@ -120,6 +121,23 @@ class ProjectController extends Controller
             $project->teamMembers()->sync($validated['user_ids']);
 
             CreateProject::dispatch($request, $project);
+            if(company_setting('Create Project') == 'on') {
+                 
+                $emailData = [
+                    'name'         => $project->name ?? null,
+                    'budget'       => $project->budget ?? null,
+                    'start_date'   => $validated['start_date'] ?? null,
+                    'end_date'     => $validated['end_date'] ?? null,
+                ];
+                $memberEmails = User::whereIn('id', $validated['user_ids'])->pluck('email')->toArray();
+               
+                $message = EmailTemplate::sendEmailTemplate('Create Project', $memberEmails, $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('project has been created successfully.'))
+                        ->with('error', $message['error']);
+                }
+            }
 
             return redirect()->route('project.index')->with('success', __('The project has been created successfully.'));
         } else {
@@ -388,6 +406,24 @@ class ProjectController extends Controller
 
             ProjectInviteMember::dispatch($request, $project);
 
+            if(company_setting('Create Project') == 'on') {
+                     
+                $emailData = [
+                    'name'         => $project->name ?? null,
+                    'budget'       => $project->budget ?? null,
+                    'start_date'   => $project->start_date ?? null,
+                    'end_date'     => $project->end_date ?? null,
+                ];
+                $memberEmails = User::whereIn('id', $validated['user_ids'])->pluck('email')->toArray();
+
+                $message = EmailTemplate::sendEmailTemplate('Create Project', $memberEmails, $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('User added to project successfully.'))
+                        ->with('error', $message['error']);
+                }
+            }
+
             // Log activity
             foreach ($validated['user_ids'] as $userId) {
                 ActivityLog::create([
@@ -448,6 +484,24 @@ class ProjectController extends Controller
                 }
             }
 
+            if(company_setting('Project Assign to Client') == 'on') {
+
+                $emailData = [
+                    'name'       => $project->name ?? null,
+                    'budget'     => $project->budget ?? null,
+                    'start_date' => $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('d M Y') : null,
+                    'end_date'   => $project->end_date ? \Carbon\Carbon::parse($project->end_date)->format('d M Y') : null,
+                ];
+                $memberEmails = User::whereIn('id', $validated['client_ids'])->pluck('email')->toArray();
+
+                $message = EmailTemplate::sendEmailTemplate('Project Assign to Client', $memberEmails, $emailData);
+
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('Client added to project successfully.'))
+                        ->with('error', $message['error']);
+                }
+            }
             return back()->with('success', __('Client added to project successfully.'));
         } else {
             return back()->with('error', __('Permission denied'));

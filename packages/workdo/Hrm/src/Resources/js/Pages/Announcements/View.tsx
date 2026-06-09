@@ -52,7 +52,7 @@ export default function View({ announcement }: ViewProps) {
                     
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Priority')}</label>
-                        <div className="bg-gray-50 p-2 rounded">
+                        <div className="p-1 rounded">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 announcement.priority === 'low' ? 'bg-slate-100 text-slate-800' :
                                 announcement.priority === 'medium' ? 'bg-blue-100 text-blue-800' :
@@ -67,7 +67,7 @@ export default function View({ announcement }: ViewProps) {
 
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Status')}</label>
-                        <div className="bg-gray-50 p-2 rounded">
+                        <div className="p-1 rounded">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 announcement.status === 'active' ? 'bg-green-100 text-green-700' :
                                 announcement.status === 'inactive' ? 'bg-red-100 text-red-700' :
@@ -82,7 +82,7 @@ export default function View({ announcement }: ViewProps) {
                 
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Departments')}</label>
-                        <div className="bg-gray-50 p-2 rounded">
+                        <div className="p-1 rounded">
                             <div className="flex flex-wrap gap-1">
                                 {announcement.departments.map((dept: any) => (
                                     <span key={dept.id} className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-medium">

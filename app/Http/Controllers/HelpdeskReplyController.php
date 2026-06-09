@@ -61,7 +61,12 @@ class HelpdeskReplyController extends Controller
                         'ticket_description' => strip_tags($reply->message ?? ''),
                     ];
                     
-                    EmailTemplate::sendEmailTemplate('Helpdesk Ticket Reply', [$toEmail], $emailData, $adminUser->id);
+                    $message = EmailTemplate::sendEmailTemplate('Helpdesk Ticket Reply', [$toEmail], $emailData, $adminUser->id);
+                    if($message['is_success'] == false && !empty($message['error'])) {
+                        return back()
+                            ->with('success', __('Reply added successfully.'))
+                            ->with('error', $message['error']);
+                    }
                 }
             } catch (\Throwable $th) {
                 return back()->with('error', $th->getMessage());

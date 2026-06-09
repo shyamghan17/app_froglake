@@ -1,75 +1,38 @@
 <?php
-
 use Workdo\Hrm\Http\Controllers\IpRestrictController;
-
 use Workdo\Hrm\Http\Controllers\PayrollController;
-
 use Workdo\Hrm\Http\Controllers\LoanTypeController;
-
 use Workdo\Hrm\Http\Controllers\DeductionTypeController;
-
 use Workdo\Hrm\Http\Controllers\AllowanceTypeController;
-
 use Workdo\Hrm\Http\Controllers\AllowanceController;
-
 use Workdo\Hrm\Http\Controllers\DeductionController;
-
 use Workdo\Hrm\Http\Controllers\LoanController;
-
 use Workdo\Hrm\Http\Controllers\AttendanceController;
-
 use Workdo\Hrm\Http\Controllers\ShiftController;
-
 use Workdo\Hrm\Http\Controllers\LeaveApplicationController;
-
 use Workdo\Hrm\Http\Controllers\LeaveTypeController;
-
 use Workdo\Hrm\Http\Controllers\EventController;
-
 use Workdo\Hrm\Http\Controllers\EventTypeController;
-
 use Workdo\Hrm\Http\Controllers\AnnouncementController;
-
 use Workdo\Hrm\Http\Controllers\AnnouncementCategoryController;
-
 use Workdo\Hrm\Http\Controllers\AcknowledgmentController;
-
-use Workdo\Hrm\Http\Controllers\DocumentController;
-
 use Workdo\Hrm\Http\Controllers\DocumentCategoryController;
-
 use Workdo\Hrm\Http\Controllers\HolidayController;
-
 use Workdo\Hrm\Http\Controllers\HolidayTypeController;
-
 use Workdo\Hrm\Http\Controllers\EmployeeTransferController;
-
 use Workdo\Hrm\Http\Controllers\ComplaintTypeController;
-
 use Workdo\Hrm\Http\Controllers\WarningController;
-
 use Workdo\Hrm\Http\Controllers\WarningTypeController;
-
 use Workdo\Hrm\Http\Controllers\ComplaintController;
-
 use Workdo\Hrm\Http\Controllers\TerminationController;
-
 use Workdo\Hrm\Http\Controllers\TerminationTypeController;
-
 use Workdo\Hrm\Http\Controllers\ResignationController;
-
 use Workdo\Hrm\Http\Controllers\PromotionController;
-
 use Workdo\Hrm\Http\Controllers\AwardController;
-
 use Workdo\Hrm\Http\Controllers\AwardTypeController;
-
 use Workdo\Hrm\Http\Controllers\EmployeeController;
-
 use Workdo\Hrm\Http\Controllers\EmployeeDocumentTypeController;
-
 use Workdo\Hrm\Http\Controllers\DesignationController;
-
 use Workdo\Hrm\Http\Controllers\DepartmentController;
 use Illuminate\Support\Facades\Route;
 use Workdo\Hrm\Http\Controllers\DashboardController;
@@ -77,12 +40,11 @@ use Workdo\Hrm\Http\Controllers\BranchController;
 use Workdo\Hrm\Http\Controllers\HrmDocumentController;
 use Workdo\Hrm\Http\Controllers\LeaveBalanceController;
 use Workdo\Hrm\Http\Controllers\OvertimeController;
-use Workdo\Hrm\Http\Controllers\SetSalaryController;
-use Workdo\Hrm\Http\Controllers\SystemSetupController;
+use Workdo\Hrm\Http\Controllers\SetSalaryController; 
 use Workdo\Hrm\Http\Controllers\WorkingDaysController;
 
 Route::middleware(['web', 'auth', 'verified', 'PlanModuleCheck:Hrm'])->group(function () {
-    Route::get('/hrm', [DashboardController::class, 'index'])->name('hrm.index');
+    Route::get('/hrm/dashboard', [DashboardController::class, 'index'])->name('hrm.index');
 
 
     Route::prefix('hrm/branches')->name('hrm.branches.')->group(function () {
@@ -292,6 +254,7 @@ Route::middleware(['web', 'auth', 'verified', 'PlanModuleCheck:Hrm'])->group(fun
 
     Route::prefix('hrm/leave-applications')->name('hrm.leave-applications.')->group(function () {
         Route::get('/', [LeaveApplicationController::class, 'index'])->name('index');
+        Route::get('/calendar', [LeaveApplicationController::class, 'calendar'])->name('calendar');
         Route::post('/', [LeaveApplicationController::class, 'store'])->name('store');
         Route::put('/{leaveapplication}', [LeaveApplicationController::class, 'update'])->name('update');
         Route::put('/{leaveapplication}/status', [LeaveApplicationController::class, 'updateStatus'])->name('updateStatus');

@@ -57,7 +57,6 @@ class SettingController extends Controller
                 'settings.footerText' => 'required|string|max:500',
                 'settings.sidebarVariant' => 'nullable|string|max:50',
                 'settings.sidebarStyle' => 'nullable|string|max:50',
-                'settings.layoutDirection' => 'nullable|string|max:50',
                 'settings.themeMode' => 'nullable|string|max:50',
                 'settings.themeColor' => 'nullable|string|max:50',
                 'settings.customColor' => 'nullable|string|max:50',
@@ -73,7 +72,6 @@ class SettingController extends Controller
                 'settings.favicon.string' => __('Favicon must be a valid string.'),
                 'settings.sidebarVariant.string' => __('Sidebar variant must be a valid string.'),
                 'settings.sidebarStyle.string' => __('Sidebar style must be a valid string.'),
-                'settings.layoutDirection.string' => __('Layout direction must be a valid string.'),
                 'settings.themeMode.string' => __('Theme mode must be a valid string.'),
                 'settings.themeColor.string' => __('Theme color must be a valid string.'),
                 'settings.customColor.string' => __('Custom color must be a valid string.'),
@@ -82,7 +80,6 @@ class SettingController extends Controller
                 'settings.favicon.max' => __('Favicon path is too long.'),
                 'settings.sidebarVariant.max' => __('Sidebar variant must not exceed 50 characters.'),
                 'settings.sidebarStyle.max' => __('Sidebar style must not exceed 50 characters.'),
-                'settings.layoutDirection.max' => __('Layout direction must not exceed 50 characters.'),
                 'settings.themeMode.max' => __('Theme mode must not exceed 50 characters.'),
                 'settings.themeColor.max' => __('Theme color must not exceed 50 characters.'),
                 'settings.customColor.max' => __('Custom color must not exceed 50 characters.'),
@@ -689,6 +686,50 @@ class SettingController extends Controller
         {
             return back()->with('error', __('Permission denied'));
         }
+    }
+
+    public function updateAIAgentSettings(Request $request)
+    {
+        if(Auth::user()->can('edit-ai-agent-settings'))
+        {
+            $request->validate([
+                'settings.ai_agent_provider' => 'required|string|in:openai,anthropic,google',
+                'settings.ai_agent_model' => 'required|string|max:255',
+                'settings.ai_agent_api_key' => 'required|string|max:255',
+            ]);
+
+            $settings = $request->input('settings');
+
+            foreach ($settings as $key => $value) {
+                setSetting($key, $value,null, false);
+            }
+
+            return redirect()->back()->with('success', __('AI Agent settings saved successfully.'));
+        }
+        else
+        {
+            return back()->with('error', __('Permission denied'));
+        }
+    }
+
+    public function getAIAgentProviders()
+    {
+        $providers = [
+            'openai'    => [
+                'name'   => 'OpenAI',
+                'models' => ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4-turbo', 'gpt-4']
+            ],
+            'anthropic' => [
+                'name'   => 'Anthropic (Claude)',
+                'models' => ['claude-opus-4-5', 'claude-sonnet-4-5', 'claude-haiku-4-5', 'claude-3-5-haiku-latest']
+            ],
+            'google'    => [
+                'name'   => 'Google (Gemini)',
+                'models' => ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-flash-latest']
+            ]
+        ];
+
+        return response()->json(['providers' => $providers]);
     }
 
     public function mailNotificationStore(Request $request)

@@ -13,7 +13,5 @@ class DestroyLeaveApplication
     public function __construct(
           public LeaveApplication $leaveapplication
     )
-    {
-        //
-    }
+    {}
 }

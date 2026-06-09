@@ -17,6 +17,7 @@ use Workdo\Hrm\Events\UpdateLeaveApplication;
 use Workdo\Hrm\Events\DestroyLeaveApplication;
 use Workdo\Hrm\Events\UpdateLeaveStatus;
 use Workdo\Hrm\Models\Holiday;
+use App\Models\EmailTemplate;
 
 class LeaveApplicationController extends Controller
 {
@@ -154,7 +155,6 @@ class LeaveApplicationController extends Controller
             $leaveapplication->total_days = $totalDays;
             $leaveapplication->reason = $validated['reason'];
             $leaveapplication->attachment = basename($validated['attachment']) ?? null;
-            $leaveapplication->status = 'pending';
             $leaveapplication->employee_id = $validated['employee_id'];
             $leaveapplication->leave_type_id = $validated['leave_type_id'];
 
@@ -164,9 +164,9 @@ class LeaveApplicationController extends Controller
 
             CreateLeaveApplication::dispatch($request, $leaveapplication);
 
-            return redirect()->route('hrm.leave-applications.index')->with('success', __('The leave application has been created successfully.'));
+            return redirect()->back()->with('success', __('The leave application has been created successfully.'));
         } else {
-            return redirect()->route('hrm.leave-applications.index')->with('error', __('Permission denied'));
+            return redirect()->back()->with('error', __('Permission denied'));
         }
     }
 
@@ -306,6 +306,23 @@ class LeaveApplicationController extends Controller
 
             $leaveapplication->save();
             UpdateLeaveStatus::dispatch($request, $leaveapplication);
+            if(company_setting('Leave Status') == 'on') {
+                $emailData = [
+                    'employee_name' => $leaveapplication->employee->name ?? null,
+                    'leave_type'    => $leaveapplication->leave_type->name ?? null,
+                    'start_date'    => $leaveapplication->start_date ? \Carbon\Carbon::parse($leaveapplication->start_date)->format('d M Y') : null,
+                    'end_date'      => $leaveapplication->end_date ? \Carbon\Carbon::parse($leaveapplication->end_date)->format('d M Y') : null,
+                    'total_days'    => $leaveapplication->total_days ?? null,
+                    'reason'        => $leaveapplication->reason ?? null,
+                    'status'        => $leaveapplication->status ?? null,
+                ];
+                $message = EmailTemplate::sendEmailTemplate('Leave Status', [$leaveapplication->employee->email ?? null], $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('The leave application status has been updated successfully.'))
+                        ->with('error', $message['error']);
+                }
+            }
 
             return redirect()->back()->with('success', __('The leave application status has been updated successfully.'));
         } else {
@@ -354,6 +371,91 @@ class LeaveApplicationController extends Controller
             return response()->json($leave_types);
         } else {
             return response()->json([], 403);
+        }
+    }
+
+    public function calendar()
+    {
+        if (Auth::user()->can('manage-leave-applications')) {
+            $leaveapplications = LeaveApplication::query()
+                ->with(['employee', 'leave_type', 'approved_by'])
+                ->where(function ($q) {
+                    if (Auth::user()->can('manage-any-leave-applications')) {
+                        $q->where('created_by', creatorId());
+                    } elseif (Auth::user()->can('manage-own-leave-applications')) {
+                        $q->where('creator_id', Auth::id())->orWhere('employee_id', Auth::id());
+                    } else {
+                        $q->whereRaw('1 = 0');
+                    }
+                })
+                ->when(request('status') !== null && request('status') !== '', fn($q) => $q->where('status', request('status')))
+                ->when(request('employee_id'), fn($q) => $q->where('employee_id', request('employee_id')))
+                ->when(request('leave_type_id'), fn($q) => $q->where('leave_type_id', request('leave_type_id')))
+                ->when(request('month'), function ($q) {
+                    $month = request('month'); // Format: YYYY-MM
+                    if (str_contains($month, '-')) {
+                        [$year, $monthNum] = explode('-', $month);
+                        $startOfMonth = $year . '-' . $monthNum . '-01';
+                        $endOfMonth = date('Y-m-t', strtotime($startOfMonth));
+                        // Show leaves that overlap with this month
+                        $q->whereDate('start_date', '<=', $endOfMonth)
+                          ->whereDate('end_date', '>=', $startOfMonth);
+                    }
+                })
+                ->orderBy('start_date', 'desc')
+                ->get()
+                ->map(function ($leave) {
+                    $statusColors = [
+                        'pending' => '#fbbf24',
+                        'approved' => '#34d399',
+                        'rejected' => '#f87171'
+                    ];
+                    $color = $leave->leave_type->color ?? '#3b82f6';
+                    $borderColor = $statusColors[$leave->status] ?? '#3b82f6';
+
+                    $title = ($leave->employee->name ?? 'Unknown') . ' - ' . ($leave->leave_type->name ?? '-');
+
+                    return [
+                        'id' => $leave->id,
+                        'title' => $title,
+                        'startDate' => $leave->start_date->format('Y-m-d'),
+                        'endDate' => $leave->end_date->format('Y-m-d'),
+                        'time' => '',
+                        'color' => $borderColor,
+                        'borderColor' => $borderColor,
+                        'status' => $leave->status,
+                        'leaveType' => $leave->leave_type->name ?? '-',
+                        'leaveTypeColor' => $color,
+                        'totalDays' => $leave->total_days,
+                        'reason' => $leave->reason,
+                        'isPaid' => $leave->leave_type->is_paid ?? false,
+                        'employeeName' => $leave->employee->name ?? 'Unknown',
+                        'approvedBy' => $leave->approved_by->name ?? null,
+                        'approvedAt' => $leave->approved_at,
+                        'approverComment' => $leave->approver_comment,
+                        'createdAt' => $leave->created_at,
+                        'attachment' => $leave->attachment,
+                        'employeeId' => $leave->employee_id,
+                        'leaveTypeId' => $leave->leave_type_id,
+                    ];
+                });
+
+            $stats = [
+                'total' => $leaveapplications->count(),
+                'pending' => $leaveapplications->where('status', 'pending')->count(),
+                'approved' => $leaveapplications->where('status', 'approved')->count(),
+                'rejected' => $leaveapplications->where('status', 'rejected')->count(),
+                'upcoming' => $leaveapplications->where('startDate', '>=', now()->format('Y-m-d'))->where('status', 'approved')->count(),
+            ];
+
+            return Inertia::render('Hrm/LeaveApplications/Calendar', [
+                'leaveEvents' => $leaveapplications,
+                'employees' => $this->getFilteredEmployees(),
+                'leavetypes' => LeaveType::where('created_by', creatorId())->select('id', 'name', 'color')->get(),
+                'stats' => $stats,
+            ]);
+        } else {
+            return back()->with('error', __('Permission denied'));
         }
     }
 

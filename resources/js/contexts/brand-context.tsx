@@ -10,10 +10,10 @@ interface BrandSettings {
   footerText?: string;
   sidebarVariant?: string;
   sidebarStyle?: string;
-  layoutDirection?: string;
   themeMode?: string;
   themeColor?: string;
   customColor?: string;
+  layoutDirection?: string;
 }
 
 interface BrandContextType {
@@ -39,6 +39,19 @@ export function BrandProvider({ children }: { children: ReactNode }) {
         globalSettings = adminAllSetting ;
     }
 
+  // Use user-level layout direction from auth, or detect from HTML lang attribute for guest users
+  const layoutDirection = React.useMemo(() => {
+    // If user is logged in, use their preference
+    if (auth?.layout_direction) {
+      return auth.layout_direction;
+    }
+    
+    // For guest users (login page), detect from HTML lang attribute
+    const htmlLang = document.documentElement.lang || 'en';
+    const rtlLanguages = ['ar', 'he', 'ur', 'fa', 'ps', 'yi'];
+    return rtlLanguages.includes(htmlLang) ? 'rtl' : 'ltr';
+  }, [auth?.layout_direction]);
+
   const settings: BrandSettings = {
     logo_dark: globalSettings?.logo_dark || '',
     logo_light: globalSettings?.logo_light || '',
@@ -47,10 +60,10 @@ export function BrandProvider({ children }: { children: ReactNode }) {
     footerText: globalSettings?.footerText || '© WorkDo. All rights reserved.',
     sidebarVariant: globalSettings?.sidebarVariant || 'inset',
     sidebarStyle: globalSettings?.sidebarStyle || 'plain',
-    layoutDirection: globalSettings?.layoutDirection || 'ltr',
     themeMode: globalSettings?.themeMode || 'light',
     themeColor: globalSettings?.themeColor || 'green',
     customColor: globalSettings?.customColor || '#10b981',
+    layoutDirection: layoutDirection,
   };
 
   const getPreviewUrl = (path: string) => {
@@ -104,7 +117,7 @@ export function BrandProvider({ children }: { children: ReactNode }) {
     root.style.setProperty('--primary-foreground', '0 0% 98%');
 
     // Set global RTL direction
-    const isRTL = settings.layoutDirection === 'rtl';
+    const isRTL = layoutDirection === 'rtl';
 
     root.dir = isRTL ? 'rtl' : 'ltr';
     root.style.direction = isRTL ? 'rtl' : 'ltr';
@@ -169,7 +182,7 @@ export function BrandProvider({ children }: { children: ReactNode }) {
       existingStyle.textContent = '';
     }
 
-  }, [settings.themeColor, settings.customColor, settings.layoutDirection, settings.themeMode]);
+  }, [settings.themeColor, settings.customColor, layoutDirection, settings.themeMode]);
 
   const getSidebarStyles = (): React.CSSProperties => {
     const primaryColor = getPrimaryColor();

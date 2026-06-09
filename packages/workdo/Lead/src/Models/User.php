@@ -20,19 +20,4 @@ class User extends BaseUser
     {
         return $this->belongsToMany('Workdo\Lead\Models\Deal', 'client_deals', 'client_id', 'deal_id');
     }
-
-    public function clientEstimations()
-    {
-        return $this->hasMany('Workdo\Lead\Models\Estimation', 'client_id', 'id');
-    }
-
-    public function clientContracts()
-    {
-        return $this->hasMany('Workdo\Lead\Models\Contract', 'client_name', 'id');
-    }
-
-    public function clientPermission($dealId)
-    {
-        return ClientPermission::where('client_id', '=', $this->id)->where('deal_id', '=', $dealId)->first();
-    }
 }

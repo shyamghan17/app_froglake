@@ -33,7 +33,6 @@ class DefultSetting extends Seeder
                 'footerText' => 'Copyright © ' . (!empty(env('APP_NAME')) ? env('APP_NAME') : 'WorkDo Dash'),
                 'sidebarVariant' => 'inset',
                 'sidebarStyle' => 'plain',
-                'layoutDirection' => 'ltr',
                 'themeMode' => 'light',
                 'themeColor' => 'green',
                 'customColor' => '#10b981',

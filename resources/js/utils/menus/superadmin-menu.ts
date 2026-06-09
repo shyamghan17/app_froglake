@@ -1,4 +1,4 @@
-import { LayoutGrid, Users, Building2, Settings, Shield, Image, Package, CreditCard, FileText, Ticket, Mail, Bell, Headphones} from 'lucide-react';
+import { LayoutGrid, Users, Building2, Settings, Shield, Image, Package, CreditCard, FileText, Ticket, Mail, Bell, Headphones, Clock} from 'lucide-react';
 import { NavItem } from '@/types';
 
 export const getSuperAdminMenu = (t: (key: string) => string): NavItem[] => [
@@ -23,7 +23,12 @@ export const getSuperAdminMenu = (t: (key: string) => string): NavItem[] => [
         order: 2750,
         children: [
             {
-                title: t('Tickets'),
+                title: t('Today\'s Tickets'),
+                href: route('helpdesk-tickets.today'),
+                permission: 'manage-any-helpdesk-tickets',
+            },
+            {
+                title: t('All Tickets'),
                 href: route('helpdesk-tickets.index'),
                 permission: 'manage-any-helpdesk-tickets',
             },

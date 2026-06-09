@@ -86,7 +86,7 @@ interface ShowProps {
 export default function Show() {
     const { t } = useTranslation();
     const { project, teamMembers, available_clients, projectStats, chartData, chartLines, activityLogs, projectFiles, auth } = usePage<ShowProps>().props;
-    const videoHubButtons = usePageButtons('projectShowButtons', { project });
+    const videoHubButtons = usePageButtons('videoHubBtn', { addonModule: 'Taskly', fallbackName: 'Taskly', itemId: project?.id, subModuleKeyword: '' });
     const spreadsheetButtons = usePageButtons('spreadsheetBtn', { module: 'Projects', id: project.id });
     const businessProcessMappingButtons = usePageButtons('businessProcessMappingBtn', { module: 'Taskly', submodule: 'Projects', id: project.id });
     const [isModalOpen, setIsModalOpen] = useState(false);

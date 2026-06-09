@@ -6,44 +6,25 @@ import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 import AuthenticatedLayout from "@/layouts/authenticated-layout";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { DataTable } from "@/components/ui/data-table";
-import { Dialog } from "@/components/ui/dialog";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Plus, Edit as EditIcon, Trash2, Eye, Clock as ClockIcon, Download, FileImage } from "lucide-react";
+import { Plus, Check, X, ChevronLeft, ChevronRight, Flag, Umbrella, Coffee, AlertCircle, Timer, User as UserIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { FilterButton } from '@/components/ui/filter-button';
-import { Pagination } from "@/components/ui/pagination";
-import { SearchInput } from "@/components/ui/search-input";
-import { ListGridToggle } from '@/components/ui/list-grid-toggle';
-import { PerPageSelector } from '@/components/ui/per-page-selector';
+import { Dialog } from "@/components/ui/dialog";
+import { SearchInput } from '@/components/ui/search-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { DatePicker } from '@/components/ui/date-picker';
+
 import Create from './Create';
 import Edit from './Edit';
 import View from './Show';
-
-import NoRecordsFound from '@/components/no-records-found';
-import { Attendance, AttendancesIndexProps, AttendanceFilters, AttendanceModalState } from './types';
-import { formatDate, formatTime, formatDateTime, formatCurrency, getImagePath } from '@/utils/helpers';
+import { Attendance, AttendancesIndexProps, AttendanceModalState } from './types';
+import { formatDate, formatTime, getImagePath } from '@/utils/helpers';
 
 export default function Index() {
     const { t } = useTranslation();
-    const { attendances, auth, employees, shifts } = usePage<AttendancesIndexProps>().props;
-    const urlParams = new URLSearchParams(window.location.search);
-
-    const [filters, setFilters] = useState<AttendanceFilters>({
-        search: urlParams.get('search') || '',
-        status: urlParams.get('status') || '',
-        employee_id: urlParams.get('employee_id') || '',
-        date_from: urlParams.get('date_from') || '',
-        date_to: urlParams.get('date_to') || '',
-    });
-
-    const [perPage] = useState(urlParams.get('per_page') || '10');
-    const [sortField, setSortField] = useState(urlParams.get('sort') || '');
-    const [sortDirection, setSortDirection] = useState(urlParams.get('direction') || 'asc');
-    const [viewMode, setViewMode] = useState<'list' | 'grid'>(urlParams.get('view') as 'list' | 'grid' || 'list');
+    const { attendances, auth, employees, shifts, leaves, holidays, workingDays } = usePage<AttendancesIndexProps>().props;
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [search, setSearch] = useState('');
+    const [appliedSearch, setAppliedSearch] = useState('');
     const [modalState, setModalState] = useState<AttendanceModalState>({
         isOpen: false,
         mode: '',
@@ -51,7 +32,175 @@ export default function Index() {
     });
 
 
-    const [showFilters, setShowFilters] = useState(false);
+    // Calendar helpers
+    const getDaysInMonth = (date: Date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        return Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    };
+
+    const getMonthName = (date: Date) => {
+        return date.toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase();
+    };
+
+    const getDayName = (day: number) => {
+        const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+        return date.toLocaleString('default', { weekday: 'short' }).toUpperCase();
+    };
+
+    const previousMonth = () => {
+        const newMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1);
+        setCurrentMonth(newMonth);
+        router.get(route('hrm.attendances.index'), { 
+            month: `${newMonth.getFullYear()}-${String(newMonth.getMonth() + 1).padStart(2, '0')}-01`
+        }, {
+            preserveState: true,
+            replace: true
+        });
+    };
+
+    const nextMonth = () => {
+        const newMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1);
+        setCurrentMonth(newMonth);
+        router.get(route('hrm.attendances.index'), { 
+            month: `${newMonth.getFullYear()}-${String(newMonth.getMonth() + 1).padStart(2, '0')}-01`
+        }, {
+            preserveState: true,
+            replace: true
+        });
+    };
+
+    const getLeaveForDay = (employeeId: number, day: number) => {
+        const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        return leaves?.find((leave: any) => {
+            return leave.employee_id === employeeId && 
+                   leave.start_date <= dateStr && 
+                   leave.end_date >= dateStr;
+        });
+    };
+
+    const getHolidayForDay = (day: number) => {
+        const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        return holidays?.find((holiday: any) => {
+            return holiday.start_date <= dateStr && holiday.end_date >= dateStr;
+        });
+    };
+
+    const isDayOff = (day: number) => {
+        const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+        const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+        // Convert workingDays strings to numbers for comparison
+        const workingDaysNumbers = workingDays?.map((d: any) => parseInt(d)) || [];
+        return workingDaysNumbers.length > 0 && !workingDaysNumbers.includes(dayOfWeek);
+    };
+
+    const getFilteredEmployees = () => {
+        let filtered = employees || [];
+        if (appliedSearch) {
+            filtered = filtered.filter((emp: any) => {
+                const name = emp.name || emp.user?.name || '';
+                return name.toLowerCase().includes(appliedSearch.toLowerCase());
+            });
+        }
+        return filtered;
+    };
+
+    const handleSearch = () => {
+        setAppliedSearch(search);
+    };
+
+    const handleClearSearch = () => {
+        setSearch('');
+        setAppliedSearch('');
+    };
+
+    const getAttendanceForDay = (employeeId: number, day: number) => {
+        const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const attendance = attendances?.data?.find((att: any) => {
+            const attDate = att.date ? att.date.split('T')[0] : '';
+            return att.employee_id === employeeId && attDate === dateStr;
+        });
+        return attendance;
+    };
+
+    const getAttendanceIcon = (attendance: any, leave: any, holiday: any, dayOff: boolean) => {
+        // Priority: Holiday > Leave > Day Off > Attendance
+        if (holiday) {
+            return <Umbrella className="h-4 w-4 text-yellow-600" />;
+        }
+        
+        if (leave) {
+            return <Flag className="h-4 w-4 text-red-600" />;
+        }
+        
+        if (dayOff) {
+            return <Coffee className="h-4 w-4 text-gray-600" />;
+        }
+        
+        if (!attendance) return <span className="text-gray-300">○</span>;
+        
+        // Check for pending (clock in but no clock out)
+        if (attendance.is_pending) {
+            return <AlertCircle className="h-4 w-4 text-orange-500" />;
+        }
+        
+        const overtime = attendance.overtime_hours > 0;
+        const isLate = attendance.is_late;
+        const isEarly = attendance.is_early;
+        
+        switch(attendance.status) {
+            case 'present':
+                return (
+                    <div className="flex flex-col items-center">
+                        <div className="flex items-center gap-0.5">
+                            <Check className="h-4 w-4 text-green-600" />
+                            {isLate && <Timer className="h-3 w-3 text-red-600" />}
+                            {isEarly && <Timer className="h-3 w-3 text-green-600" />}
+                        </div>
+                        {overtime && <span className="text-[10px] text-blue-500">O</span>}
+                    </div>
+                );
+            case 'absent':
+                return (
+                    <div className="flex flex-col items-center">
+                        <div className="flex items-center gap-0.5">
+                            <X className="h-4 w-4 text-red-600" />
+                            {isLate && <Timer className="h-3 w-3 text-red-600" />}
+                            {isEarly && <Timer className="h-3 w-3 text-green-600" />}
+                        </div>
+                        {overtime && <span className="text-[10px] text-blue-500">O</span>}
+                    </div>
+                );
+            case 'half day':
+                return (
+                    <div className="flex flex-col items-center">
+                        <div className="flex items-center gap-0.5">
+                            <span className="text-yellow-600 font-bold text-sm">½</span>
+                            {isLate && <Timer className="h-3 w-3 text-red-600" />}
+                            {isEarly && <Timer className="h-3 w-3 text-green-600" />}
+                        </div>
+                        {overtime && <span className="text-[10px] text-blue-500">O</span>}
+                    </div>
+                );
+            default:
+                return <span className="text-gray-300">○</span>;
+        }
+    };
+
+
+
+    const calculateMonthlyTotal = (employeeId: number) => {
+        const days = getDaysInMonth(currentMonth);
+        let total = 0;
+        days.forEach(day => {
+            const attendance = getAttendanceForDay(employeeId, day);
+            if (attendance?.total_hour) {
+                total += parseFloat(attendance.total_hour);
+            }
+        });
+        return total.toFixed(1);
+    };
 
 
 
@@ -62,34 +211,6 @@ export default function Index() {
         defaultMessage: t('Are you sure you want to delete this attendance?')
     });
 
-    const handleFilter = () => {
-        router.get(route('hrm.attendances.index'), { ...filters, per_page: perPage, sort: sortField, direction: sortDirection, view: viewMode }, {
-            preserveState: true,
-            replace: true
-        });
-    };
-
-    const handleSort = (field: string) => {
-        const direction = sortField === field && sortDirection === 'asc' ? 'desc' : 'asc';
-        setSortField(field);
-        setSortDirection(direction);
-        router.get(route('hrm.attendances.index'), { ...filters, per_page: perPage, sort: field, direction, view: viewMode }, {
-            preserveState: true,
-            replace: true
-        });
-    };
-
-    const clearFilters = () => {
-        setFilters({
-            search: '',
-            status: '',
-            employee_id: '',
-            date_from: '',
-            date_to: '',
-        });
-        router.get(route('hrm.attendances.index'), { per_page: perPage, view: viewMode });
-    };
-
     const openModal = (mode: 'add' | 'edit' | 'view', data: Attendance | null = null) => {
         setModalState({ isOpen: true, mode, data });
     };
@@ -98,136 +219,11 @@ export default function Index() {
         setModalState({ isOpen: false, mode: '', data: null });
     };
 
-    const tableColumns = [
-        {
-            key: 'employee.user.name',
-            header: t('Employee Name'),
-            sortable: false,
-            render: (value: any, row: any) => row.user?.name || '-'
-        },
-        {
-            key: 'date',
-            header: t('Date'),
-            sortable: true,
-            render: (value: string) => value ? formatDate(value) : '-'
-        },
-        {
-            key: 'shift.shift_name',
-            header: t('Shift'),
-            sortable: false,
-            render: (value: any, row: any) => row.shift?.shift_name || '-'
-        },
-        {
-            key: 'clock_in',
-            header: t('Clock In'),
-            sortable: false,
-            render: (value: string) => value ? formatDateTime(value) : '-'
-        },
-        {
-            key: 'clock_out',
-            header: t('Clock Out'),
-            sortable: false,
-            render: (value: string) => value ? formatDateTime(value) : '-'
-        },
-        {
-            key: 'total_hour',
-            header: t('Total Hour'),
-            sortable: false,
-            render: (value: number) => value ? `${value}h` : '-'
-        },
-        {
-            key: 'break_hour',
-            header: t('Break Hour'),
-            sortable: false,
-            render: (value: number) => value ? `${value}h` : '-'
-        },
-        {
-            key: 'overtime_hours',
-            header: t('Overtime'),
-            sortable: false,
-            render: (value: number) => value ? `${value}h` : '-'
-        },
-        {
-            key: 'status',
-            header: t('Status'),
-            sortable: false,
-            render: (value: string) => {
-                const statusColors = {
-                    present: 'bg-green-100 text-green-800 font-medium',
-                    'half day': 'bg-yellow-100 text-yellow-800 font-medium',
-                    absent: 'bg-red-100 text-red-800 font-medium'
-                };
-                const formatStatus = (status: string) => {
-                    return status.split(' ').map(word =>
-                        word.charAt(0).toUpperCase() + word.slice(1)
-                    ).join(' ');
-                };
-
-                return (
-                    <span className={`px-2 py-1 rounded-full text-sm ${statusColors[value as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'}`}>
-                        {t(formatStatus(value || 'Unknown'))}
-                    </span>
-                );
-            }
-        },
-        ...(auth.user?.permissions?.some((p: string) => ['view-attendances', 'edit-attendances', 'delete-attendances'].includes(p)) ? [{
-            key: 'actions',
-            header: t('Actions'),
-            render: (_: any, attendance: Attendance) => (
-                <div className="flex gap-1">
-                    <TooltipProvider>
-                        {auth.user?.permissions?.includes('view-attendances') && (
-                            <Tooltip delayDuration={0}>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" onClick={() => openModal('view', attendance)} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
-                                        <Eye className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{t('View')}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        )}
-                        {auth.user?.permissions?.includes('edit-attendances') && (
-                            <Tooltip delayDuration={0}>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" onClick={() => openModal('edit', attendance)} className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700">
-                                        <EditIcon className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{t('Edit')}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        )}
-                        {auth.user?.permissions?.includes('delete-attendances') && (
-                            <Tooltip delayDuration={0}>
-                                <TooltipTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => openDeleteDialog(attendance.id)}
-                                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{t('Delete')}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        )}
-                    </TooltipProvider>
-                </div>
-            )
-        }] : [])
-    ];
 
     return (
         <AuthenticatedLayout
             breadcrumbs={[
-                { label: t('Hrm'), url: route('hrm.index') },
-                { label: t('Attendance') },
+                { label: t('HRM'), url: route('hrm.index') },
                 { label: t('Attendances') }
             ]}
             pageTitle={t('Manage Attendances')}
@@ -252,274 +248,288 @@ export default function Index() {
 
             {/* Main Content Card */}
             <Card className="shadow-sm">
-                {/* Search & Controls Header */}
-                <CardContent className="p-6 border-b bg-gray-50/50">
-                    <div className="flex items-center justify-between gap-4">
-                        {auth.user?.permissions?.includes('manage-employees') && (
-                            <div className="flex-1 max-w-md">
-                                <SearchInput
-                                    value={filters.search}
-                                    onChange={(value) => setFilters({ ...filters, search: value })}
-                                    onSearch={handleFilter}
-                                    placeholder={t('Search by employee name')}
-                                />
+                {/* Calendar Content */}
+                <CardContent className="p-0">
+                    <div className="p-6">
+                            {/* Search, Month & Year Dropdowns */}
+                            <div className="flex items-center justify-between mb-4 gap-4">
+                                <div className="max-w-sm w-full">
+                                    <SearchInput
+                                        value={search}
+                                        onChange={(value) => setSearch(value)}
+                                        onSearch={handleSearch}
+                                        placeholder={t('Search employee...')}
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-44">
+                                        <Select
+                                            value={currentMonth.getMonth().toString()}
+                                            onValueChange={(value) => {
+                                                const monthIndex = parseInt(value);
+                                                const newMonth = new Date(currentMonth.getFullYear(), monthIndex);
+                                                setCurrentMonth(newMonth);
+                                                router.get(route('hrm.attendances.index'), {
+                                                    month: `${newMonth.getFullYear()}-${String(newMonth.getMonth() + 1).padStart(2, '0')}-01`
+                                                }, {
+                                                    preserveState: true,
+                                                    replace: true
+                                                });
+                                            }}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder={t('Select Month')} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {Array.from({ length: 12 }, (_, i) => (
+                                                    <SelectItem key={i} value={i.toString()}>
+                                                        {new Date(2024, i, 1).toLocaleString('default', { month: 'long' })}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="w-28">
+                                        <Select
+                                            value={currentMonth.getFullYear().toString()}
+                                            onValueChange={(value) => {
+                                                const year = parseInt(value);
+                                                const newMonth = new Date(year, currentMonth.getMonth());
+                                                setCurrentMonth(newMonth);
+                                                router.get(route('hrm.attendances.index'), {
+                                                    month: `${newMonth.getFullYear()}-${String(newMonth.getMonth() + 1).padStart(2, '0')}-01`
+                                                }, {
+                                                    preserveState: true,
+                                                    replace: true
+                                                });
+                                            }}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder={t('Select Year')} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {Array.from({ length: 11 }, (_, i) => {
+                                                    const year = 2017 + i;
+                                                    return (
+                                                        <SelectItem key={year} value={year.toString()}>
+                                                            {year}
+                                                        </SelectItem>
+                                                    );
+                                                })}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
                             </div>
-                        )}
-                        <div className="flex items-center gap-3">
-                            <ListGridToggle
-                                currentView={viewMode}
-                                routeName="hrm.attendances.index"
-                                filters={{ ...filters, per_page: perPage }}
-                            />
-                            <PerPageSelector
-                                routeName="hrm.attendances.index"
-                                filters={{ ...filters, view: viewMode }}
-                            />
-                            <div className="relative">
-                                <FilterButton
-                                    showFilters={showFilters}
-                                    onToggle={() => setShowFilters(!showFilters)}
-                                />
-                                {(() => {
-                                    const activeFilters = [filters.status, filters.employee_id, filters.date_from, filters.date_to].filter(f => f !== '' && f !== null && f !== undefined).length;
-                                    return activeFilters > 0 && (
-                                        <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                                            {activeFilters}
-                                        </span>
-                                    );
-                                })()}
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
 
-                {/* Advanced Filters */}
-                {showFilters && (
-                    <CardContent className="p-6 bg-blue-50/30 border-b">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">{t('Employee')}</label>
-                                <Select value={filters.employee_id} onValueChange={(value) => setFilters({ ...filters, employee_id: value })}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder={t('Filter by Employee')} />
-                                    </SelectTrigger>
-                                    <SelectContent searchable={true}>
-                                        {employees?.map((employee: any) => (
-                                            <SelectItem key={employee.id} value={employee.id.toString()}>
-                                                {employee.user?.name || employee.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                            {/* Calendar Header */}
+                            <div className="flex items-center justify-between mb-6 gap-4">
+                                <h2 className="text-lg font-semibold text-green-600 whitespace-nowrap">
+                                    ATTENDANCE REPORT: {getMonthName(currentMonth)}
+                                </h2>
+                                <div className="flex items-center gap-2">
+                                    <Button variant="outline" size="sm" onClick={previousMonth}>
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="outline" size="sm" onClick={nextMonth}>
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">{t('Status')}</label>
-                                <Select value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder={t('Filter by Status')} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="present">{t('Present')}</SelectItem>
-                                        <SelectItem value="half day">{t('Half Day')}</SelectItem>
-                                        <SelectItem value="absent">{t('Absent')}</SelectItem>
-                                    </SelectContent>
-                                </Select>
+
+                            {/* Legend */}
+                            <div className="flex flex-wrap items-center gap-4 mb-6 text-xs">
+                                <div className="flex items-center gap-1">
+                                    <Check className="h-3 w-3 text-green-600" />
+                                    <span className="text-gray-600">PRESENT</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <X className="h-3 w-3 text-red-600" />
+                                    <span className="text-gray-600">ABSENT</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <span className="text-yellow-600 font-bold">½</span>
+                                    <span className="text-gray-600">HALF DAY</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Flag className="h-3 w-3 text-red-600" />
+                                    <span className="text-gray-600">ON LEAVE</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Umbrella className="h-3 w-3 text-yellow-600" />
+                                    <span className="text-gray-600">HOLIDAY</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Coffee className="h-3 w-3 text-gray-600" />
+                                    <span className="text-gray-600">DAY OFF</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <span className="text-gray-400">○</span>
+                                    <span className="text-gray-600">FUTURE</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <AlertCircle className="h-3 w-3 text-gray-400" />
+                                    <span className="text-gray-600">PENDING</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Timer className="h-3 w-3 text-red-600" />
+                                    <span className="text-gray-600">LATE</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Timer className="h-3 w-3 text-green-600" />
+                                    <span className="text-gray-600">EARLY</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Timer className="h-3 w-3 text-blue-600" />
+                                    <span className="text-gray-600">OVERTIME</span>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">{t('Date From')}</label>
-                                <DatePicker
-                                    value={filters.date_from}
-                                    onChange={(value) => setFilters({ ...filters, date_from: value })}
-                                    placeholder={t('Start Date')}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">{t('Date To')}</label>
-                                <DatePicker
-                                    value={filters.date_to}
-                                    onChange={(value) => setFilters({ ...filters, date_to: value })}
-                                    placeholder={t('End Date')}
-                                />
-                            </div>
-                            <div className="flex items-end gap-2">
-                                <Button onClick={handleFilter} size="sm">{t('Apply')}</Button>
-                                <Button variant="outline" onClick={clearFilters} size="sm">{t('Clear')}</Button>
+
+                            {/* Calendar Grid - Fixed width with horizontal scroll */}
+                            <div className="w-full overflow-auto border rounded-lg max-h-[600px]">
+                                <table className="border-collapse text-xs" style={{ minWidth: '100%' }}>
+                                    <thead>
+                                        <tr className="bg-gray-50">
+                                            <th className="border p-2 text-left font-semibold text-gray-700 sticky top-0 left-0 bg-gray-50 z-30 w-48">
+                                                EMPLOYEE
+                                            </th>
+                                            {getDaysInMonth(currentMonth).map(day => (
+                                                <th key={day} className="border p-2 text-center w-12 sticky top-0 bg-gray-50 z-20">
+                                                    <div className="font-semibold text-gray-900">{day}</div>
+                                                    <div className="text-[10px] text-gray-500 font-normal">{getDayName(day)}</div>
+                                                </th>
+                                            ))}
+                                            <th className="border p-2 text-center font-semibold text-gray-700 sticky top-0 right-0 bg-gray-50 z-20 w-16">
+                                                TOTAL
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {getFilteredEmployees()?.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={getDaysInMonth(currentMonth).length + 2} className="border p-8 text-center">
+                                                    <div className="flex flex-col items-center gap-2 text-gray-500">
+                                                        <AlertCircle className="h-12 w-12 text-gray-400" />
+                                                        <p className="text-lg font-medium">{t('No employees found')}</p>
+                                                        {(search || appliedSearch) && (
+                                                            <Button variant="outline" size="sm" onClick={handleClearSearch} className="mt-2">
+                                                                {t('Clear Search')}
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            getFilteredEmployees()?.map((employee: any) => (
+                                            <tr key={employee.id} className="hover:bg-gray-50">
+                                                <td className="border p-3 sticky left-0 bg-white z-10 w-48">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="h-8 w-8 rounded-lg overflow-hidden bg-gray-100 border flex items-center justify-center flex-shrink-0">
+                                                            {employee.avatar || employee.user?.avatar ? (
+                                                                <img
+                                                                    src={getImagePath(employee.avatar || employee.user?.avatar)}
+                                                                    alt="Avatar"
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <UserIcon className="w-4 h-4 text-gray-400" />
+                                                            )}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <div className="font-semibold text-gray-900 truncate">{employee.name || employee.user?.name}</div>
+                                                            <div className="text-[10px] text-gray-500 truncate">{employee.designation?.designation_name || 'N/A'}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                {getDaysInMonth(currentMonth).map(day => {
+                                                    const attendance = getAttendanceForDay(employee.id, day);
+                                                    const leave = getLeaveForDay(employee.id, day);
+                                                    const holiday = getHolidayForDay(day);
+                                                    const dayOff = isDayOff(day);
+                                                    
+                                                    return (
+                                                        <td key={day} className="border p-2 text-center w-12">
+                                                            <TooltipProvider>
+                                                                <Tooltip delayDuration={0}>
+                                                                    <TooltipTrigger asChild>
+                                                                        <div 
+                                                                            className="cursor-pointer flex justify-center items-center h-6 hover:bg-gray-100 rounded"
+                                                                            onClick={() => {
+                                                                                if (attendance && auth.user?.permissions?.includes('edit-attendances')) {
+                                                                                    openModal('edit', attendance);
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            {getAttendanceIcon(attendance, leave, holiday, dayOff)}
+                                                                        </div>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>
+                                                                        <div className="text-xs">
+                                                                            {holiday && (
+                                                                                <>
+                                                                                    <p><strong>Holiday:</strong> {holiday.name}</p>
+                                                                                    <p><strong>Date:</strong> {formatDate(holiday.start_date)} - {formatDate(holiday.end_date)}</p>
+                                                                                </>
+                                                                            )}
+                                                                            {leave && !holiday && (
+                                                                                <>
+                                                                                    <p><strong>On Leave</strong></p>
+                                                                                    <p><strong>Type:</strong> {leave.leave_type?.name || 'Leave'}</p>
+                                                                                    <p><strong>Date:</strong> {formatDate(leave.start_date)} - {formatDate(leave.end_date)}</p>
+                                                                                </>
+                                                                            )}
+                                                                            {dayOff && !leave && !holiday && (
+                                                                                <p><strong>Day Off</strong> (Non-working day)</p>
+                                                                            )}
+                                                                            {attendance && !leave && !holiday && !dayOff && (
+                                                                                <>
+                                                                                    <p><strong>Date:</strong> {formatDate(attendance.date)}</p>
+                                                                                    <p><strong>Status:</strong> {attendance.status}</p>
+                                                                                    {attendance.is_pending && (
+                                                                                        <p className="text-orange-500"><strong>Status:</strong> Pending (No Clock Out)</p>
+                                                                                    )}
+                                                                                    {attendance.is_late && (
+                                                                                        <p className="text-red-500"><strong>Late Entry</strong></p>
+                                                                                    )}
+                                                                                    {attendance.is_early && (
+                                                                                        <p className="text-green-500"><strong>Early Exit</strong></p>
+                                                                                    )}
+                                                                                    <p><strong>Clock In:</strong> {attendance.clock_in ? formatTime(attendance.clock_in) : '-'}</p>
+                                                                                    <p><strong>Clock Out:</strong> {attendance.clock_out ? formatTime(attendance.clock_out) : '-'}</p>
+                                                                                    <p><strong>Total Hours:</strong> {attendance.total_hour || 0}h</p>
+                                                                                    {attendance.overtime_hours > 0 && (
+                                                                                        <p><strong>Overtime:</strong> {attendance.overtime_hours}h</p>
+                                                                                    )}
+                                                                                    {auth.user?.permissions?.includes('edit-attendances') && (
+                                                                                        <p className="mt-2 text-blue-500">Click to edit</p>
+                                                                                    )}
+                                                                                </>
+                                                                            )}
+                                                                            {!attendance && !leave && !holiday && !dayOff && (
+                                                                                <p>No record</p>
+                                                                            )}
+                                                                        </div>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        </td>
+                                                    );
+                                                })}
+                                                <td className="border p-2 text-center sticky right-0 bg-white z-10 w-16">
+                                                    <div className="font-semibold text-green-600">{calculateMonthlyTotal(employee.id)}</div>
+                                                    <div className="text-[10px] text-gray-500">
+                                                        /{getDaysInMonth(currentMonth).length}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )))
+                                        }
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </CardContent>
-                )}
-
-                {/* Table Content */}
-                <CardContent className="p-0">
-                    {viewMode === 'list' ? (
-                        <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 max-h-[70vh] rounded-none w-full">
-                            <div className="min-w-[800px]">
-                                <DataTable
-                                    data={attendances?.data || []}
-                                    columns={tableColumns}
-                                    onSort={handleSort}
-                                    sortKey={sortField}
-                                    sortDirection={sortDirection as 'asc' | 'desc'}
-                                    className="rounded-none"
-                                    emptyState={
-                                        <NoRecordsFound
-                                            icon={ClockIcon}
-                                            title={t('No Attendances found')}
-                                            description={t('Get started by creating your first Attendance.')}
-                                            hasFilters={!!(filters.search || filters.status || filters.employee_id || filters.date_from || filters.date_to)}
-                                            onClearFilters={clearFilters}
-                                            createPermission="create-attendances"
-                                            onCreateClick={() => openModal('add')}
-                                            createButtonText={t('Create Attendance')}
-                                            className="h-auto"
-                                        />
-                                    }
-                                />
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="overflow-auto max-h-[70vh] p-6">
-                            {attendances?.data?.length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                                    {attendances?.data?.map((attendance) => (
-                                        <Card key={attendance.id} className="p-0 hover:shadow-lg transition-all duration-200 relative overflow-hidden flex flex-col h-full min-w-0">
-                                            <div className="p-4 bg-gradient-to-r from-primary/5 to-transparent border-b flex-shrink-0">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-primary/10 rounded-lg">
-                                                        <ClockIcon className="h-5 w-5 text-primary" />
-                                                    </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <h3 className="font-semibold text-sm text-gray-900 line-clamp-2">{attendance.user?.name || '-'}</h3>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="p-4 flex-1 min-h-0">
-                                                <div className="grid grid-cols-1 gap-4">
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div className="text-xs min-w-0">
-                                                            <p className="text-muted-foreground mb-1 text-xs uppercase tracking-wide">{t('Date')}</p>
-                                                            <p className="font-medium text-xs">{attendance.date ? formatDate(attendance.date) : '-'}</p>
-                                                        </div>
-                                                        <div className="text-xs min-w-0">
-                                                            <p className="text-muted-foreground mb-1 text-xs uppercase tracking-wide">{t('Shift')}</p>
-                                                            <p className="font-medium text-xs">{attendance.shift?.shift_name || '-'}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div className="text-xs min-w-0">
-                                                            <p className="text-muted-foreground mb-1 text-xs uppercase tracking-wide">{t('Clock In')}</p>
-                                                            <p className="font-medium text-xs">{attendance.clock_in ? formatDateTime(attendance.clock_in) : '-'}</p>
-                                                        </div>
-                                                        <div className="text-xs min-w-0">
-                                                            <p className="text-muted-foreground mb-1 text-xs uppercase tracking-wide">{t('Clock Out')}</p>
-                                                            <p className="font-medium text-xs">{attendance.clock_out ? formatDateTime(attendance.clock_out) : '-'}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div className="text-xs min-w-0">
-                                                            <p className="text-muted-foreground mb-1 text-xs uppercase tracking-wide">{t('Total Hours')}</p>
-                                                            <p className="font-medium text-xs">{attendance.total_hour ? `${attendance.total_hour}h` : '-'}</p>
-                                                        </div>
-                                                        <div className="text-xs min-w-0">
-                                                            <p className="text-muted-foreground mb-1 text-xs uppercase tracking-wide">{t('Break Hours')}</p>
-                                                            <p className="font-medium text-xs">{attendance.break_hour ? `${attendance.break_hour}h` : '-'}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div className="text-xs min-w-0">
-                                                            <p className="text-muted-foreground mb-1 text-xs uppercase tracking-wide">{t('Overtime')}</p>
-                                                            <p className="font-medium text-xs">{attendance.overtime_hours ? `${attendance.overtime_hours}h` : '-'}</p>
-                                                        </div>
-                                                        <div className="text-xs min-w-0">
-                                                            <p className="text-muted-foreground mb-1 text-xs uppercase tracking-wide">{t('Overtime Amount')}</p>
-                                                            <p className="font-medium text-xs">{attendance.overtime_amount ? `${attendance.overtime_amount}` : '-'}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="flex justify-between items-center gap-2 p-3 border-t bg-gray-50/50 flex-shrink-0 mt-auto">
-                                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                                    attendance.status === 'present' ? 'bg-green-100 text-green-800' :
-                                                    attendance.status === 'half day' ? 'bg-yellow-100 text-yellow-800' :
-                                                    attendance.status === 'absent' ? 'bg-red-100 text-red-800' :
-                                                    'bg-gray-100 text-gray-800'
-                                                }`}>
-                                                    {t(attendance.status?.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') || 'Unknown')}
-                                                </span>
-                                                <div className="flex gap-1">
-                                                    <TooltipProvider>
-                                                        {auth.user?.permissions?.includes('view-attendances') && (
-                                                            <Tooltip delayDuration={300}>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button variant="ghost" size="sm" onClick={() => openModal('view', attendance)} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
-                                                                        <Eye className="h-4 w-4" />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>
-                                                                    <p>{t('View')}</p>
-                                                                </TooltipContent>
-                                                            </Tooltip>
-                                                        )}
-                                                        {auth.user?.permissions?.includes('edit-attendances') && (
-                                                            <Tooltip delayDuration={300}>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button variant="ghost" size="sm" onClick={() => openModal('edit', attendance)} className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700">
-                                                                        <EditIcon className="h-4 w-4" />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>
-                                                                    <p>{t('Edit')}</p>
-                                                                </TooltipContent>
-                                                            </Tooltip>
-                                                        )}
-                                                        {auth.user?.permissions?.includes('delete-attendances') && (
-                                                            <Tooltip delayDuration={300}>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="sm"
-                                                                        onClick={() => openDeleteDialog(attendance.id)}
-                                                                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                                                    >
-                                                                        <Trash2 className="h-4 w-4" />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>
-                                                                    <p>{t('Delete')}</p>
-                                                                </TooltipContent>
-                                                            </Tooltip>
-                                                        )}
-                                                    </TooltipProvider>
-                                                </div>
-                                            </div>
-                                        </Card>
-                                    ))}
-                                </div>
-                            ) : (
-                                <NoRecordsFound
-                                    icon={ClockIcon}
-                                    title={t('No Attendances found')}
-                                    description={t('Get started by creating your first Attendance.')}
-                                    hasFilters={!!(filters.search || filters.status || filters.employee_id || filters.date_from || filters.date_to)}
-                                    onClearFilters={clearFilters}
-                                    createPermission="create-attendances"
-                                    onCreateClick={() => openModal('add')}
-                                    createButtonText={t('Create Attendance')}
-                                />
-                            )}
-                        </div>
-                    )}
-                </CardContent>
-
-                {/* Pagination Footer */}
-                <CardContent className="px-4 py-2 border-t bg-gray-50/30">
-                    <Pagination
-                        data={attendances || { data: [], links: [], meta: {} }}
-                        routeName="hrm.attendances.index"
-                        filters={{ ...filters, per_page: perPage, view: viewMode }}
-                    />
-                </CardContent>
-            </Card>
+                </Card>
 
             <Dialog open={modalState.isOpen} onOpenChange={closeModal}>
                 {modalState.mode === 'add' && (

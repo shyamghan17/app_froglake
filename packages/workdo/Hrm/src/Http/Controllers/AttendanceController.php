@@ -23,6 +23,147 @@ class AttendanceController extends Controller
     public function index()
     {
         if (Auth::user()->can('manage-attendances')) {
+            // Default to calendar view if not specified
+            $view = request('view', 'calendar');
+            
+            // For calendar view, get all attendances of current month
+            if ($view === 'calendar') {
+                $currentMonth = request('month') ? \Carbon\Carbon::parse(request('month')) : now();
+                $startOfMonth = $currentMonth->copy()->startOfMonth()->toDateString();
+                $endOfMonth = $currentMonth->copy()->endOfMonth()->toDateString();
+
+                $attendances = Attendance::query()
+                    ->with(['user', 'shift'])
+                    ->where(function ($q) {
+                        if (Auth::user()->can('manage-any-attendances')) {
+                            $q->where('created_by', creatorId());
+                        } elseif (Auth::user()->can('manage-own-attendances')) {
+                            $q->where('creator_id', Auth::id())->orWhere('employee_id', Auth::id());
+                        } else {
+                            $q->whereRaw('1 = 0');
+                        }
+                    })
+                    ->whereRaw('DATE(date) BETWEEN ? AND ?', [$startOfMonth, $endOfMonth])
+                    ->orderBy('date', 'asc')
+                    ->get()
+                    ->map(function($attendance) {
+                        $isLate = false;
+                        $isEarly = false;
+                        $isPending = false;
+                        
+                        if ($attendance->shift_id) {
+                            $shift = Shift::find($attendance->shift_id);
+                            if ($shift && $attendance->clock_in) {
+                                $clockInTime = \Carbon\Carbon::parse($attendance->clock_in);
+                                $attendanceDate = \Carbon\Carbon::parse($attendance->date)->format('Y-m-d');
+                                $shiftStartTime = \Carbon\Carbon::parse($attendanceDate . ' ' . $shift->start_time);
+                                
+                                // Check if late (more than 15 minutes after shift start)
+                                if ($clockInTime->diffInMinutes($shiftStartTime, false) > 15) {
+                                    $isLate = true;
+                                }
+                            }
+                            
+                            if ($shift && $attendance->clock_out) {
+                                $clockOutTime = \Carbon\Carbon::parse($attendance->clock_out);
+                                $attendanceDate = \Carbon\Carbon::parse($attendance->date)->format('Y-m-d');
+                                $shiftEndTime = \Carbon\Carbon::parse($attendanceDate . ' ' . $shift->end_time);
+                                
+                                // Handle night shifts
+                                if ($shift->is_night_shift && $shift->end_time < $shift->start_time) {
+                                    $shiftEndTime->addDay();
+                                }
+                                
+                                // Check if early (more than 15 minutes before shift end)
+                                if ($shiftEndTime->diffInMinutes($clockOutTime, false) > 15) {
+                                    $isEarly = true;
+                                }
+                            }
+                        }
+                        
+                        // Check if pending (clock in but no clock out)
+                        if ($attendance->clock_in && !$attendance->clock_out) {
+                            $isPending = true;
+                        }
+                        
+                        return [
+                            'id' => $attendance->id,
+                            'employee_id' => $attendance->employee_id,
+                            'shift_id' => $attendance->shift_id,
+                            'date' => $attendance->date ? $attendance->date->format('Y-m-d') : null,
+                            'clock_in' => $attendance->clock_in,
+                            'clock_out' => $attendance->clock_out,
+                            'total_hour' => $attendance->total_hour,
+                            'break_hour' => $attendance->break_hour,
+                            'overtime_hours' => $attendance->overtime_hours,
+                            'overtime_amount' => $attendance->overtime_amount,
+                            'status' => $attendance->status,
+                            'notes' => $attendance->notes,
+                            'is_late' => $isLate,
+                            'is_early' => $isEarly,
+                            'is_pending' => $isPending,
+                            'user' => $attendance->user,
+                            'shift' => $attendance->shift,
+                        ];
+                    });
+
+                // Fetch leaves and holidays for the month
+                $leaves = LeaveApplication::where('created_by', creatorId())
+                    ->where('status', 'approved')
+                    ->where(function($q) use ($startOfMonth, $endOfMonth) {
+                        $q->whereBetween('start_date', [$startOfMonth, $endOfMonth])
+                          ->orWhereBetween('end_date', [$startOfMonth, $endOfMonth])
+                          ->orWhere(function($q2) use ($startOfMonth, $endOfMonth) {
+                              $q2->where('start_date', '<=', $startOfMonth)
+                                 ->where('end_date', '>=', $endOfMonth);
+                          });
+                    })
+                    ->with(['employee', 'leave_type'])
+                    ->get()
+                    ->map(function($leave) {
+                        return [
+                            'id' => $leave->id,
+                            'employee_id' => $leave->employee_id,
+                            'start_date' => $leave->start_date->format('Y-m-d'),
+                            'end_date' => $leave->end_date->format('Y-m-d'),
+                            'total_days' => $leave->total_days,
+                            'reason' => $leave->reason,
+                            'status' => $leave->status,
+                            'leave_type' => $leave->leave_type,
+                        ];
+                    });
+
+                $holidays = Holiday::where('created_by', creatorId())
+                    ->where(function($q) use ($startOfMonth, $endOfMonth) {
+                        $q->whereBetween('start_date', [$startOfMonth, $endOfMonth])
+                          ->orWhereBetween('end_date', [$startOfMonth, $endOfMonth])
+                          ->orWhere(function($q2) use ($startOfMonth, $endOfMonth) {
+                              $q2->where('start_date', '<=', $startOfMonth)
+                                 ->where('end_date', '>=', $endOfMonth);
+                          });
+                    })
+                    ->get()
+                    ->map(function($holiday) {
+                        return [
+                            'id' => $holiday->id,
+                            'name' => $holiday->name,
+                            'start_date' => $holiday->start_date->format('Y-m-d'),
+                            'end_date' => $holiday->end_date->format('Y-m-d'),
+                            'description' => $holiday->description,
+                            'is_paid' => $holiday->is_paid,
+                        ];
+                    });
+
+                return Inertia::render('Hrm/Attendances/Index', [
+                    'attendances' => ['data' => $attendances],
+                    'leaves' => $leaves,
+                    'holidays' => $holidays,
+                    'employees' => $this->getFilteredEmployees(),
+                    'workingDays' => json_decode(getCompanyAllSetting(creatorId())['working_days'] ?? '[]', true),
+                ]);
+            }
+
+            // For list view, use pagination
             $attendances = Attendance::query()
                 ->with(['user', 'shift'])
                 ->where(function ($q) {
@@ -34,16 +175,7 @@ class AttendanceController extends Controller
                         $q->whereRaw('1 = 0');
                     }
                 })
-                ->when(request('search'), function ($q) {
-                    $q->whereHas('user', function ($query) {
-                        $query->where('name', 'like', '%' . request('search') . '%');
-                    })->orWhere('date', 'like', '%' . request('search') . '%');
-                })
-                ->when(request('status') !== null && request('status') !== '', fn($q) => $q->where('status', request('status')))
-                ->when(request('employee_id'), fn($q) => $q->where('employee_id', request('employee_id')))
-                ->when(request('date_from'), fn($q) => $q->where('date', '>=', request('date_from')))
-                ->when(request('date_to'), fn($q) => $q->where('date', '<=', request('date_to')))
-                ->when(request('sort'), fn($q) => $q->orderBy(request('sort'), request('direction', 'asc')), fn($q) => $q->latest())
+                ->latest()
                 ->paginate(request('per_page', 10))
                 ->withQueryString();
 
@@ -562,8 +694,31 @@ class AttendanceController extends Controller
             });
         }
 
-        return User::emp()->where('created_by', creatorId())
-            ->whereIn('id', $employeeQuery->pluck('user_id'))
-            ->select('id', 'name')->get();
+        $userIds = $employeeQuery->pluck('user_id');
+
+        $users = User::emp()->where('created_by', creatorId())
+            ->whereIn('id', $userIds)
+            ->select('id', 'name', 'avatar')
+            ->get()
+            ->keyBy('id');
+
+        $employees = Employee::where('created_by', creatorId())
+            ->whereIn('user_id', $userIds)
+            ->with('designation')
+            ->get()
+            ->keyBy('user_id');
+
+        return $users->map(function ($user) use ($employees) {
+            $employee = $employees->get($user->id);
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'avatar' => $user->avatar,
+                'designation' => $employee?->designation ? [
+                    'id' => $employee->designation->id,
+                    'designation_name' => $employee->designation->designation_name,
+                ] : null,
+            ];
+        })->values();
     }
 }

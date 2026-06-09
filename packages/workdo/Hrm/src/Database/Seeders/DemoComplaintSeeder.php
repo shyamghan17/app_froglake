@@ -25,7 +25,7 @@ class DemoComplaintSeeder extends Seeder
             $complaintTypes = ComplaintType::where('created_by', $userId)->pluck('id')->toArray();
             $resolvers = User::where('created_by', $userId)->pluck('id')->toArray();
 
-            if (empty($employees) || empty($complaintTypes)) {
+            if (empty($employees) || empty($complaintTypes) || count($employees) < 2) {
                 return;
             }
 
@@ -127,7 +127,14 @@ class DemoComplaintSeeder extends Seeder
                 $availableAgainstEmployees = array_filter($employees, function($id) use ($employeeId) {
                     return $id !== $employeeId;
                 });
-                $againstEmployee = $availableAgainstEmployees[array_rand($availableAgainstEmployees)];
+                
+                // Re-index array and handle edge case
+                if (empty($availableAgainstEmployees)) {
+                    $againstEmployee = $employees[($i + 1) % count($employees)];
+                } else {
+                    $availableAgainstEmployees = array_values($availableAgainstEmployees);
+                    $againstEmployee = $availableAgainstEmployees[array_rand($availableAgainstEmployees)];
+                }
 
                 $complaints[] = [
                     'employee_id' => $employeeId,

@@ -57,6 +57,9 @@ export default function Create({ categories, bankAccounts, chartOfAccounts, onSu
         reference_number: '',
     });
 
+    // Calendar sync fields
+    const calendarFields = useFormFields('getCalendarSyncFields', data, setData, errors, 'create', t, 'Revenue');
+
     // AI hooks for description field
     const descriptionAI = useFormFields('aiField', data, setData, errors, 'create', 'description', 'Description', 'account', 'revenue');
 
@@ -183,6 +186,13 @@ export default function Create({ categories, bankAccounts, chartOfAccounts, onSu
                             />
                             <InputError message={errors.description} />
                         </div>
+
+                        {/* Calendar Sync Fields */}
+                        {calendarFields.map((field) => (
+                            <div key={field.id}>
+                                {field.component}
+                            </div>
+                        ))}
 
                 <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={onSuccess}>

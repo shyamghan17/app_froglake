@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Workdo\ProductService\Models\ProductServiceItem;
+use App\Models\EmailTemplate;
 
 class SalesProposalController extends Controller
 {
@@ -141,7 +142,6 @@ class SalesProposalController extends Controller
             $proposal->save();
 
             $this->createProposalItems($proposal->id, $request->items);
-
             try {
                 CreateSalesProposal::dispatch($request, $proposal);
             } catch (\Throwable $th) {
@@ -436,6 +436,21 @@ class SalesProposalController extends Controller
             }
 
             SentSalesProposal::dispatch($salesProposal);
+             
+            if(company_setting('Proposal Sent') == 'on') {
+                $emailData = [
+                    'proposal_number' => $salesProposal->proposal_number ?? null,
+                    'sales_customer_name' => $salesProposal->customer->name ?? null,
+                    'total_amount' => $salesProposal->total_amount ?? null,
+                    'discount_amount' => $salesProposal->discount_amount ?? null,
+                ];
+                $message = EmailTemplate::sendEmailTemplate('Proposal Sent', [$salesProposal->customer->email], $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('Proposal sent successfully.'))
+                        ->with('error', $message['error']);
+                }
+            }
 
             $salesProposal->update(['status' => 'sent']);
 
@@ -453,6 +468,24 @@ class SalesProposalController extends Controller
                 return back()->with('error', __('Only sent proposals can be accepted.'));
             }
             AcceptSalesProposal::dispatch($salesProposal);
+                
+            if(company_setting('Proposal Approved') == 'on') {
+
+                $companyEmail = company_setting('company_email', $salesProposal->created_by) ?: $proposalCreator?->email;
+                $emailData = [
+                    'proposal_number' => $salesProposal->proposal_number ?? null,
+                    'sales_customer_name' => $salesProposal->customer->name ?? null,
+                    'total_amount' => $salesProposal->total_amount ?? null,
+                    'discount_amount' => $salesProposal->discount_amount ?? null,
+                    'status' => 'Accepted',
+                ];
+                $message = EmailTemplate::sendEmailTemplate('Proposal Approved', [$companyEmail], $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('Proposal accepted successfully.'))
+                        ->with('error', $message['error']);
+                }
+            }
 
             $salesProposal->update(['status' => 'accepted']);
 
@@ -471,6 +504,25 @@ class SalesProposalController extends Controller
             }
 
             RejectSalesProposal::dispatch($salesProposal);
+           
+            if(company_setting('Proposal Approved') == 'on') {
+
+                $companyEmail = company_setting('company_email', $salesProposal->created_by) ?: $proposalCreator?->email;
+               
+                $emailData = [
+                    'proposal_number' => $salesProposal->proposal_number ?? null,
+                    'sales_customer_name' => $salesProposal->customer->name ?? null,
+                    'total_amount' => $salesProposal->total_amount ?? null,
+                    'discount_amount' => $salesProposal->discount_amount ?? null,
+                    'status' => 'Rejected',
+                ];
+                $message = EmailTemplate::sendEmailTemplate('Proposal Approved', [$companyEmail], $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('Proposal rejected successfully.'))
+                        ->with('error', $message['error']);
+                }
+            }
 
             $salesProposal->update(['status' => 'rejected']);
 

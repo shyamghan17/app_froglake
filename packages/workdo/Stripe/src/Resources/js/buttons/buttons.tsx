@@ -116,7 +116,7 @@ export const lmsPayment = (data?: any) => {
                     <Label htmlFor="stripe-lms" className="cursor-pointer flex items-center space-x-3 flex-1">
                         <img src={getPackageFavicon('Stripe')} alt="Stripe" className="h-8 w-8" />
                         <div>
-                            <div className="font-medium text-gray-900">{t('Credit/Debit Card')}</div>
+                            <div className="font-medium text-gray-900">{t('Stripe')}</div>
                             <div className="text-sm text-gray-500">{t('Pay securely with Stripe')}</div>
                         </div>
                     </Label>
@@ -241,7 +241,7 @@ export const holidayzPayment = (data?: any) => {
                 <div className="flex items-center space-x-3">
                     <img src={getPackageFavicon('Stripe')} alt="Stripe" className="h-8 w-8" />
                     <div>
-                        <div className="font-medium text-gray-900">{t('Credit/Debit Card')}</div>
+                        <div className="font-medium text-gray-900">{t('Stripe')}</div>
                         <div className="text-sm text-gray-500">{t('Pay securely with Stripe')}</div>
                     </div>
                 </div>
@@ -267,7 +267,7 @@ export const facilitiesPayment = (data?: any) => {
                     <Label htmlFor="stripe-facilities" className="cursor-pointer flex items-center space-x-3 flex-1">
                         <img src={getPackageFavicon('Stripe')} alt="Stripe" className="h-8 w-8" />
                         <div>
-                            <div className="font-medium text-gray-900">{t('Credit/Debit Card')}</div>
+                            <div className="font-medium text-gray-900">{t('Stripe')}</div>
                             <div className="text-sm text-gray-500">{t('Pay securely with Stripe')}</div>
                         </div>
                     </Label>
@@ -379,7 +379,7 @@ export const coworkingSpacePayment = (data?: any) => {
                     <Label htmlFor="stripe-coworking" className="cursor-pointer flex items-center space-x-3 flex-1">
                         <img src={getPackageFavicon('Stripe')} alt="Stripe" className="h-8 w-8" />
                         <div>
-                            <div className="font-medium text-white-900">{t('Credit/Debit Card')}</div>
+                            <div className="font-medium text-white-900">{t('Stripe')}</div>
                             <div className="text-sm text-gray-500">{t('Pay securely with Stripe')}</div>
                         </div>
                     </Label>
@@ -666,7 +666,7 @@ export const yogaClassesPayment = (data?: any) => {
                 <div className="flex items-center space-x-3 flex-1">
                     <img src={getPackageFavicon('Stripe')} alt="Stripe" className="h-8 w-8" />
                     <div>
-                        <div className="font-medium text-gray-900">{t('Credit/Debit Card')}</div>
+                        <div className="font-medium text-gray-900">{t('Stripe')}</div>
                         <div className="text-sm text-gray-500">{t('Pay securely with Stripe')}</div>
                     </div>
                 </div>
@@ -676,4 +676,178 @@ export const yogaClassesPayment = (data?: any) => {
     else {
         return [];
     }
+};
+
+export const hairCareStudioPayment = (data?: any) => {
+    const { t } = useTranslation();
+    const { userSlug } = usePage().props as any;
+
+    const stripeEnabled = getCompanySetting('stripe_enabled');
+    if (stripeEnabled === 'on') {
+        return [{
+            id: 'stripe-hair-care-studio-payment',
+            dataUrl: route('hair-care-studio.payment.stripe.store', { userSlug: userSlug }),
+            component: (
+                <Label htmlFor="stripe-hair-care-studio-payment"
+                    className="block border border-gray-200 rounded-lg p-4 hover:border-[#C58154] cursor-pointer transition-all duration-200">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full overflow-hidden bg-white border">
+                                <img src={getPackageFavicon('Stripe')} alt="Stripe Logo" className="object-contain w-full h-full" />
+                            </div>
+                            <div>
+                                <h5 className="text-base font-medium text-gray-800">{t('Stripe')}</h5>
+                            </div>
+                        </div>
+                        <RadioGroupItem value="stripe" id="stripe-hair-care-studio-payment" />
+                    </div>
+                </Label>
+            )
+        }];
+    }
+    return [];
+};
+
+export const petCarePayment = (data?: any) => {
+    const { t } = useTranslation();
+    const { userSlug } = usePage().props as any;
+
+    const stripeEnabled = getCompanySetting('stripe_enabled');
+    if (stripeEnabled === 'on') {
+        return [{
+            id: 'stripe-pet-care-payment',
+            dataUrl: route('pet-care.payment.stripe.store', { userSlug: userSlug }),
+            onFormSubmit: data?.onFormSubmit,
+            component: (
+                <Label htmlFor="stripe-pet-care-payment"
+                    className="block border border-gray-200 rounded-lg p-4 hover:border-[#df9896] cursor-pointer transition-all duration-200">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full overflow-hidden bg-white border">
+                                <img src={getPackageFavicon('Stripe')} alt="Stripe Logo" className="object-contain w-full h-full" />
+                            </div>
+                            <div>
+                                <h5 className="text-base font-medium text-gray-800">{t('Stripe')}</h5>
+                            </div>
+                        </div>
+                        <RadioGroupItem value="stripe" id="stripe-pet-care-payment" />
+                    </div>
+                </Label>
+            )
+        }];
+    }
+    return [];
+};
+
+export const boutiqueStudioPayment = (data?: any) => {
+    const { t } = useTranslation();
+    const { userSlug } = usePage().props as any;
+
+    const stripeEnabled = getCompanySetting('stripe_enabled');
+    if (stripeEnabled === 'on') {
+        return [{
+            id: 'stripe-boutique-studio-payment',
+            dataUrl: route('boutique-studio.payment.stripe.store', { userSlug: userSlug }),
+            component: (
+                <Label htmlFor="stripe-boutique-studio-payment"
+                    className="block border border-gray-200 rounded-lg p-4 hover:border-[var(--primary-color)] cursor-pointer transition-all duration-200">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full overflow-hidden bg-white border">
+                                <img src={getPackageFavicon('Stripe')} alt="Stripe Logo" className="object-contain w-full h-full" />
+                            </div>
+                            <div>
+                                <h5 className="text-base font-medium text-gray-800">{t('Stripe')}</h5>
+                            </div>
+                        </div>
+                        <RadioGroupItem value="stripe" id="stripe-boutique-studio-payment" />
+                    </div>
+                </Label>
+            )
+        }];
+    }
+    return [];
+};
+
+
+export const investmentSystemPayment = (data?: any) => {
+
+    const { t } = useTranslation();
+    const { auth, userSlug } = usePage().props as any;
+
+    const stripeEnabled = getCompanySetting('stripe_enabled');
+    if (stripeEnabled === 'on') {
+        return [{
+            id: 'stripe-investment-system-payment',
+            dataUrl: route('investment-system.payment.stripe.store', { userSlug: userSlug }),
+            onFormSubmit: data?.onFormSubmit,
+            component: (
+                <Label htmlFor="stripe-investment-payment"
+                    className="block border border-gray-200 rounded-lg p-4 hover:border-blue-500 cursor-pointer transition-all duration-200">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full overflow-hidden bg-white border">
+                                <img src={getPackageFavicon('Stripe')} alt="Stripe Logo" className="object-contain w-full h-full" />
+                            </div>
+                            <div>
+                                <h5 className="text-base font-medium">{t('Stripe')}</h5>
+                            </div>
+                        </div>
+                        <RadioGroupItem value="stripe" id="stripe-investment-payment" className="border-white text-white hover:text-blue-500" />
+
+                    </div>
+                </Label>
+            )
+        }];
+    }
+    else {
+        return [];
+    }
+};
+
+export const jewelleryPayment = (data?: any) => {
+    const { t } = useTranslation();
+    const { userSlug } = usePage().props as any;
+
+    const stripeEnabled = getCompanySetting('stripe_enabled');
+    if (stripeEnabled === 'on') {
+        return [{
+            id: 'stripe-jewellery-payment',
+            dataUrl: route('jewellery-store.payment.stripe.store', { userSlug: userSlug }),
+            onFormSubmit: data?.onFormSubmit,
+            component: (
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-white border">
+                        <img src={getPackageFavicon('Stripe')} alt="Stripe Logo" className="object-contain w-full h-full" />
+                    </div>
+                    <div>
+                        <h5 className="text-base font-medium text-gray-800">{t('Stripe')}</h5>
+                    </div>
+                </div>
+            )
+        }];
+    }
+    return [];
+};
+
+export const freelancingWalletPayment = (data?: any) => {
+    const { t } = useTranslation();
+    const { userSlug } = usePage().props as any;
+    const stripeEnabled = getCompanySetting('stripe_enabled');
+    
+    if (stripeEnabled === 'on') {        
+        return [{
+            id: 'stripe-freelancing-wallet-payment',
+            dataUrl: route('freelancing.wallet.payment.stripe.store', { userSlug: userSlug }),
+            component: (
+                <div className="flex items-center space-x-3 flex-1">
+                    <img src={getPackageFavicon('Stripe')} alt="Stripe" className="h-8 w-8" />
+                    <div>
+                        <div className="font-medium text-gray-900">{t('Stripe')}</div>
+                    </div>
+                </div>
+            )
+        }];
+    }
+    return [];
 };

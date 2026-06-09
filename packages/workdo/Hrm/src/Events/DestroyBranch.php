@@ -13,7 +13,5 @@ class DestroyBranch
     public function __construct(
           public Branch $branch
     )
-    {
-        //
-    }
+    {}
 }

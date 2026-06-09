@@ -20,7 +20,6 @@ export default function View({ award }: ViewAwardProps) {
                     </div>
                     <div>
                         <DialogTitle className="text-xl font-semibold">{t('Award Details')}</DialogTitle>
-                        <p className="text-sm text-muted-foreground">{award.award_type?.name}</p>
                     </div>
                 </div>
             </DialogHeader>
@@ -35,6 +34,10 @@ export default function View({ award }: ViewAwardProps) {
                         <label className="text-sm font-medium text-gray-700">{t('Award Date')}</label>
                         <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">{award.award_date ? formatDate(award.award_date) : '-'}</p>
                     </div>
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">{t('Award Type')}</label>
+                    <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">{award.award_type?.name || '-'}</p>
                 </div>
 
                 {award.description && (

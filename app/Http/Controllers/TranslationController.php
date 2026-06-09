@@ -34,7 +34,6 @@ class TranslationController extends Controller
             $locale = 'en';
         }
 
-        // $layoutDirection = in_array($locale, ['ar', 'he']) ? 'rtl' : 'ltr';
         $layoutDirection = in_array($locale, ['ar', 'he']) ? 'rtl' : 'ltr';
 
         $translations = json_decode(File::get($path), true) ?? [];
@@ -57,7 +56,7 @@ class TranslationController extends Controller
 
         return response()->json([
             'translations' => $translations,
-            'layoutDirection' => null,
+            'layoutDirection' => $layoutDirection,
             'locale' => $locale
         ]);
     }
@@ -403,9 +402,10 @@ class TranslationController extends Controller
         ]);
 
         $locale = strtolower($request->input('lang'));
-        // $layoutDirection = in_array($locale, ['ar', 'he']) ? 'rtl' : 'ltr';
+        $layoutDirection = in_array($locale, ['ar', 'he']) ? 'rtl' : 'ltr';
 
         auth()->user()->update(['lang' => $locale]);
+        auth()->user()->update(['layout_direction' => $layoutDirection]);
 
         // when company's user change then update company setting
         // setSetting('layoutDirection', $layoutDirection);

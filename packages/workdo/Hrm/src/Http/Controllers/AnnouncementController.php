@@ -70,22 +70,17 @@ class AnnouncementController extends Controller
         if (Auth::user()->can('create-announcements')) {
             $validated = $request->validated();
 
-
-
             $announcement = new Announcement();
             $announcement->title = $validated['title'];
             $announcement->description = $validated['description'];
             $announcement->start_date = $validated['start_date'];
             $announcement->end_date = $validated['end_date'];
             $announcement->priority = $validated['priority'];
-            $announcement->status = 'draft';
             $announcement->announcement_category_id = $validated['announcement_category_id'];
 
             $announcement->creator_id = Auth::id();
             $announcement->created_by = creatorId();
             $announcement->save();
-
-            CreateAnnouncement::dispatch($request, $announcement);
 
             // Sync departments with creator info
             if (isset($validated['departments'])) {
@@ -98,6 +93,7 @@ class AnnouncementController extends Controller
                 }
                 $announcement->departments()->sync($departmentData);
             }
+            CreateAnnouncement::dispatch($request, $announcement);
 
             return redirect()->route('hrm.announcements.index')->with('success', __('The announcement has been created successfully.'));
         } else {
@@ -119,9 +115,7 @@ class AnnouncementController extends Controller
             $announcement->priority = $validated['priority'];
             $announcement->announcement_category_id = $validated['announcement_category_id'];
 
-            $announcement->save();
-
-            UpdateAnnouncement::dispatch($request, $announcement);
+            $announcement->save();            
 
             // Sync departments with creator info
             if (isset($validated['departments'])) {
@@ -134,6 +128,8 @@ class AnnouncementController extends Controller
                 }
                 $announcement->departments()->sync($departmentData);
             }
+
+            UpdateAnnouncement::dispatch($request, $announcement);
 
             return redirect()->back()->with('success', __('The announcement details are updated successfully.'));
         } else {

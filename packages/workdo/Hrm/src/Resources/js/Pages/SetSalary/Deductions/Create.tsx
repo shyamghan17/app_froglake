@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import InputError from '@/components/ui/input-error';
+import { CurrencyInput } from '@/components/ui/currency-input';
 
 interface CreateDeductionProps {
     employeeId: number;
@@ -75,18 +76,32 @@ export default function Create({ employeeId, deductionTypes, onSuccess }: Create
                 </div>
 
                 <div>
-                    <Label htmlFor="amount" required>{t('Amount')}</Label>
-                    <Input
-                        id="amount"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={data.amount}
-                        onChange={(e) => setData('amount', e.target.value)}
-                        placeholder={data.type === 'percentage' ? t('Enter percentage') : t('Enter amount')}
-                        required
-                    />
-                    <InputError message={errors.amount} />
+                    {data.type === 'percentage' ? (
+                        <>
+                            <Label htmlFor="amount" required>{t('Percentage')}</Label>
+                            <Input
+                                id="amount"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="100"
+                                value={data.amount}
+                                onChange={(e) => setData('amount', e.target.value)}
+                                placeholder={t('Enter percentage')}
+                                required
+                            />
+                            <InputError message={errors.amount} />
+                        </>
+                    ) : (
+                        <CurrencyInput
+                            label={t('Amount')}
+                            value={data.amount}
+                            onChange={(value) => setData('amount', value)}
+                            error={errors.amount}
+                            placeholder={t('Enter amount')}
+                            required
+                        />
+                    )}
                 </div>
 
                 <div className="flex justify-end gap-2">

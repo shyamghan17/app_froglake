@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Calendar } from 'lucide-react';
 import { formatDate } from '@/utils/helpers';
 import { DatePicker } from "@/components/ui/date-picker";
@@ -73,7 +73,7 @@ export default function LeadReports() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>{t('This Week Leads Conversions')}</CardTitle>
+                                <CardTitle className="text-lg">{t('This Week Leads Conversions')}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <ResponsiveContainer width="100%" height={300}>
@@ -83,8 +83,7 @@ export default function LeadReports() {
                                             cx="50%"
                                             cy="50%"
                                             labelLine={false}
-                                            label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                            outerRadius={80}
+                                            outerRadius={100}
                                             fill="#8884d8"
                                             dataKey="value"
                                         >
@@ -92,7 +91,17 @@ export default function LeadReports() {
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                        <Tooltip />
+                                        <Tooltip formatter={(value, name) => [value, name]} />
+                                        <Legend
+                                            layout="vertical"
+                                            align="right"
+                                            verticalAlign="middle"
+                                            formatter={(value, entry: any) => (
+                                                <span className="text-sm text-gray-700">
+                                                    {value}: {entry.payload?.value} ({entry.payload?.percent !== undefined ? (entry.payload.percent * 100).toFixed(0) : 0}%)
+                                                </span>
+                                            )}
+                                        />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </CardContent>
@@ -100,7 +109,7 @@ export default function LeadReports() {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>{t('Sources Conversion')}</CardTitle>
+                                <CardTitle className="text-lg">{t('Sources Conversion')}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <ResponsiveContainer width="100%" height={300}>
@@ -118,7 +127,7 @@ export default function LeadReports() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>{t('Per Month Lead')}</CardTitle>
+                            <CardTitle  className="text-lg">{t('Per Month Lead')}</CardTitle>
                             <Select value={selectedMonth} onValueChange={(value) => setSelectedMonth(value)}>
                                 <SelectTrigger className="w-40">
                                     <SelectValue />
@@ -213,7 +222,7 @@ export default function LeadReports() {
                 <TabsContent value="pipeline" className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>{t('Pipelines')}</CardTitle>
+                            <CardTitle className="text-lg">{t('Pipelines')}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={400}>

@@ -23,23 +23,27 @@ class DemoLeadSeeder extends Seeder
             $pipelines = Pipeline::where('created_by', $userId)->get();
             $users = User::where('created_by', $userId)->where('type', '!=', 'client')->pluck('id')->toArray();
 
-            if ($pipelines->isEmpty() || empty($users)) {
+            if (empty($users)) {
+                $users = [$userId];
+            }
+
+            if ($pipelines->isEmpty()) {
                 return;
             }
 
             $leadData = [
                 // Marketing Pipeline Leads (30 records)
-                ['name' => 'Hazel Cox', 'email' => 'hazel.cox@gmail.com', 'subject' => 'Product Demo Request', 'date' => Carbon::now()->subMonths(6)->setDay(24), 'created_at' => Carbon::now()->subDays(179)],
-                ['name' => 'Leo Ward', 'email' => 'leo.ward@yahoo.com', 'subject' => 'Partnership Inquiry', 'date' => Carbon::now()->subMonths(5)->setDay(16), 'created_at' => Carbon::now()->subDays(173)],
-                ['name' => 'Violet Richardson', 'email' => 'violet.richardson@hotmail.com', 'subject' => 'Pricing Information', 'date' => Carbon::now()->subMonths(4)->setDay(11), 'created_at' => Carbon::now()->subDays(167)],
-                ['name' => 'Ezra Butler', 'email' => 'ezra.butler@outlook.com', 'subject' => 'Solution Consultation', 'date' => Carbon::now()->subMonths(3)->setDay(18), 'created_at' => Carbon::now()->subDays(161)],
-                ['name' => 'Aurora Simmons', 'email' => 'aurora.simmons@gmail.com', 'subject' => 'Service Integration', 'date' => Carbon::now()->subMonths(2)->setDay(13), 'created_at' => Carbon::now()->subDays(155)],
-                ['name' => 'Kai Foster', 'email' => 'kai.foster@yahoo.com', 'subject' => 'Custom Development', 'date' => Carbon::now()->subMonths(2)->setDay(26), 'created_at' => Carbon::now()->subDays(149)],
-                ['name' => 'Savannah Henderson', 'email' => 'savannah.henderson@hotmail.com', 'subject' => 'Platform Migration', 'date' => Carbon::now()->subMonth()->setDay(9), 'created_at' => Carbon::now()->subDays(143)],
-                ['name' => 'Maverick Bryant', 'email' => 'maverick.bryant@gmail.com', 'subject' => 'Marketing Automation', 'date' => Carbon::now()->subMonth()->setDay(23), 'created_at' => Carbon::now()->subDays(137)],
-                ['name' => 'Skylar Alexander', 'email' => 'skylar.alexander@outlook.com', 'subject' => 'API Integration', 'date' => Carbon::now()->subDays(9), 'created_at' => Carbon::now()->subDays(131)],
-                ['name' => 'Jaxon Russell', 'email' => 'jaxon.russell@yahoo.com', 'subject' => 'AI Implementation', 'date' => Carbon::now()->subDays(5), 'created_at' => Carbon::now()->subDays(125)],
-                ['name' => 'Paisley Griffin', 'email' => 'paisley.griffin@gmail.com', 'subject' => 'Cloud Migration', 'date' => Carbon::now()->subDay(), 'created_at' => Carbon::now()->subDays(119)],
+                ['name' => 'Hazel Cox', 'email' => 'hazel.cox@gmail.com', 'subject' => 'Product Demo Request', 'date' => Carbon::now(), 'created_at' => Carbon::now()->subDays(179)],
+                ['name' => 'Leo Ward', 'email' => 'leo.ward@yahoo.com', 'subject' => 'Partnership Inquiry', 'date' => Carbon::now()->addDays(1), 'created_at' => Carbon::now()->subDays(173)],
+                ['name' => 'Violet Richardson', 'email' => 'violet.richardson@hotmail.com', 'subject' => 'Pricing Information', 'date' => Carbon::now()->addDays(2), 'created_at' => Carbon::now()->subDays(167)],
+                ['name' => 'Ezra Butler', 'email' => 'ezra.butler@outlook.com', 'subject' => 'Solution Consultation', 'date' => Carbon::now()->addDays(3), 'created_at' => Carbon::now()->subDays(161)],
+                ['name' => 'Aurora Simmons', 'email' => 'aurora.simmons@gmail.com', 'subject' => 'Service Integration', 'date' => Carbon::now()->addDays(4), 'created_at' => Carbon::now()->subDays(155)],
+                ['name' => 'Kai Foster', 'email' => 'kai.foster@yahoo.com', 'subject' => 'Custom Development', 'date' => Carbon::now()->addDays(5), 'created_at' => Carbon::now()->subDays(149)],
+                ['name' => 'Savannah Henderson', 'email' => 'savannah.henderson@hotmail.com', 'subject' => 'Platform Migration', 'date' => Carbon::now()->addDays(6), 'created_at' => Carbon::now()->subDays(143)],
+                ['name' => 'Maverick Bryant', 'email' => 'maverick.bryant@gmail.com', 'subject' => 'Marketing Automation', 'date' => Carbon::now()->addDays(7), 'created_at' => Carbon::now()->subDays(137)],
+                ['name' => 'Skylar Alexander', 'email' => 'skylar.alexander@outlook.com', 'subject' => 'API Integration', 'date' => Carbon::now()->addDays(8), 'created_at' => Carbon::now()->subDays(131)],
+                ['name' => 'Jaxon Russell', 'email' => 'jaxon.russell@yahoo.com', 'subject' => 'AI Implementation', 'date' => Carbon::now()->addDays(9), 'created_at' => Carbon::now()->subDays(125)],
+                ['name' => 'Paisley Griffin', 'email' => 'paisley.griffin@gmail.com', 'subject' => 'Cloud Migration', 'date' => Carbon::now()->addDays(10), 'created_at' => Carbon::now()->subDays(119)],
                 ['name' => 'Roman Diaz', 'email' => 'roman.diaz@hotmail.com', 'subject' => 'Data Analysis Tools', 'date' => Carbon::now()->addDay(), 'created_at' => Carbon::now()->subDays(113)],
                 ['name' => 'Kinsley Hayes', 'email' => 'kinsley.hayes@outlook.com', 'subject' => 'Mobile App Development', 'date' => Carbon::now()->addDays(5), 'created_at' => Carbon::now()->subDays(107)],
                 ['name' => 'Declan Myers', 'email' => 'declan.myers@gmail.com', 'subject' => 'Security Assessment', 'date' => Carbon::now()->addDays(7), 'created_at' => Carbon::now()->subDays(101)],
@@ -61,17 +65,17 @@ class DemoLeadSeeder extends Seeder
                 ['name' => 'Indie Hughes', 'email' => 'indie.hughes@hotmail.com', 'subject' => 'Blockchain Integration', 'date' => Carbon::now()->addMonths(2)->setDay(9), 'created_at' => Carbon::now()->subDays(2)],
 
                 // Lead Qualification Pipeline Leads (30 records)
-                ['name' => 'Remi Flores', 'email' => 'remi.flores@gmail.com', 'subject' => 'Enterprise Assessment', 'date' => Carbon::now()->subMonths(6)->setDay(26), 'created_at' => Carbon::now()->subDays(178)],
-                ['name' => 'Crew Washington', 'email' => 'crew.washington@yahoo.com', 'subject' => 'System Evaluation', 'date' => Carbon::now()->subMonths(5)->setDay(18), 'created_at' => Carbon::now()->subDays(172)],
-                ['name' => 'Sloane Butler', 'email' => 'sloane.butler@hotmail.com', 'subject' => 'BI Platform Review', 'date' => Carbon::now()->subMonths(4)->setDay(13), 'created_at' => Carbon::now()->subDays(166)],
-                ['name' => 'Ari Simmons', 'email' => 'ari.simmons@outlook.com', 'subject' => 'Automation Feasibility', 'date' => Carbon::now()->subMonths(3)->setDay(20), 'created_at' => Carbon::now()->subDays(160)],
-                ['name' => 'Lennox Patterson', 'email' => 'lennox.patterson@gmail.com', 'subject' => 'Workflow Optimization', 'date' => Carbon::now()->subMonths(2)->setDay(15), 'created_at' => Carbon::now()->subDays(154)],
-                ['name' => 'Marlowe Jenkins', 'email' => 'marlowe.jenkins@yahoo.com', 'subject' => 'Integration Assessment', 'date' => Carbon::now()->subMonths(2)->setDay(28), 'created_at' => Carbon::now()->subDays(148)],
-                ['name' => 'Sutton Perry', 'email' => 'sutton.perry@hotmail.com', 'subject' => 'Quality Control System', 'date' => Carbon::now()->subMonth()->setDay(11), 'created_at' => Carbon::now()->subDays(142)],
-                ['name' => 'Bellamy Powell', 'email' => 'bellamy.powell@gmail.com', 'subject' => 'Performance Analysis', 'date' => Carbon::now()->subMonth()->setDay(25), 'created_at' => Carbon::now()->subDays(136)],
-                ['name' => 'Finley Long', 'email' => 'finley.long@outlook.com', 'subject' => 'Compliance Review', 'date' => Carbon::now()->subDays(11), 'created_at' => Carbon::now()->subDays(130)],
-                ['name' => 'Oakley Hughes', 'email' => 'oakley.hughes@yahoo.com', 'subject' => 'Risk Management', 'date' => Carbon::now()->subDays(5), 'created_at' => Carbon::now()->subDays(124)],
-                ['name' => 'Lennon Flores', 'email' => 'lennon.flores@gmail.com', 'subject' => 'Security Evaluation', 'date' => Carbon::now()->subDay(), 'created_at' => Carbon::now()->subDays(118)],
+                ['name' => 'Remi Flores', 'email' => 'remi.flores@gmail.com', 'subject' => 'Enterprise Assessment', 'date' => Carbon::now(), 'created_at' => Carbon::now()->subDays(178)],
+                ['name' => 'Crew Washington', 'email' => 'crew.washington@yahoo.com', 'subject' => 'System Evaluation', 'date' => Carbon::now()->addDays(1), 'created_at' => Carbon::now()->subDays(172)],
+                ['name' => 'Sloane Butler', 'email' => 'sloane.butler@hotmail.com', 'subject' => 'BI Platform Review', 'date' => Carbon::now()->addDays(2), 'created_at' => Carbon::now()->subDays(166)],
+                ['name' => 'Ari Simmons', 'email' => 'ari.simmons@outlook.com', 'subject' => 'Automation Feasibility', 'date' => Carbon::now()->addDays(3), 'created_at' => Carbon::now()->subDays(160)],
+                ['name' => 'Lennox Patterson', 'email' => 'lennox.patterson@gmail.com', 'subject' => 'Workflow Optimization', 'date' => Carbon::now()->addDays(4), 'created_at' => Carbon::now()->subDays(154)],
+                ['name' => 'Marlowe Jenkins', 'email' => 'marlowe.jenkins@yahoo.com', 'subject' => 'Integration Assessment', 'date' => Carbon::now()->addDays(5), 'created_at' => Carbon::now()->subDays(148)],
+                ['name' => 'Sutton Perry', 'email' => 'sutton.perry@hotmail.com', 'subject' => 'Quality Control System', 'date' => Carbon::now()->addDays(6), 'created_at' => Carbon::now()->subDays(142)],
+                ['name' => 'Bellamy Powell', 'email' => 'bellamy.powell@gmail.com', 'subject' => 'Performance Analysis', 'date' => Carbon::now()->addDays(7), 'created_at' => Carbon::now()->subDays(136)],
+                ['name' => 'Finley Long', 'email' => 'finley.long@outlook.com', 'subject' => 'Compliance Review', 'date' => Carbon::now()->addDays(8), 'created_at' => Carbon::now()->subDays(130)],
+                ['name' => 'Oakley Hughes', 'email' => 'oakley.hughes@yahoo.com', 'subject' => 'Risk Management', 'date' => Carbon::now()->addDays(9), 'created_at' => Carbon::now()->subDays(124)],
+                ['name' => 'Lennon Flores', 'email' => 'lennon.flores@gmail.com', 'subject' => 'Security Evaluation', 'date' => Carbon::now()->addDays(10), 'created_at' => Carbon::now()->subDays(118)],
                 ['name' => 'Harley Washington', 'email' => 'harley.washington@hotmail.com', 'subject' => 'Data Management Review', 'date' => Carbon::now()->addDay(), 'created_at' => Carbon::now()->subDays(112)],
                 ['name' => 'Peyton Butler', 'email' => 'peyton.butler@outlook.com', 'subject' => 'Vendor Assessment', 'date' => Carbon::now()->addDays(7), 'created_at' => Carbon::now()->subDays(106)],
                 ['name' => 'Reese Simmons', 'email' => 'reese.simmons@gmail.com', 'subject' => 'Procurement Review', 'date' => Carbon::now()->addDays(9), 'created_at' => Carbon::now()->subDays(100)],
@@ -90,20 +94,20 @@ class DemoLeadSeeder extends Seeder
                 ['name' => 'Blake Perry', 'email' => 'blake.perry@outlook.com', 'subject' => 'Requirements Analysis', 'date' => Carbon::now()->addMonth()->setDay(20), 'created_at' => Carbon::now()->subDays(13)],
                 ['name' => 'Jordan Powell', 'email' => 'jordan.powell@yahoo.com', 'subject' => 'Feasibility Assessment', 'date' => Carbon::now()->addMonth()->setDay(27), 'created_at' => Carbon::now()->subDays(8)],
                 ['name' => 'Casey Long', 'email' => 'casey.long@gmail.com', 'subject' => 'Technical Evaluation', 'date' => Carbon::now()->addMonths(2)->setDay(4), 'created_at' => Carbon::now()->subDays(4)],
-                ['name' => 'Taylor Hughes', 'email' => 'taylor.hughes@hotmail.com', 'subject' => 'Architecture Review', 'date' => Carbon::now()->addMonths(2)->setDay(11), 'created_at' => Carbon::now(1)],
+                ['name' => 'Taylor Hughes', 'email' => 'taylor.hughes@hotmail.com', 'subject' => 'Architecture Review', 'date' => Carbon::now()->addMonths(2)->setDay(11), 'created_at' => Carbon::now()],
 
                 // Sales Pipeline Leads (30 records)
-                ['name' => 'Oliver Bennett', 'email' => 'oliver.bennett@gmail.com', 'subject' => 'Enterprise Software Purchase', 'date' => Carbon::now()->subMonths(6)->setDay(22), 'created_at' => Carbon::now()->subDays(180)],
-                ['name' => 'Charlotte Foster', 'email' => 'charlotte.foster@yahoo.com', 'subject' => 'Annual License Renewal', 'date' => Carbon::now()->subMonths(5)->setDay(14), 'created_at' => Carbon::now()->subDays(174)],
-                ['name' => 'Ethan Murphy', 'email' => 'ethan.murphy@hotmail.com', 'subject' => 'Custom Solution Quote', 'date' => Carbon::now()->subMonths(4)->setDay(9), 'created_at' => Carbon::now()->subDays(168)],
-                ['name' => 'Sophia Richardson', 'email' => 'sophia.richardson@gmail.com', 'subject' => 'Multi-Year Contract', 'date' => Carbon::now()->subMonths(3)->setDay(16), 'created_at' => Carbon::now()->subDays(162)],
-                ['name' => 'Lucas Cooper', 'email' => 'lucas.cooper@outlook.com', 'subject' => 'Premium Package Upgrade', 'date' => Carbon::now()->subMonths(2)->setDay(11), 'created_at' => Carbon::now()->subDays(156)],
-                ['name' => 'Amelia Brooks', 'email' => 'amelia.brooks@yahoo.com', 'subject' => 'Volume Discount Request', 'date' => Carbon::now()->subMonths(2)->setDay(24), 'created_at' => Carbon::now()->subDays(150)],
-                ['name' => 'Mason Reed', 'email' => 'mason.reed@gmail.com', 'subject' => 'Implementation Services', 'date' => Carbon::now()->subMonth()->setDay(7), 'created_at' => Carbon::now()->subDays(144)],
-                ['name' => 'Harper Bailey', 'email' => 'harper.bailey@hotmail.com', 'subject' => 'Training Package Deal', 'date' => Carbon::now()->subMonth()->setDay(21), 'created_at' => Carbon::now()->subDays(138)],
-                ['name' => 'Logan Kelly', 'email' => 'logan.kelly@gmail.com', 'subject' => 'Support Contract Extension', 'date' => Carbon::now()->subDays(7), 'created_at' => Carbon::now()->subDays(132)],
-                ['name' => 'Ella Howard', 'email' => 'ella.howard@yahoo.com', 'subject' => 'Professional Services Quote', 'date' => Carbon::now()->subDays(3), 'created_at' => Carbon::now()->subDays(126)],
-                ['name' => 'Jackson Ward', 'email' => 'jackson.ward@outlook.com', 'subject' => 'Migration Service Purchase', 'date' => Carbon::now()->subDay(), 'created_at' => Carbon::now()->subDays(120)],
+                ['name' => 'Oliver Bennett', 'email' => 'oliver.bennett@gmail.com', 'subject' => 'Enterprise Software Purchase', 'date' => Carbon::now(), 'created_at' => Carbon::now()->subDays(180)],
+                ['name' => 'Charlotte Foster', 'email' => 'charlotte.foster@yahoo.com', 'subject' => 'Annual License Renewal', 'date' => Carbon::now()->addDays(1), 'created_at' => Carbon::now()->subDays(174)],
+                ['name' => 'Ethan Murphy', 'email' => 'ethan.murphy@hotmail.com', 'subject' => 'Custom Solution Quote', 'date' => Carbon::now()->addDays(2), 'created_at' => Carbon::now()->subDays(168)],
+                ['name' => 'Sophia Richardson', 'email' => 'sophia.richardson@gmail.com', 'subject' => 'Multi-Year Contract', 'date' => Carbon::now()->addDays(3), 'created_at' => Carbon::now()->subDays(162)],
+                ['name' => 'Lucas Cooper', 'email' => 'lucas.cooper@outlook.com', 'subject' => 'Premium Package Upgrade', 'date' => Carbon::now()->addDays(4), 'created_at' => Carbon::now()->subDays(156)],
+                ['name' => 'Amelia Brooks', 'email' => 'amelia.brooks@yahoo.com', 'subject' => 'Volume Discount Request', 'date' => Carbon::now()->addDays(5), 'created_at' => Carbon::now()->subDays(150)],
+                ['name' => 'Mason Reed', 'email' => 'mason.reed@gmail.com', 'subject' => 'Implementation Services', 'date' => Carbon::now()->addDays(6), 'created_at' => Carbon::now()->subDays(144)],
+                ['name' => 'Harper Bailey', 'email' => 'harper.bailey@hotmail.com', 'subject' => 'Training Package Deal', 'date' => Carbon::now()->addDays(7), 'created_at' => Carbon::now()->subDays(138)],
+                ['name' => 'Logan Kelly', 'email' => 'logan.kelly@gmail.com', 'subject' => 'Support Contract Extension', 'date' => Carbon::now()->addDays(8), 'created_at' => Carbon::now()->subDays(132)],
+                ['name' => 'Ella Howard', 'email' => 'ella.howard@yahoo.com', 'subject' => 'Professional Services Quote', 'date' => Carbon::now()->addDays(9), 'created_at' => Carbon::now()->subDays(126)],
+                ['name' => 'Jackson Ward', 'email' => 'jackson.ward@outlook.com', 'subject' => 'Migration Service Purchase', 'date' => Carbon::now()->addDays(10), 'created_at' => Carbon::now()->subDays(120)],
                 ['name' => 'Avery Torres', 'email' => 'avery.torres@gmail.com', 'subject' => 'Analytics Platform License', 'date' => Carbon::now()->addDay(), 'created_at' => Carbon::now()->subDays(114)],
                 ['name' => 'Scarlett Peterson', 'email' => 'scarlett.peterson@hotmail.com', 'subject' => 'Development Framework Sale', 'date' => Carbon::now()->addDays(3), 'created_at' => Carbon::now()->subDays(108)],
                 ['name' => 'Aiden Gray', 'email' => 'aiden.gray@yahoo.com', 'subject' => 'Security Audit Service', 'date' => Carbon::now()->addDays(5), 'created_at' => Carbon::now()->subDays(102)],
@@ -124,7 +128,6 @@ class DemoLeadSeeder extends Seeder
                 ['name' => 'Nora Bell', 'email' => 'nora.bell@gmail.com', 'subject' => 'Logistics Management System', 'date' => Carbon::now()->addMonth()->setDay(15), 'created_at' => Carbon::now()->subDays(6)],
                 ['name' => 'Wyatt Rivera', 'email' => 'wyatt.rivera@hotmail.com', 'subject' => 'Hotel Management Software', 'date' => Carbon::now()->addMonth()->setDay(22), 'created_at' => Carbon::now()->subDays(3)],
             ];
-
             $notes = [
                 "Initial contact established through multiple touchpoints with strong interest demonstrated. Follow-up meeting scheduled to discuss specific requirements and next steps.",
                 "Productive discussion completed with key decision makers present. Budget parameters confirmed and approval process timeline established for moving forward with evaluation.",
@@ -162,11 +165,8 @@ class DemoLeadSeeder extends Seeder
             $leadIndex = 0;
 
             foreach ($pipelines as $pipeline) {
-                // Skip Sales pipeline
-                if ($pipeline->name === 'Sales') continue;
-                
                 $stages = LeadStage::where('pipeline_id', $pipeline->id)->get();
-
+                
                 if ($stages->isEmpty()) continue;
 
                 // Create 10 leads per pipeline with proper date distribution
@@ -184,38 +184,14 @@ class DemoLeadSeeder extends Seeder
                     $assignedUserId = $availableUsers[array_rand($availableUsers)];
                     $usedUserIds[] = $assignedUserId;
 
-                    // Realistic stage distribution based on sales funnel
-                    if ($pipeline->name === 'Sales') {
-                        // Sales funnel: more leads in early stages
-                        if ($i < 4) $stageIndex = 0; // Draft (40%)
-                        elseif ($i < 7) $stageIndex = 1; // Sent (30%)
-                        elseif ($i < 8) $stageIndex = 2; // Open (10%)
-                        elseif ($i < 9) $stageIndex = 3; // Revised (10%)
-                        else $stageIndex = 4; // Accepted (10%)
-                    } elseif ($pipeline->name === 'Marketing') {
-                        // Marketing funnel: gradual decrease
-                        if ($i < 4) $stageIndex = 0; // Prospect (40%)
-                        elseif ($i < 6) $stageIndex = 1; // Contacted (20%)
-                        elseif ($i < 8) $stageIndex = 2; // Engaged (20%)
-                        elseif ($i < 9) $stageIndex = 3; // Qualified (10%)
-                        else $stageIndex = 4; // Converted (10%)
-                    } else {
-                        // Lead Qualification: assessment-based distribution
-                        if ($i < 3) $stageIndex = 0; // Unqualified (30%)
-                        elseif ($i < 5) $stageIndex = 1; // In Review (20%)
-                        elseif ($i < 7) $stageIndex = 2; // Qualified (20%)
-                        elseif ($i < 9) $stageIndex = 3; // Approved (20%)
-                        else $stageIndex = 4; // Rejected (10%)
-                    }
+                    $stageCount = $stages->count();
+                    $stageIndex = (int) floor(($i / 10) * $stageCount);
+                    $stageIndex = min($stageIndex, $stageCount - 1);
                     $stage = $stages[$stageIndex];
 
                     // Select source IDs and random product IDs
                     $sourceIds = Source::where('created_by', $userId)->pluck('id')->toArray();
-
-                    $productIds = [];
-                    if (Module_is_active('ProductService')) {
-                        $productIds = ProductServiceItem::where('created_by', $userId)->pluck('id')->toArray();
-                    }
+                    $productIds = ProductServiceItem::where('created_by', $userId)->pluck('id')->toArray();
 
                     $selectedSourceId = !empty($sourceIds) ? $sourceIds[array_rand($sourceIds)] : null;
                     $selectedProductId = !empty($productIds) ? $productIds[array_rand($productIds)] : null;

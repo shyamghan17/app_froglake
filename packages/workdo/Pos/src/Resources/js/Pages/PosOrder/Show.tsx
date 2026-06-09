@@ -15,7 +15,7 @@ interface PosItem {
     quantity: number;
     price: number;
     subtotal: number;
-    discount_amount: number;
+    item_discount_amount: number;
     tax_amount: number;
     total_amount: number;
     product: {
@@ -192,7 +192,9 @@ export default function Show() {
                                         <th className="px-4 py-3 text-left text-sm font-semibold">{t('Product')}</th>
                                         <th className="px-4 py-3 text-right text-sm font-semibold">{t('Qty')}</th>
                                         <th className="px-4 py-3 text-right text-sm font-semibold">{t('Unit Price')}</th>
-                                        <th className="px-4 py-3 text-right text-sm font-semibold">{t('Tax')}</th>
+                                        <th className="px-4 py-3 text-right text-sm font-semibold">{t('Subtotal')}</th>
+                                        <th className="px-4 py-3 text-right text-sm font-semibold">{t('Discount')}</th>
+                                        <th className="px-4 py-3 text-center text-sm font-semibold">{t('Tax')}</th>
                                         <th className="px-4 py-3 text-right text-sm font-semibold">{t('Tax Amount')}</th>
                                         <th className="px-4 py-3 text-right text-sm font-semibold">{t('Total')}</th>
                                     </tr>
@@ -211,9 +213,17 @@ export default function Show() {
                                             </td>
                                             <td className="px-4 py-4 text-right">{item.quantity}</td>
                                             <td className="px-4 py-4 text-right">{formatCurrency(item.price)}</td>
+                                            <td className="px-4 py-4 text-right">{formatCurrency(item.subtotal)}</td>
                                             <td className="px-4 py-4 text-right">
+                                                {item.item_discount_amount > 0 ? (
+                                                    <span className="text-green-600">-{formatCurrency(item.item_discount_amount)}</span>
+                                                ) : (
+                                                    <span className="text-muted-foreground">-</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-4 text-center">
                                                 {item.taxes && item.taxes.length > 0 ? (
-                                                    <div className="flex flex-wrap gap-1 justify-end">
+                                                    <div className="flex flex-wrap gap-1 justify-center">
                                                         {item.taxes.map((tax) => (
                                                             <Badge key={tax.id} variant="outline" className="text-xs">
                                                                 {tax.tax_name} ({tax.rate}%)
@@ -245,10 +255,12 @@ export default function Show() {
                                     <span className="text-muted-foreground">{t('Subtotal')}</span>
                                     <span className="font-medium">{formatCurrency(sale.subtotal || 0)}</span>
                                 </div>
+                                {sale.discount_amount > 0 && (
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">{t('Discount')}</span>
                                     <span className="font-medium text-red-600">-{formatCurrency(sale.discount_amount || 0)}</span>
                                 </div>
+                                 )}
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">{t('Tax')}</span>
                                     <span className="font-medium">{formatCurrency(sale.tax_amount || 0)}</span>

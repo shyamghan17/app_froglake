@@ -14,11 +14,7 @@ class DemoDealProductSourceSeeder extends Seeder
     {
         if (!empty($userId)) {
             $sourceIds = Source::where('created_by', $userId)->pluck('id')->toArray();
-            $productIds = [];
-
-            if (Module_is_active('ProductService')) {
-                $productIds = ProductServiceItem::where('created_by', $userId)->pluck('id')->toArray();
-            }
+            $productIds = ProductServiceItem::where('created_by', $userId)->pluck('id')->toArray();
 
             // Only assign to deals that are NOT converted from leads
             $convertedDealIds = Lead::where('created_by', $userId)->where('is_converted', '>', 0)->pluck('is_converted')->toArray();

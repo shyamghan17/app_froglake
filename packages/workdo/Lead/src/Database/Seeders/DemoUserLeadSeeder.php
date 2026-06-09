@@ -18,13 +18,25 @@ class DemoUserLeadSeeder extends Seeder
             $leads = Lead::where('created_by', $userId)->get();
             $users = User::where('created_by', $userId)->where('type', '!=', 'client')->pluck('id')->toArray();
 
-            if ($leads->isEmpty() || empty($users)) {
+            if ($leads->isEmpty()) {
                 return;
             }
 
+            if (empty($users)) {
+                $users = [$userId];
+            }
+
             foreach ($leads as $lead) {
-                // Then assign 1-2 additional users (avoiding the primary user)
-                $availableUsers = array_diff($users, [$lead->user_id]);
+                // Assign the primary user_id of the lead
+                if (!empty($lead->user_id)) {
+                    UserLead::firstOrCreate([
+                        'user_id' => $lead->user_id,
+                        'lead_id' => $lead->id,
+                    ]);
+                }
+
+                // Assign 1-2 additional users (avoiding the primary user)
+                $availableUsers = array_diff($users, [$lead->user_id, $userId]);
 
                 if (!empty($availableUsers)) {
                     $randomUsers = collect($availableUsers)->shuffle()->take(rand(1, min(2, count($availableUsers))))->all();
@@ -36,6 +48,12 @@ class DemoUserLeadSeeder extends Seeder
                         ]);
                     }
                 }
+
+                // Always assign company user (userId)
+                UserLead::firstOrCreate([
+                    'user_id' => $userId,
+                    'lead_id' => $lead->id,
+                ]);
             }
         }
     }

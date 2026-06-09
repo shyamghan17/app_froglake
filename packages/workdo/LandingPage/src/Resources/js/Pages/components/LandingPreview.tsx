@@ -126,7 +126,7 @@ export function LandingPreview({ settings }: LandingPreviewProps) {
         return (
           <div key={sectionKey} className="p-2 bg-gray-50">
             <div className="text-xs font-bold text-center mb-1">
-              {sectionData.title || 'Why Choose Us?'}
+              {sectionData.title}
             </div>
             <div className="space-y-1">
               {Array.from({ length: 3 }).map((_, i) => (

@@ -25,9 +25,7 @@ export default function EditHoliday({ holiday, onSuccess }: EditHolidayProps) {
         end_date: holiday.end_date || '',
         holiday_type_id: holiday.holiday_type_id ?? '',
         description: holiday.description ?? '',
-        is_paid: holiday.is_paid ?? false,
-        is_sync_google_calendar: holiday.is_sync_google_calendar ?? false,
-        is_sync_outlook_calendar: holiday.is_sync_outlook_calendar ?? false,
+        is_paid: holiday.is_paid ?? false, 
     });
 
     // AI hooks for name and description fields
@@ -134,26 +132,6 @@ export default function EditHoliday({ holiday, onSuccess }: EditHolidayProps) {
                     />
                     <Label htmlFor="is_paid" className="cursor-pointer">{t('Is Paid')}</Label>
                     <InputError message={errors.is_paid} />
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                    <Switch
-                        id="is_sync_google_calendar"
-                        checked={data.is_sync_google_calendar || false}
-                        onCheckedChange={(checked) => setData('is_sync_google_calendar', !!checked)}
-                    />
-                    <Label htmlFor="is_sync_google_calendar" className="cursor-pointer">{t('Is Sync Google Calendar')}</Label>
-                    <InputError message={errors.is_sync_google_calendar} />
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                    <Switch
-                        id="is_sync_outlook_calendar"
-                        checked={data.is_sync_outlook_calendar || false}
-                        onCheckedChange={(checked) => setData('is_sync_outlook_calendar', !!checked)}
-                    />
-                    <Label htmlFor="is_sync_outlook_calendar" className="cursor-pointer">{t('Is Sync Outlook Calendar')}</Label>
-                    <InputError message={errors.is_sync_outlook_calendar} />
                 </div>
                 
                 <div className="flex justify-end gap-2">

@@ -39,17 +39,27 @@ export const downloadReceiptPDF = async (completedSale: any, globalSettings: any
             <div class="items-section">
                 ${completedSale.items.map((item: any) => {
                     const itemSubtotal = item.price * item.quantity;
+                    const itemDiscount = item.item_discount_amount || 0;
+                    const discountedSubtotal = itemSubtotal - itemDiscount;
                     let itemTaxAmount = 0;
                     let taxDisplay = '';
                     if (item.taxes && item.taxes.length > 0) {
                         const taxNames = item.taxes.map((tax: any) => {
-                            itemTaxAmount += (itemSubtotal * tax.rate) / 100;
+                            itemTaxAmount += (discountedSubtotal * tax.rate) / 100;
                             return `${tax.name} (${tax.rate}%)`;
                         });
                         taxDisplay = taxNames.join(', ');
                     } else {
                         taxDisplay = 'No Tax';
                     }
+                    
+                    const discountRow = itemDiscount > 0 
+                        ? `<div class="total-row" style="color: #16a34a;">
+                                <span>Discount:</span>
+                                <span>-${formatCurrency(itemDiscount, { companyAllSetting: globalSettings })}</span>
+                            </div>`
+                        : '';
+                    
                     return `
                         <div class="item">
                             <div class="item-name">${item.name}</div>
@@ -59,12 +69,17 @@ export const downloadReceiptPDF = async (completedSale: any, globalSettings: any
                                     <span>Price: ${formatCurrency(item.price, { companyAllSetting: globalSettings })}</span>
                                 </div>
                                 <div class="total-row">
+                                    <span>Subtotal:</span>
+                                    <span>${formatCurrency(itemSubtotal, { companyAllSetting: globalSettings })}</span>
+                                </div>
+                                ${discountRow}
+                                <div class="total-row">
                                     <span>Tax: ${taxDisplay}</span>
                                     <span>Tax Amount: ${formatCurrency(itemTaxAmount, { companyAllSetting: globalSettings })}</span>
                                 </div>
                                 <div class="total-row" style="font-weight: bold;">
-                                    <span>Subtotal:</span>
-                                    <span>${formatCurrency(itemSubtotal + itemTaxAmount, { companyAllSetting: globalSettings })}</span>
+                                    <span>Total:</span>
+                                    <span>${formatCurrency(discountedSubtotal + itemTaxAmount, { companyAllSetting: globalSettings })}</span>
                                 </div>
                             </div>
                         </div>
@@ -72,13 +87,7 @@ export const downloadReceiptPDF = async (completedSale: any, globalSettings: any
                 }).join('')}
             </div>
             
-            <div class="separator"></div>
-            
             <div class="totals">
-                <div class="total-row">
-                    <span>Discount:</span>
-                    <span>-${formatCurrency(completedSale.discount, { companyAllSetting: globalSettings })}</span>
-                </div>
                 <div class="final-total">
                     <span>TOTAL:</span>
                     <span>${formatCurrency(completedSale.total, { companyAllSetting: globalSettings })}</span>

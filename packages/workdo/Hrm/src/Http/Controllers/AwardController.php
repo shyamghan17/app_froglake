@@ -14,6 +14,7 @@ use Workdo\Hrm\Models\Employee;
 use Workdo\Hrm\Events\CreateAward;
 use Workdo\Hrm\Events\DestroyAward;
 use Workdo\Hrm\Events\UpdateAward;
+use App\Models\EmailTemplate;
 
 class AwardController extends Controller
 {
@@ -67,6 +68,22 @@ class AwardController extends Controller
             $award->save();
 
             CreateAward::dispatch($request, $award);
+
+            // Send sales invoice mail
+            if(company_setting('Create Award') == 'on') {
+                $emailData = [
+                    'employee_name' => $award->employee->name ?? null,
+                    'award_type' => $award->awardType->name ?? null,
+                    'award_date' => $validated['award_date'] ?? null,
+                ];
+                 
+                $message = EmailTemplate::sendEmailTemplate('Create Award', [$award->employee->email], $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('The award has been created successfully.'))
+                        ->with('error', $message['error']);
+                }
+            }
 
             return redirect()->route('hrm.awards.index')->with('success', __('The award has been created successfully.'));
         } else {

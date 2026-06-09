@@ -1098,11 +1098,12 @@ class JournalService
         $salesAccount = ChartOfAccount::where('account_code', '4100')->where('created_by', creatorId())->first();
         $taxAccount = ChartOfAccount::where('account_code', '2210')->where('created_by', creatorId())->first();
 
-        $totalAmount = $posSale->payment->discount_amount ?? 0;
         $subtotal = $posSale->items->sum('subtotal');
         $discount = $posSale->payment->discount ?? 0;
+        $taxAmount = $taxAmount;
+        $totalAmount = $subtotal - $discount + $taxAmount;
 
-        $this->validateBalance($totalAmount, $subtotal - $discount + $taxAmount);
+        $this->validateBalance($totalAmount, $totalAmount);
 
         $journalEntry = JournalEntry::create([
             'journal_date' => $posSale->pos_date ?? now(),
@@ -1148,6 +1149,93 @@ class JournalService
                 'created_by' => creatorId()
             ]);
         }
+
+        try {
+            UpdateBudgetSpending::dispatch($journalEntry);
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $this->updateAccountBalances($journalEntry);
+        return $journalEntry;
+    }
+
+    /**
+     * Creates journal entry for POS return: Dr: Sales Revenue + Tax, Cr: Cash/Bank
+     * Usage: ApprovePosReturnListener after POS return
+     */
+    public function approvePosReturnJournal($posReturn)
+    {
+        $bankGLAccount = BankAccount::where('id', $posReturn->originalPos->bank_account_id)->first()->glAccount;
+        if (!$bankGLAccount) {
+            throw new \Exception("Bank account must have a GL account assigned");
+        }
+
+        $posReturn->load(['items']);
+
+        $requiredAccounts = ['1010', '4100'];
+        if ($posReturn->tax_amount > 0) {
+            $requiredAccounts[] = '2210';
+        }
+        $this->validateAccounts($requiredAccounts);
+
+        $salesAccount = ChartOfAccount::where('account_code', '4100')->where('created_by', creatorId())->first();
+        $taxAccount = ChartOfAccount::where('account_code', '2210')->where('created_by', creatorId())->first();
+
+        $subtotal = $posReturn->subtotal ?? 0;
+        $discount = $posReturn->discount_amount ?? 0;
+        $taxAmount = $posReturn->tax_amount ?? 0;
+        $totalAmount = $subtotal - $discount + $taxAmount;
+
+        $this->validateBalance($totalAmount, $totalAmount);
+
+        $journalEntry = JournalEntry::create([
+            'journal_date' => $posReturn->return_date ?? now(),
+            'entry_type' => 'automatic',
+            'reference_type' => 'pos_return',
+            'reference_id' => $posReturn->id,
+            'description' => 'POS Return ' . $posReturn->return_number,
+            'total_debit' => $totalAmount,
+            'total_credit' => $totalAmount,
+            'status' => 'posted',
+            'creator_id' => Auth::id(),
+            'created_by' => creatorId()
+        ]);
+
+        // Debit: Sales Revenue (reduces revenue)
+        JournalEntryItem::create([
+            'journal_entry_id' => $journalEntry->id,
+            'account_id' => $salesAccount->id,
+            'description' => 'POS product return',
+            'debit_amount' => $subtotal - $discount,
+            'credit_amount' => 0,
+            'creator_id' => Auth::id(),
+            'created_by' => creatorId()
+        ]);
+
+        // Debit: Tax Payable (if tax exists)
+        if ($taxAmount > 0 && $taxAccount) {
+            JournalEntryItem::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $taxAccount->id,
+                'description' => 'Sales tax refunded',
+                'debit_amount' => $taxAmount,
+                'credit_amount' => 0,
+                'creator_id' => Auth::id(),
+                'created_by' => creatorId()
+            ]);
+        }
+
+        // Credit: Bank (refund to customer)
+        JournalEntryItem::create([
+            'journal_entry_id' => $journalEntry->id,
+            'account_id' => $bankGLAccount->id,
+            'description' => 'POS cash refund',
+            'debit_amount' => 0,
+            'credit_amount' => $totalAmount,
+            'creator_id' => Auth::id(),
+            'created_by' => creatorId()
+        ]);
 
         try {
             UpdateBudgetSpending::dispatch($journalEntry);
@@ -1280,6 +1368,77 @@ class JournalService
                 'journal_entry_id' => $journalEntry->id,
                 'account_id' => $inventoryAccount->id,
                 'description' => 'Inventory reduction',
+                'debit_amount' => 0,
+                'credit_amount' => $totalCost,
+                'creator_id' => Auth::id(),
+                'created_by' => creatorId()
+            ]);
+
+            $this->updateAccountBalances($journalEntry);
+            return $journalEntry;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Creates COGS reversal journal entry for POS return: Dr: Inventory, Cr: COGS
+     * Usage: ApprovePosReturnListener after creating POS return
+     */
+    public function approvePosReturnCOGSJournal($posReturn)
+    {
+        try {
+            $posReturn->load('items.product');
+            $totalCost = 0;
+
+            foreach ($posReturn->items as $item) {
+                if (!$item->product) {
+                    continue;
+                }
+                $costPrice = $item->product->purchase_price ?? 0;
+                $totalCost += $item->return_quantity * $costPrice;
+            }
+
+            if ($totalCost <= 0.01) {
+                return null;
+            }
+
+            $this->validateAccounts(['5100', '1200']);
+
+            $cogsAccount = ChartOfAccount::where('account_code', '5100')->where('created_by', creatorId())->first();
+            $inventoryAccount = ChartOfAccount::where('account_code', '1200')->where('created_by', creatorId())->first();
+
+            $this->validateBalance($totalCost, $totalCost);
+
+            $journalEntry = JournalEntry::create([
+                'journal_date' => $posReturn->return_date ?? now(),
+                'entry_type' => 'automatic',
+                'reference_type' => 'pos_return_cogs',
+                'reference_id' => $posReturn->id,
+                'description' => 'COGS Reversal for POS Return ' . $posReturn->return_number,
+                'total_debit' => $totalCost,
+                'total_credit' => $totalCost,
+                'status' => 'posted',
+                'creator_id' => Auth::id(),
+                'created_by' => creatorId()
+            ]);
+
+            // Debit: Inventory (goods returned)
+            JournalEntryItem::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $inventoryAccount->id,
+                'description' => 'Inventory returned',
+                'debit_amount' => $totalCost,
+                'credit_amount' => 0,
+                'creator_id' => Auth::id(),
+                'created_by' => creatorId()
+            ]);
+
+            // Credit: COGS (reversal)
+            JournalEntryItem::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $cogsAccount->id,
+                'description' => 'COGS reversal',
                 'debit_amount' => 0,
                 'credit_amount' => $totalCost,
                 'creator_id' => Auth::id(),
@@ -2701,6 +2860,68 @@ class JournalService
             'description' => 'Payment from petty cash',
             'debit_amount' => 0,
             'credit_amount' => $pettyCash->added_amount,
+            'creator_id' => Auth::id(),
+            'created_by' => creatorId()
+        ]);
+
+        try {
+            UpdateBudgetSpending::dispatch($journalEntry);
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $this->updateAccountBalances($journalEntry);
+        return $journalEntry;
+    }
+
+    /**
+     * Creates journal entry for project payment: Dr: Bank, Cr: A/R
+     * Usage: ProjectPaymentController->post() after posting payment
+     */
+    public function createProjectPaymentJournal($projectPayment)
+    {
+        $bankGLAccount = $projectPayment->bankAccount->glAccount;
+        if (!$bankGLAccount) {
+            throw new \Exception("Bank account must have a GL account assigned");
+        }
+
+        $this->validateAccounts(['4200']);
+        $arAccount = ChartOfAccount::where('account_code', '4200')->where('created_by', creatorId())->first();
+
+        // Validate amounts balance
+        $this->validateBalance($projectPayment->total_amount, $projectPayment->total_amount);
+
+        $journalEntry = JournalEntry::create([
+            'journal_date' => $projectPayment->payment_date ?? now(),
+            'entry_type' => 'automatic',
+            'reference_type' => 'project_payment',
+            'reference_id' => $projectPayment->id,
+            'description' => 'Project Payment #' . $projectPayment->payment_number . ' - ' . $projectPayment->project->name,
+            'total_debit' => $projectPayment->total_amount,
+            'total_credit' => $projectPayment->total_amount,
+            'status' => 'posted',
+            'creator_id' => Auth::id(),
+            'created_by' => creatorId()
+        ]);
+
+        // Debit: Specific Bank Account (from GL Account)
+        JournalEntryItem::create([
+            'journal_entry_id' => $journalEntry->id,
+            'account_id' => $bankGLAccount->id,
+            'description' => 'Project payment received from ' . $projectPayment->customer->name,
+            'debit_amount' => $projectPayment->total_amount,
+            'credit_amount' => 0,
+            'creator_id' => Auth::id(),
+            'created_by' => creatorId()
+        ]);
+
+        // Credit: Accounts Receivable
+        JournalEntryItem::create([
+            'journal_entry_id' => $journalEntry->id,
+            'account_id' => $arAccount->id,
+            'description' => 'Project payment - ' . $projectPayment->project->name,
+            'debit_amount' => 0,
+            'credit_amount' => $projectPayment->total_amount,
             'creator_id' => Auth::id(),
             'created_by' => creatorId()
         ]);

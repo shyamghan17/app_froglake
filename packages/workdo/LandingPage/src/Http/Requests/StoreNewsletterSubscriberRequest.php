@@ -21,9 +21,9 @@ class StoreNewsletterSubscriberRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => 'Email address is required.',
-            'email.email' => 'Please enter a valid email address.',
-            'email.unique' => 'This email is already subscribed to our newsletter.',
+            'email.required' => __('Email address is required.'),
+            'email.email' => __('Please enter a valid email address.'),
+            'email.unique' => __('This email is already subscribed to our newsletter.'),
         ];
     }
 }

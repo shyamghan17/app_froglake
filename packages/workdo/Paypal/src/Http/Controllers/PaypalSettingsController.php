@@ -23,7 +23,8 @@ class PaypalSettingsController extends Controller
             } catch (\Exception $e) {
                 return redirect()->back()->with('error', __('Failed to update PayPal settings: ') . $e->getMessage());
             }           
+        } else {
+            return back()->with('error', __('Permission denied'));
         }
-        return back()->with('error', __('Permission denied'));
     }
 }

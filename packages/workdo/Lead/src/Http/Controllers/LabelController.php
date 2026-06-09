@@ -94,6 +94,4 @@ class LabelController extends Controller
             return back()->with('error', __('Permission denied'));
         }
     }
-
-
 }

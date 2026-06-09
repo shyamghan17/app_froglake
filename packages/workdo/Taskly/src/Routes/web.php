@@ -7,6 +7,7 @@ use Workdo\Taskly\Http\Controllers\ProjectTaskController;
 use Workdo\Taskly\Http\Controllers\TaskStageController;
 use Workdo\Taskly\Http\Controllers\BugStageController;
 use Workdo\Taskly\Http\Controllers\ProjectBugController;
+use Workdo\Taskly\Http\Controllers\ProjectPaymentController;
 use Workdo\Taskly\Http\Controllers\ProjectReportController;
 
 // API Routes for other packages
@@ -31,8 +32,8 @@ Route::middleware(['web', 'auth', 'verified', 'PlanModuleCheck:Taskly'])->group(
     Route::get('/project/{project}/tasks/api', [ProjectTaskController::class, 'getTasks'])->name('project.tasks.api');
 
     // Project report routes
-    Route::get('/project/report', [ProjectReportController::class, 'index'])->name('project.report.index');
-    Route::get('/project/report/{id}', [ProjectReportController::class, 'show'])->name('project.report.show');
+    Route::get('/projects/report', [ProjectReportController::class, 'index'])->name('project.report.index');
+    Route::get('/projects/report/{id}', [ProjectReportController::class, 'show'])->name('project.report.show');
     // Task comments and subtasks
     Route::get('/project/tasks/{task}/comments', [ProjectTaskController::class, 'getComments'])->name('project.tasks.comments.index');
     Route::post('/project/tasks/{task}/comments', [ProjectTaskController::class, 'storeComment'])->name('project.tasks.comments.store');
@@ -86,4 +87,18 @@ Route::middleware(['web', 'auth', 'verified', 'PlanModuleCheck:Taskly'])->group(
     Route::put('/project/bug-stages/reorder', [BugStageController::class, 'reorder'])->name('project.bug-stages.reorder');
     Route::put('/project/bug-stages/{bugStage}', [BugStageController::class, 'update'])->name('project.bug-stages.update');
     Route::delete('/project/bug-stages/{bugStage}', [BugStageController::class, 'destroy'])->name('project.bug-stages.destroy');
+
+    // Project Payment routes
+    Route::prefix('project-payments')->name('project-payments.')->group(function () {
+        Route::get('/get-project-milestones', [ProjectPaymentController::class, 'getProjectMilestones'])->name('get-milestones');
+        Route::get('/', [ProjectPaymentController::class, 'index'])->name('index');
+        Route::get('/create', [ProjectPaymentController::class, 'create'])->name('create');
+        Route::post('/', [ProjectPaymentController::class, 'store'])->name('store');
+        Route::get('/{projectPayment}', [ProjectPaymentController::class, 'show'])->name('show');
+        Route::get('/{projectPayment}/edit', [ProjectPaymentController::class, 'edit'])->name('edit');
+        Route::put('/{projectPayment}', [ProjectPaymentController::class, 'update'])->name('update');
+        Route::delete('/{projectPayment}', [ProjectPaymentController::class, 'destroy'])->name('destroy');
+        Route::post('/{projectPayment}/post', [ProjectPaymentController::class, 'post'])->name('post');
+        Route::get('/{projectPayment}/print', [ProjectPaymentController::class, 'print'])->name('print');
+    });
 });

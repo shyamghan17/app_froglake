@@ -14,11 +14,7 @@ class DemoLeadProductSourceSeeder extends Seeder
     {
         if (!empty($userId)) {
             $sourceIds = Source::where('created_by', $userId)->pluck('id')->toArray();
-            $productIds = [];
-
-            if (Module_is_active('ProductService')) {
-                $productIds = ProductServiceItem::where('created_by', $userId)->pluck('id')->toArray();
-            }
+            $productIds = ProductServiceItem::where('created_by', $userId)->pluck('id')->toArray();
 
             // Add random sources/products to existing assignments for leads
             $leads = Lead::where('created_by', $userId)->get();

@@ -77,10 +77,10 @@ class ComplaintTypeController extends Controller
 
             UpdateComplaintType::dispatch($request, $complainttype);
 
-            return redirect()->route('hrm.complaint-types.index')->with('success', __('The complaint type details are updated successfully.'));
+            return back()->with('success', __('The complaint type details are updated successfully.'));
         }
         else{
-            return redirect()->route('hrm.complaint-types.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 
@@ -90,10 +90,10 @@ class ComplaintTypeController extends Controller
             DestroyComplaintType::dispatch($complainttype);
             $complainttype->delete();
 
-            return redirect()->route('hrm.complaint-types.index')->with('success', __('The complaint type has been deleted.'));
+            return back()->with('success', __('The complaint type has been deleted.'));
         }
         else{
-            return redirect()->route('hrm.complaint-types.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 

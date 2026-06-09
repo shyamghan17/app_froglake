@@ -12,7 +12,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TranslationController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\BankTransferPaymentController;
-
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\CouponController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +31,8 @@ use App\Http\Controllers\SalesInvoiceController;
 use App\Http\Controllers\SalesProposalController;
 use App\Http\Controllers\SalesReturnController;
 use App\Http\Controllers\MetaController;
+use App\Http\Controllers\AIAgentChatPageController;
+use App\Http\Controllers\AIAgentChatController;
 use Inertia\Inertia;
 
 
@@ -91,6 +93,7 @@ Route::middleware(['auth', 'verified', 'PlanModuleCheck'])->group(function () {
 
     // Helpdesk Routes
     Route::resource('helpdesk-categories', HelpdeskCategoryController::class);
+    Route::get('helpdesk-ticket/today', [HelpdeskTicketController::class, 'today'])->name('helpdesk-tickets.today');
     Route::resource('helpdesk-tickets', HelpdeskTicketController::class);
 
     // Helpdesk Replies (AJAX endpoints)
@@ -130,6 +133,8 @@ Route::middleware(['auth', 'verified', 'PlanModuleCheck'])->group(function () {
     Route::post('settings/email/test', [SettingController::class, 'testEmail'])->name('settings.email.test');
     Route::post('settings/pusher', [SettingController::class, 'updatePusherSettings'])->name('settings.pusher.update');
     Route::post('settings/bank-transfer', [SettingController::class, 'updateBankTransferSettings'])->name('settings.bank-transfer.update');
+    Route::post('settings/ai-agent', [SettingController::class, 'updateAIAgentSettings'])->name('settings.ai-agent.update');
+    Route::get('settings/ai-agent/providers', [SettingController::class, 'getAIAgentProviders'])->name('settings.ai-agent.providers');
     Route::post('email-notification-settings-save', [SettingController::class, 'mailNotificationStore'])->name('email.notification.setting.store');
 
     // Bank Transfer Payment routes
@@ -187,6 +192,16 @@ Route::middleware(['auth', 'verified', 'PlanModuleCheck'])->group(function () {
     Route::get('/messenger/pinned', [MessengerController::class, 'getPinned'])->name('messenger.pinned');
     Route::get('/messenger/check-new-messages', [MessengerController::class, 'checkNewMessages'])->name('messenger.check-new-messages');
 
+    // AI Agent routes
+    Route::prefix('ai-agent')->name('ai-agent.')->group(function () {
+        Route::get('/chat-page', [AIAgentChatPageController::class, 'index'])->name('chat.page');
+        Route::post('/chat', [AIAgentChatController::class, 'chat'])->name('chat');
+        Route::get('/sessions', [AIAgentChatPageController::class, 'getSessions'])->name('sessions.index');
+        Route::post('/sessions', [AIAgentChatPageController::class, 'createSession'])->name('sessions.store');
+        Route::delete('/sessions/{session}', [AIAgentChatPageController::class, 'destroySession'])->name('sessions.destroy');
+        Route::get('/sessions/{session}/messages', [AIAgentChatPageController::class, 'getMessages'])->name('sessions.messages');
+    });
+
     // Media Library API routes
     Route::get('media-library', [MediaController::class, 'page'])->name('media-library');
     Route::get('media', [MediaController::class, 'index'])->name('media.index');
@@ -196,6 +211,12 @@ Route::middleware(['auth', 'verified', 'PlanModuleCheck'])->group(function () {
     Route::put('media/directories/{id}', [MediaController::class, 'updateDirectory'])->name('media.directories.update');
     Route::delete('media/directories/{id}', [MediaController::class, 'destroyDirectory'])->name('media.directories.destroy');
     Route::patch('media/{id}/directory', [MediaController::class, 'updateMediaDirectory'])->name('media.directory.update');
+});
+
+Route::get('/storage-link', function () {
+    Artisan::call('storage:unlink');
+    Artisan::call('storage:link');
+    return 'done';
 });
 
 Route::get('/translations/{locale}', [TranslationController::class, 'getTranslations'])->name('languages.translations');

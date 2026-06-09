@@ -46,8 +46,6 @@ class WarningTypeController extends Controller
         if(Auth::user()->can('create-warning-types')){
             $validated = $request->validated();
 
-
-
             $warningtype = new WarningType();
             $warningtype->warning_type_name = $validated['warning_type_name'];
 
@@ -77,10 +75,10 @@ class WarningTypeController extends Controller
 
             UpdateWarningType::dispatch($request, $warningtype);
 
-            return redirect()->route('hrm.warning-types.index')->with('success', __('The warning type details are updated successfully.'));
+            return back()->with('success', __('The warning type details are updated successfully.'));
         }
         else{
-            return redirect()->route('hrm.warning-types.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 
@@ -90,10 +88,10 @@ class WarningTypeController extends Controller
             DestroyWarningType::dispatch($warningtype);
             $warningtype->delete();
 
-            return redirect()->route('hrm.warning-types.index')->with('success', __('The warning type has been deleted.'));
+            return back()->with('success', __('The warning type has been deleted.'));
         }
         else{
-            return redirect()->route('hrm.warning-types.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 

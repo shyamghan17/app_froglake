@@ -11,15 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('media_directories', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->foreignId('parent_id')->nullable()->constrained('media_directories')->onDelete('cascade');
-            $table->foreignId('creator_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
-            $table->timestamps();
-        });
+        if(!Schema::hasTable('media_directories'))
+        {
+            Schema::create('media_directories', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->string('slug')->unique();
+                $table->foreignId('parent_id')->nullable()->constrained('media_directories')->onDelete('cascade');
+                $table->foreignId('creator_id')->constrained('users')->onDelete('cascade');
+                $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
+                $table->timestamps();
+            });
+        }
     }
 
     /**

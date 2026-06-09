@@ -14,10 +14,13 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         $typeRule = auth()->user()->type === 'superadmin' ? 'nullable' : 'required|exists:roles,id';
-        
         return [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => [
+                'required',
+                'email',
+                'unique:users,email,NULL,id,created_by,' . creatorId()
+            ],
             'mobile_no' => 'nullable|string|regex:/^\+\d{1,3}\d{9,13}$/',
             'password' => 'required|confirmed|min:6',
             'type' => $typeRule,

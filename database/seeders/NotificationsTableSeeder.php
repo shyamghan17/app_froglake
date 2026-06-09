@@ -19,6 +19,9 @@ class NotificationsTableSeeder extends Seeder
             'Purchase Invoice Return',
             'Helpdesk Ticket',
             'Helpdesk Ticket Reply',
+            'Proposal Sent',
+            'Proposal Approval',
+            'Plan Purchase',
         ];
 
         $permissions = [
@@ -30,6 +33,9 @@ class NotificationsTableSeeder extends Seeder
             'manage-purchase-return-invoices',
             'manage-email-helpdesk-tickets',
             'manage-email-helpdesk-replies',
+            'sent-sales-proposals',
+            'accept-sales-proposals',
+            'manage-email-plan-purchases',
         ];
         
         foreach($notifications as $key=>$n){

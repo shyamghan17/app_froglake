@@ -57,18 +57,13 @@ use Workdo\Lead\Events\LeadAddEmail;
 use Workdo\Lead\Events\LeadConvertDeal;
 use Workdo\Lead\Models\Source;
 use App\Events\CreateUser;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+
 class LeadController extends Controller
 {
     public function index()
     {
         if (Auth::user()->can('manage-leads')) {
-            $sortable = ['name', 'email', 'subject', 'date', 'created_at', 'is_active'];
-            $sort = request('sort');
-            $direction = strtolower(request('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
-            if (!in_array($sort, $sortable, true)) {
-                $sort = null;
-            }
-
             // Get user's default pipeline or first available pipeline
             $usr = Auth::user();
             $defaultPipelineId = null;
@@ -86,42 +81,31 @@ class LeadController extends Controller
                 $defaultPipelineId = $pipeline ? $pipeline->id : null;
             }
 
-            $applyLeadVisibility = function ($q) {
-                if (Auth::user()->can('manage-any-leads')) {
-                    return;
-                }
-                if (Auth::user()->can('manage-own-leads')) {
-                    $q->where(function ($subQ) {
-                        $subQ->where('creator_id', Auth::id())
-                            ->orWhereHas('userLeads', function ($leadQ) {
-                                $leadQ->where('user_id', Auth::id());
-                            });
-                    });
-                    return;
-                }
-                $q->whereRaw('1 = 0');
-            };
-
             $leads = Lead::with(['stage', 'user', 'userLeads.user'])
                 ->withCount(['tasks', 'complete_tasks'])
-                ->where('created_by', creatorId())
-                ->where(function ($q) use ($applyLeadVisibility) {
-                    $applyLeadVisibility($q);
+                ->where(function ($q) {
+                    if (Auth::user()->can('manage-any-leads')) {
+                        $q->where('created_by', creatorId());
+                    } elseif (Auth::user()->can('manage-own-leads')) {
+                        $q->where('created_by', creatorId())
+                          ->where(function($subQ) {
+                              $subQ->where('creator_id', Auth::id())
+                                   ->orWhereHas('userLeads', function($leadQ) {
+                                       $leadQ->where('user_id', Auth::id());
+                                   });
+                          });
+                    } else {
+                        $q->whereRaw('1 = 0');
+                    }
                 })
                 ->when(request('name'), function ($q) {
                     $q->where(function ($query) {
                         $query->where('name', 'like', '%' . request('name') . '%');
-                        $query->orWhere('company_name', 'like', '%' . request('name') . '%');
                         $query->orWhere('email', 'like', '%' . request('name') . '%');
                         $query->orWhere('subject', 'like', '%' . request('name') . '%');
                     });
                 })
-                ->when(request('email') && request('email') !== '', fn($q) => $q->where('email', 'like', '%' . request('email') . '%'))
-                ->when(request('subject') && request('subject') !== '', fn($q) => $q->where('subject', 'like', '%' . request('subject') . '%'))
                 ->when(request('is_active') !== null && request('is_active') !== '', fn($q) => $q->where('is_active', request('is_active') === '1' ? 1 : 0))
-                ->when(request('category') && request('category') !== '', fn($q) => $q->where('category', request('category')))
-                ->when(request('lead_status') && request('lead_status') !== '', fn($q) => $q->where('lead_status', request('lead_status')))
-                ->when(request('is_live') !== null && request('is_live') !== '', fn($q) => $q->where('is_live', request('is_live') === '1' ? 1 : 0))
                 ->when(request('user_id') && request('user_id') !== '', fn($q) => $q->where('user_id', request('user_id')))
                 ->when(request('pipeline_id') && request('pipeline_id') !== '', fn($q) => $q->where('pipeline_id', request('pipeline_id')), function($q) use ($defaultPipelineId) {
                     // If no pipeline_id in request, use default pipeline
@@ -130,7 +114,9 @@ class LeadController extends Controller
                     }
                 })
                 ->when(request('stage_id') && request('stage_id') !== '', fn($q) => $q->where('stage_id', request('stage_id')))
-                ->when($sort, fn($q) => $q->orderBy($sort, $direction), fn($q) => $q->latest())
+                ->when(request('date_from'), fn($q) => $q->whereDate('date', '>=', request('date_from')))
+                ->when(request('date_to'), fn($q) => $q->whereDate('date', '<=', request('date_to')))
+                ->when(request('sort'), fn($q) => $q->orderBy(request('sort'), request('direction', 'asc')), fn($q) => $q->latest())
                 ->paginate(request('per_page', 10))
                 ->withQueryString();
 
@@ -140,28 +126,14 @@ class LeadController extends Controller
                 ->get();
 
             $pipelines = Pipeline::where('created_by', creatorId())->select('id', 'name')->get();
-            $stages = LeadStage::where('created_by', creatorId())->select('id', 'name', 'pipeline_id')->get();
+            $activePipelineId = request('pipeline_id') ?: $defaultPipelineId;
+            $stages = LeadStage::where('created_by', creatorId())
+                ->when($activePipelineId, fn($q) => $q->where('pipeline_id', $activePipelineId))
+                ->select('id', 'name', 'pipeline_id')
+                ->get();
             $labels = Label::with('pipeline')->where('created_by', creatorId())->select('id', 'name', 'color', 'pipeline_id')->get();
             $sources = Source::where('created_by', creatorId())->get(['id', 'name']);
             $products = module_is_active('ProductService') ? ProductServiceItem::where('created_by', creatorId())->get(['id', 'name']) : [];
-            $filterCategoriesQuery = Lead::where('created_by', creatorId());
-            $applyLeadVisibility($filterCategoriesQuery);
-            $filterCategories = $filterCategoriesQuery
-                ->whereNotNull('category')
-                ->where('category', '!=', '')
-                ->distinct()
-                ->orderBy('category')
-                ->pluck('category')
-                ->values();
-            $filterLeadStatusesQuery = Lead::where('created_by', creatorId());
-            $applyLeadVisibility($filterLeadStatusesQuery);
-            $filterLeadStatuses = $filterLeadStatusesQuery
-                ->whereNotNull('lead_status')
-                ->where('lead_status', '!=', '')
-                ->distinct()
-                ->orderBy('lead_status')
-                ->pluck('lead_status')
-                ->values();
             return Inertia::render('Lead/Leads/Index', [
                 'leads' => $leads,
                 'users' => $users,
@@ -170,8 +142,6 @@ class LeadController extends Controller
                 'labels' => $labels,
                 'sources' => $sources,
                 'products' => $products,
-                'filterCategories' => $filterCategories,
-                'filterLeadStatuses' => $filterLeadStatuses,
                 'currentPipelineId' => request('pipeline_id') ?: $defaultPipelineId,
             ]);
         } else {
@@ -196,8 +166,9 @@ class LeadController extends Controller
             } else {
                 $pipeline = $pipelines->first();
             }
+            
             if (!empty($pipeline)) {
-                $stage = LeadStage::where('pipeline_id', '=', $pipeline->id)->where('created_by', creatorId())->first();
+                $stage = LeadStage::where('pipeline_id', '=', $pipeline->id)->first();
             } else {
                 return redirect()->route('lead.leads.index')->with('error', __('Please create pipeline.'));
             }
@@ -206,7 +177,6 @@ class LeadController extends Controller
             } else {
                 $lead                 = new Lead();
                 $lead->name           = $request->name;
-                $lead->company_name   = $request->company_name;
                 $lead->email          = $request->email;
                 $lead->subject        = $request->subject;
                 $lead->user_id        = $request->user_id;
@@ -214,15 +184,6 @@ class LeadController extends Controller
                 $lead->stage_id       = $stage->id;
                 $lead->phone          = $request->phone;
                 $lead->date           = $request->date;
-                $lead->website        = $request->website;
-                $lead->category       = $request->category;
-                $lead->address        = $request->address;
-                $lead->district       = $request->district;
-                $lead->province       = $request->province;
-                $lead->remarks        = $request->remarks;
-                $lead->is_live        = $request->boolean('is_live');
-                $lead->company_pan    = $request->company_pan;
-                $lead->lead_status    = $request->lead_status;
                 $lead->creator_id     = Auth::id();
                 $lead->created_by     = creatorId();
                 $lead->save();
@@ -252,21 +213,20 @@ class LeadController extends Controller
             }
             CreateLead::dispatch($request, $lead);
 
-            $resp = ['is_success' => true, 'error' => ''];
-            if (!empty(company_setting('Lead Assigned')) && company_setting('Lead Assigned')  == true) {
-                $lArr    = [
-                    'lead_name' => $lead->name,
-                    'lead_email' => $lead->email,
+            if (company_setting('Lead Assign') == 'on') {
+                $emailData = [
+                    'lead_name'     => $lead->name,
+                    'lead_email'    => $lead->email,
                     'lead_pipeline' => $pipeline->name,
-                    'lead_stage' => $stage->name,
+                    'lead_stage'    => $stage->name,
                 ];
-                $usrEmail = User::find($request->user_id);
-                if($usrEmail){
-                    // Send Email
-                    $resp = EmailTemplate::sendEmailTemplate('Lead Assigned', [$usrEmail->id => $usrEmail->email], $lArr);
+                $assignedUsers = User::whereIn('id', $usrLeads)->get()->pluck('email', 'id')->toArray();
+                if (!empty($assignedUsers)) {
+                    EmailTemplate::sendEmailTemplate('Lead Assign', $assignedUsers, $emailData);
                 }
             }
-            return redirect()->route('lead.leads.index')->with('success', __('The lead has been created successfully.') . (($resp['is_success'] == false && !empty($resp['error'])) ? '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
+
+            return redirect()->route('lead.leads.index')->with('success', __('The lead has been created successfully.'));
         } else {
             return redirect()->route('lead.leads.index')->with('error', __('Permission denied'));
         }
@@ -274,58 +234,78 @@ class LeadController extends Controller
 
     public function show(Lead $lead)
     {
-        try {
-            if (Auth::user()->can('view-leads') && $lead->created_by == creatorId()) {
-                if(!Auth::user()->can('manage-any-leads') && $lead->creator_id != Auth::id())
+        if (Auth::user()->can('view-leads') && $lead->created_by == creatorId()) {
+            if(!Auth::user()->can('manage-any-leads') && $lead->creator_id != Auth::id())
+            {
+                if (Auth::user()->can('manage-own-leads'))
                 {
-                    if (Auth::user()->can('manage-own-leads'))
-                    {
-                        $hasAccess = false;
+                    $hasAccess = false;
 
-                        // Check if user is assigned to this lead
-                        if ($lead->userLeads()->where('user_id', Auth::id())->exists()) {
-                            $hasAccess = true;
-                        }
-
-                        if (!$hasAccess) {
-                            return redirect()->route('lead.leads.index')->with('error', __('Permission denied'));
-                        }
+                    // Check if user is assigned to this lead
+                    if ($lead->userLeads()->where('user_id', Auth::id())->exists()) {
+                        $hasAccess = true;
                     }
-                    else {
+
+                    if (!$hasAccess) {
                         return redirect()->route('lead.leads.index')->with('error', __('Permission denied'));
                     }
                 }
-
-                $lead = Lead::with([
-                    'stage',
-                    'pipeline',
-                    'user',
-                    'userLeads' => function ($query) {
-                        $query->with('user:id,name,avatar');
-                    },
-                    'tasks',
-                    'emails',
-                    'discussions.creator:id,name',
-                    'files',
-                    'calls',
-                    'activities.user:id,name'
-                ])->find($lead->id);
-                $deal = null;
-                if ($lead->is_converted) {
-                    $deal = Deal::where('id', '=', $lead->is_converted)->first();
+                else {
+                    return redirect()->route('lead.leads.index')->with('error', __('Permission denied'));
                 }
-                return Inertia::render('Lead/Leads/Show/Index', [
-                    'lead' => $lead,
-                    'deal' => $deal ? [
-                        'id' => $deal->id,
-                        'is_active' => $deal->status === 'Active'
-                    ] : null
-                ]);
-            } else {
-                return redirect()->route('lead.leads.index')->with('error', __('Permission denied'));
             }
-        } catch (\Exception $e) {
-            return back()->with('error', __('Lead not found'));
+
+            $lead = Lead::with([
+                'stage',
+                'pipeline',
+                'user',
+                'userLeads' => function ($query) {
+                    $query->with('user:id,name,avatar');
+                },
+                'tasks' => function ($query) {
+                    $query->latest();
+                },
+                'emails',
+                'discussions.creator:id,name',
+                'files',
+                'calls',
+                'activities.user:id,name'
+            ])->find($lead->id);
+
+            $productItems = [];
+            if ($lead->products) {
+                $productIds = array_filter(array_map('trim', explode(',', $lead->products)));
+                if (!empty($productIds) && module_is_active('ProductService')) {
+                    $productItems = ProductServiceItem::whereIn('id', $productIds)
+                        ->get(['id', 'name'])
+                        ->toArray();
+                }
+            }
+
+            $sourceItems = [];
+            if ($lead->sources) {
+                $sourceIds = array_filter(array_map('trim', explode(',', $lead->sources)));
+                if (!empty($sourceIds)) {
+                    $sourceItems = Source::whereIn('id', $sourceIds)
+                        ->get(['id', 'name'])
+                        ->toArray();
+                }
+            }
+            $deal = null;
+            if ($lead->is_converted) {
+                $deal = Deal::where('id', '=', $lead->is_converted)->first();
+            }
+            return Inertia::render('Lead/Leads/Show/Index', [
+                'lead' => $lead,
+                'productItems' => $productItems,
+                'sourceItems' => $sourceItems,
+                'deal' => $deal ? [
+                    'id' => $deal->id,
+                    'is_active' => $deal->status === 'Active'
+                ] : null
+            ]);
+        } else {
+            return redirect()->route('lead.leads.index')->with('error', __('Permission denied'));
         }
     }
 
@@ -360,92 +340,50 @@ class LeadController extends Controller
                 ]);
             }
         }
-        return response()->json(['error' => 'Permission denied'], 403);
+        return response()->json(['error' => __('Permission denied')], 403);
     }
 
     public function update(UpdateLeadRequest $request, Lead $lead)
     {
-        try {
-            if (Auth::user()->can('edit-leads')) {
-                if ($lead->created_by != creatorId()) {
-                    return back()->with('error', __('Permission denied'));
-                }
-                $validated = $request->validated();
-                $validated['is_active'] = $request->boolean('is_active', true);
+        if (Auth::user()->can('edit-leads')) {
+            $validated = $request->validated();
+            $validated['is_active'] = $request->boolean('is_active', true);
 
-                if (array_key_exists('pipeline_id', $validated) && $validated['pipeline_id']) {
-                    $pipeline = Pipeline::where('id', $validated['pipeline_id'])->where('created_by', creatorId())->first();
-                    if (!$pipeline) {
-                        return back()->with('error', __('Permission denied'));
-                    }
-                }
-                if (array_key_exists('stage_id', $validated) && $validated['stage_id']) {
-                    $stageQuery = LeadStage::where('id', $validated['stage_id'])->where('created_by', creatorId());
-                    if (array_key_exists('pipeline_id', $validated) && $validated['pipeline_id']) {
-                        $stageQuery->where('pipeline_id', $validated['pipeline_id']);
-                    } else {
-                        $stageQuery->where('pipeline_id', $lead->pipeline_id);
-                    }
-                    $stage = $stageQuery->first();
-                    if (!$stage) {
-                        return back()->with('error', __('Permission denied'));
-                    }
-                }
 
-                $lead->name        = $validated['name'];
-                $lead->company_name = $validated['company_name'] ?? $lead->company_name;
-                $lead->email       = $validated['email'];
-                $lead->subject     = $validated['subject'];
-                $lead->user_id     = $validated['user_id'];
-                $lead->phone       = $validated['phone'];
-                $lead->date        = $validated['date'];
-                $lead->website     = $validated['website'] ?? $lead->website;
-                $lead->category       = $validated['category'] ?? $lead->category;
-                $lead->address        = $validated['address'] ?? $lead->address;
-                $lead->district       = $validated['district'] ?? $lead->district;
-                $lead->province       = $validated['province'] ?? $lead->province;
-                $lead->remarks        = $validated['remarks'] ?? $lead->remarks;
-                $lead->is_live        = array_key_exists('is_live', $validated) ? (bool) $validated['is_live'] : $lead->is_live;
-                $lead->company_pan    = $validated['company_pan'] ?? $lead->company_pan;
-                $lead->lead_status    = $validated['lead_status'] ?? $lead->lead_status;
-                $lead->pipeline_id = $validated['pipeline_id'] ?? $lead->pipeline_id;
-                $lead->stage_id    = $validated['stage_id'] ?? $lead->stage_id;
-                $lead->sources     = is_array($validated['sources']) ? (empty($validated['sources']) ? null : implode(',', array_filter($validated['sources']))) : ($validated['sources'] ?? $lead->sources);
-                $lead->products    = is_array($validated['products']) ? (empty($validated['products']) ? null : implode(',', array_filter($validated['products']))) : ($validated['products'] ?? $lead->products);
-                $lead->notes       = $validated['notes'] ?? $lead->notes;
-                $lead->labels      = $request->input('labels', $lead->labels);
-                $lead->save();
+            $lead->name        = $validated['name'];
+            $lead->email       = $validated['email'];
+            $lead->subject     = $validated['subject'];
+            $lead->user_id     = $validated['user_id'];
+            $lead->phone       = $validated['phone'];
+            $lead->date        = $validated['date'];
+            $lead->pipeline_id = $validated['pipeline_id'] ?? $lead->pipeline_id;
+            $lead->stage_id    = $validated['stage_id'] ?? $lead->stage_id;
+            $lead->sources     = array_key_exists('sources', $validated) ? (is_array($validated['sources']) ? (empty($validated['sources']) ? null : implode(',', array_filter($validated['sources']))) : ($validated['sources'] ?? $lead->sources)) : $lead->sources;
+            $lead->products    = array_key_exists('products', $validated) ? (is_array($validated['products']) ? (empty($validated['products']) ? null : implode(',', array_filter($validated['products']))) : ($validated['products'] ?? $lead->products)) : $lead->products;
+            $lead->notes       = $validated['notes'] ?? $lead->notes;
+            $lead->labels      = $request->input('labels', $lead->labels);
+            $lead->save();
 
-                UpdateLead::dispatch($request, $lead);
+            UpdateLead::dispatch($request, $lead);
 
-                return back()->with('success', __('The lead details are updated successfully.'));
-            } else {
-                return back()->with('error', __('Permission denied'));
-            }
-        } catch (\Exception $e) {
-            return back()->with('error', __('Lead not found'));
+            return back()->with('success', __('The lead details are updated successfully.'));
+        } else {
+            return back()->with('error', __('Permission denied'));
         }
     }
 
     public function destroy(Lead $lead)
     {
-        try {
-            if (Auth::user()->can('delete-leads')) {
-                if ($lead->created_by != creatorId()) {
-                    return back()->with('error', __('Permission denied'));
-                }
-                DestroyLead::dispatch($lead);
+        if (Auth::user()->can('delete-leads')) {
+            DestroyLead::dispatch($lead);
 
-                LeadActivityLog::where('lead_id', '=', $lead->id)->delete();
+            LeadActivityLog::where('lead_id', '=', $lead->id)->delete();
 
-                $lead->delete();
+            $lead->delete();
 
-                return back()->with('success', __('The lead has been deleted.'));
-            } else {
-                return back()->with('error', __('Permission denied'));
-            }
-        } catch (\Exception $e) {
-            return back()->with('error', __('Lead not found'));
+            return back()->with('success', __('The lead has been deleted.'));
+        } else {
+            return back()->with('error', __('Permission denied'));
         }
     }
 
@@ -462,10 +400,10 @@ class LeadController extends Controller
     public function updateLabels(Request $request, $id)
     {
         if (Auth::user()->can('edit-leads')) {
-            $leads = Lead::where('id', $id)->where('created_by', creatorId())->first();
+            $leads = Lead::find($id);
             $creatorId = creatorId();
 
-            if ($leads && $leads->created_by == $creatorId) {
+            if ($leads->created_by == $creatorId) {
                 if ($request->labels) {
                     $leads->labels = is_array($request->labels) ? implode(',', $request->labels) : $request->labels;
                 } else {
@@ -484,10 +422,7 @@ class LeadController extends Controller
 
     public function getAvailableUsers(Lead $lead)
     {
-        if (Auth::user()->can('view-leads')) {
-            if ($lead->created_by != creatorId()) {
-                return response()->json(['error' => 'Permission denied'], 403);
-            }
+        if (Auth::user()->can('manage-lead-users')) {
             $users = User::where('created_by', '=', creatorId())
                 ->emp([],['vendor'])
                 ->whereNotIn('id', function ($q) use ($lead) {
@@ -498,16 +433,19 @@ class LeadController extends Controller
 
             return response()->json($users);
         }else{
-            return response()->json(['error' => 'Permission denied'], 403);
+            return response()->json(['error' => __('Permission denied')], 403);
         }
     }
 
     public function assignUsers(AssignUsersRequest $request, Lead $lead)
     {
-        if (Auth::user()->can('edit-leads')) {
-            if ($lead->created_by != creatorId()) {
-                return back()->with('error', __('Permission denied'));
-            }
+        
+        if (Auth::user()->can('create-lead-users')) {
+            $lead->load(['pipeline', 'stage']);
+
+            $existingUserIds = UserLead::where('lead_id', $lead->id)->pluck('user_id')->toArray();
+            $newUserIds = array_diff($request->user_ids, $existingUserIds);
+
             foreach ($request->user_ids as $userId) {
                 UserLead::firstOrCreate([
                     'user_id' => $userId,
@@ -516,25 +454,42 @@ class LeadController extends Controller
                 LeadAddUser::dispatch($request, $lead);
             }
 
-            return back()->with('success', __('The users have been assigned successfully.'));
-        }else{
+            if (!empty($newUserIds) && company_setting('Lead Assign') == 'on') {
+                $emailData = [
+                    'lead_name'     => $lead->name,
+                    'lead_email'    => $lead->email,
+                    'lead_subject'  => $lead->subject,
+                    'follow_up_date'=> $lead->date ? \Carbon\Carbon::parse($lead->date)->format('d M Y') : null,
+                    'lead_pipeline' => $lead->pipeline->name ?? '',
+                    'lead_stage'    => $lead->stage->name ?? '',
+                ];
+                $newUsers = User::whereIn('id', $newUserIds)->get()->pluck('email', 'id')->toArray();
+                if (!empty($newUsers)) {
+                    $message = EmailTemplate::sendEmailTemplate('Lead Assign', $newUsers, $emailData);
+                    if($message['is_success'] == false && !empty($message['error'])) {
+                        return redirect()->route('lead.leads.show', $lead->id)
+                            ->with('success', __('The users have been assigned successfully.'))
+                            ->with('error', $message['error']);
+                    }
+                }
+            }
+
+            return redirect()->route('lead.leads.show', $lead->id)->with('success', __('The users have been assigned successfully.'));
+        } else {
             return back()->with('error', __('Permission denied'));
         }
     }
 
     public function removeUser(Lead $lead, $userId)
     {
-        if (Auth::user()->can('edit-leads')) {
-            if ($lead->created_by != creatorId()) {
-                return back()->with('error', __('Permission denied'));
-            }
+        if (Auth::user()->can('delete-lead-users')) {
             UserLead::where('lead_id', $lead->id)
                 ->where('user_id', $userId)
                 ->delete();
 
             DestroyUserLead::dispatch($lead);
 
-            return back()->with('success', __('The user has been deleted.'));
+            return redirect()->route('lead.leads.show', $lead->id)->with('success', __('The user has been deleted.'));
         }else{
             return back()->with('error', __('Permission denied'));
         }
@@ -542,26 +497,25 @@ class LeadController extends Controller
 
     public function getAvailableProducts(Lead $lead)
     {
-        if (Auth::user()->can('view-leads')) {
-            if ($lead->created_by != creatorId()) {
-                return response()->json(['error' => 'Permission denied'], 403);
-            }
+        if (Auth::user()->can('manage-lead-products')) {
+            $assignedIds = $lead->products
+                ? array_filter(array_map('trim', explode(',', $lead->products)))
+                : [];
+
             $products = ProductServiceItem::where('created_by', '=', creatorId())
+                ->when(!empty($assignedIds), fn($q) => $q->whereNotIn('id', $assignedIds))
                 ->select('id', 'name')
                 ->get();
 
             return response()->json($products);
         }else{
-            return response()->json(['error' => 'Permission denied'], 403);
+            return response()->json(['error' => __('Permission denied')], 403);
         }
     }
 
     public function assignProducts(Request $request, Lead $lead)
     {
-        if (Auth::user()->can('edit-leads')) {
-            if ($lead->created_by != creatorId()) {
-                return back()->with('error', __('Permission denied'));
-            }
+        if (Auth::user()->can('create-lead-products')) {
             $usr        = Auth::user();
             $existingIds = $lead->products ? explode(',', $lead->products) : [];
             $newIds = array_merge($existingIds, $request->product_ids);
@@ -581,7 +535,7 @@ class LeadController extends Controller
                 ]
             );
 
-            return back()->with('success', __('The products have been assigned successfully.'));
+            return redirect()->route('lead.leads.show', $lead->id)->with('success', __('The products have been assigned successfully.'));
         }else{
             return back()->with('error', __('Permission denied'));
         }
@@ -589,17 +543,14 @@ class LeadController extends Controller
 
     public function removeProduct(Lead $lead, $productId)
     {
-        if (Auth::user()->can('edit-leads')) {
-            if ($lead->created_by != creatorId()) {
-                return back()->with('error', __('Permission denied'));
-            }
+        if (Auth::user()->can('delete-lead-products')) {
             $products = explode(',', $lead->products);
             $products = array_filter($products, fn($id) => $id != $productId);
             $lead->products = implode(',', $products);
             $lead->save();
             DestroyLeadProduct::dispatch($lead);
 
-            return back()->with('success', __('The product has been deleted.'));
+            return redirect()->route('lead.leads.show', $lead->id)->with('success', __('The product has been deleted.'));
         }else{
             return back()->with('error', __('Permission denied'));
         }
@@ -607,26 +558,25 @@ class LeadController extends Controller
 
     public function getAvailableSources(Lead $lead)
     {
-        if (Auth::user()->can('view-leads')) {
-            if ($lead->created_by != creatorId()) {
-                return response()->json(['error' => 'Permission denied'], 403);
-            }
+        if (Auth::user()->can('manage-lead-sources')) {
+            $assignedIds = $lead->sources
+                ? array_filter(array_map('trim', explode(',', $lead->sources)))
+                : [];
+
             $sources = Source::where('created_by', creatorId())
+                ->when(!empty($assignedIds), fn($q) => $q->whereNotIn('id', $assignedIds))
                 ->select('id', 'name')
                 ->get();
 
             return response()->json($sources);
         }else{
-            return response()->json(['error' => 'Permission denied'], 403);
+            return response()->json(['error' => __('Permission denied')], 403);
         }
     }
 
     public function assignSources(Request $request, Lead $lead)
     {
-        if (Auth::user()->can('edit-leads')) {
-            if ($lead->created_by != creatorId()) {
-                return back()->with('error', __('Permission denied'));
-            }
+        if (Auth::user()->can('create-lead-sources')) {
             $usr        = Auth::user();
             $existingIds = $lead->sources ? explode(',', $lead->sources) : [];
             $newIds = array_merge($existingIds, $request->source_ids);
@@ -642,7 +592,7 @@ class LeadController extends Controller
                     'remark' => json_encode(['title' => 'Update Sources']),
                 ]
             );
-            return back()->with('success', __('The sources have been assigned successfully.'));
+            return redirect()->route('lead.leads.show', $lead->id)->with('success', __('The sources have been assigned successfully.'));
         }else{
             return back()->with('error', __('Permission denied'));
         }
@@ -650,17 +600,14 @@ class LeadController extends Controller
 
     public function removeSource(Lead $lead, $sourceId)
     {
-        if (Auth::user()->can('edit-leads')) {
-            if ($lead->created_by != creatorId()) {
-                return back()->with('error', __('Permission denied'));
-            }
+        if (Auth::user()->can('delete-lead-sources')) {
             $sources = explode(',', $lead->sources);
             $sources = array_filter($sources, fn($id) => $id != $sourceId);
             $lead->sources = implode(',', $sources);
             $lead->save();
             DestroyLeadSource::dispatch($lead);
 
-            return back()->with('success', __('The source has been deleted.'));
+            return redirect()->route('lead.leads.show', $lead->id)->with('success', __('The source has been deleted.'));
         }else{
             return back()->with('error', __('Permission denied'));
         }
@@ -669,11 +616,7 @@ class LeadController extends Controller
     public function storeEmail(StoreLeadEmailRequest $request, Lead $lead)
     {
         if (Auth::user()->can('edit-leads')) {
-            if ($lead->created_by != creatorId()) {
-                return back()->with('error', __('Permission denied'));
-            }
             $validated = $request->validated();
-            $resp = null;
 
             $lead_email = LeadEmail::create([
                 'lead_id' => $lead->id,
@@ -692,16 +635,21 @@ class LeadController extends Controller
             );
             if (!empty(company_setting('Lead Emails')) && company_setting('Lead Emails')  == true) {
                 $lead_users[] = $request->to;
-                $lArr = [
+                $emailData = [
                     'lead_name' => $lead->name,
                     'lead_email_subject' => $request->subject,
                     'lead_email_description' => $request->description,
                 ];
 
                 // Send Email
-                $resp = EmailTemplate::sendEmailTemplate('Lead Emails', $lead_users, $lArr);
+                $message = EmailTemplate::sendEmailTemplate('Lead Emails', $lead_users, $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('The email has been created successfully.'))
+                        ->with('error', $message['error']);
+                }
             }
-            return back()->with('success', __('The email has been created successfully.') . ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
+            return back()->with('success', __('The email has been created successfully.'));
         }else{
             return back()->with('error', __('Permission denied'));
         }
@@ -710,9 +658,6 @@ class LeadController extends Controller
     public function storeDiscussion(StoreLeadDiscussionRequest $request, Lead $lead)
     {
         if (Auth::user()->can('edit-leads')) {
-            if ($lead->created_by != creatorId()) {
-                return back()->with('error', __('Permission denied'));
-            }
             $validated = $request->validated();
 
             LeadDiscussion::create([
@@ -731,62 +676,56 @@ class LeadController extends Controller
 
     public function storeFile(Request $request, Lead $lead)
     {
-        if (Auth::user()->can('edit-leads')) {
-            if ($lead->created_by != creatorId()) {
-                return back()->with('error', __('Permission denied'));
-            }
-            $additionalImages = $request->input('additional_images', []);
+        if (Auth::user()->can('create-lead-files')) {
+            $request->validate([
+                'images' => 'required|array',
+                'images.*' => 'string'
+            ]);
 
-            foreach ($additionalImages as $filePath) {
-                $fileName = basename($filePath);
+            foreach ($request->images as $imagePath) {
+                $mediaFile = Media::where('file_name', basename($imagePath))->first();
                 LeadFile::create([
-                    'lead_id' => $lead->id,
-                    'file_name' => $fileName,
-                    'file_path' => $fileName,
+                    'lead_id'   => $lead->id,
+                    'file_name' => $mediaFile ? $mediaFile->name : basename($imagePath),
+                    'file_path' => basename($imagePath),
                 ]);
                 LeadUploadFile::dispatch($request, $lead);
             }
 
             LeadActivityLog::create([
-                'user_id' => Auth::user()->id,
-                'lead_id' => $lead->id,
+                'user_id'  => Auth::user()->id,
+                'lead_id'  => $lead->id,
                 'log_type' => 'Upload File',
-                'remark' => json_encode(['title' => 'File Upload - ' . count($additionalImages) . ' file(s) uploaded']),
+                'remark'   => json_encode(['title' => 'File Upload - ' . count($request->images) . ' file(s) uploaded']),
             ]);
 
-            return back()->with('success', __('Files have been uploaded successfully.'));
-        }else{
+            return redirect()->route('lead.leads.show', $lead->id)->with('success', __('Files have been uploaded successfully.'));
+        } else {
             return back()->with('error', __('Permission denied'));
         }
     }
 
     public function deleteFile(Lead $lead, $fileId)
     {
-        if (Auth::user()->can('edit-leads')) {
-            if ($lead->created_by != creatorId()) {
-                return back()->with('error', __('Permission denied'));
-            }
+        if (Auth::user()->can('delete-lead-files')) {
             $file = LeadFile::where('id', $fileId)->where('lead_id', $lead->id)->first();
             if ($file) {
                 DestroyLeadFile::dispatch($lead);
                 $file->delete();
             }
 
-            return back()->with('success', __('The file has been deleted.'));
-        }else{
+            return redirect()->route('lead.leads.show', $lead->id)->with('success', __('The file has been deleted.'));
+        } else {
             return back()->with('error', __('Permission denied'));
         }
     }
 
     public function callStore(StoreLeadCallRequest $request)
     {
-        if (Auth::user()->can('edit-leads')) {
+        if (Auth::user()->can('create-lead-calls')) {
             $validated = $request->validated();
             $usr  = Auth::user();
-            $lead = Lead::where('id', $request->lead_id)->where('created_by', creatorId())->first();
-            if (!$lead) {
-                return back()->with('error', __('Lead not found'))->with('status', 'calls');
-            }
+            $lead = Lead::find($request->lead_id);
             $call              = new LeadCall();
             $call->lead_id     = $request->lead_id;
             $call->subject     = $request->subject;
@@ -806,25 +745,18 @@ class LeadController extends Controller
                     'remark' => json_encode(['title' => 'Create new Lead Call']),
                 ]
             );
-            return back()->with('success', __('The call has been created successfully.'))->with('status', 'calls');
+            return redirect()->route('lead.leads.show', $request->lead_id)->with('success', __('The call has been created successfully.'));
         } else {
-            return back()->with('error', __('Permission denied'))->with('status', 'calls');
+            return back()->with('error', __('Permission denied'));
         }
     }
 
     public function callUpdate(UpdateLeadCallRequest $request, $callId)
     {
-        if (Auth::user()->can('edit-leads')) {
+        if (Auth::user()->can('edit-lead-calls')) {
             $validated = $request->validated();
 
-            $call = LeadCall::where('id', $callId)
-                ->whereHas('lead', function ($q) {
-                    $q->where('created_by', creatorId());
-                })
-                ->first();
-            if (!$call) {
-                return back()->with('error', __('Lead not found'))->with('status', 'calls');
-            }
+            $call = LeadCall::find($callId);
             $call->subject     = $request->subject;
             $call->call_type   = $request->call_type;
             $call->duration    = $request->duration;
@@ -834,27 +766,21 @@ class LeadController extends Controller
             $call->save();
             LeadCallUpdate::dispatch($request, $call);
 
-            return back()->with('success', __('The call details are updated successfully.'))->with('status', 'calls');
+            return redirect()->route('lead.leads.show', $call->lead_id)->with('success', __('The call details are updated successfully.'));
         } else {
-            return back()->with('error', __('Permission denied'))->with('status', 'calls');
+            return back()->with('error', __('Permission denied'));
         }
     }
 
     public function callDestroy($callId)
     {
-        if (Auth::user()->can('edit-leads')) {
-            $call = LeadCall::where('id', $callId)
-                ->whereHas('lead', function ($q) {
-                    $q->where('created_by', creatorId());
-                })
-                ->first();
-            if (!$call) {
-                return back()->with('error', __('Lead not found'));
-            }
+        if (Auth::user()->can('delete-lead-calls')) {
+            $call = LeadCall::find($callId);
+            $lead_id = $call->lead_id;
             DestroyLeadCall::dispatch($call);
             $call->delete();
 
-            return back()->with('success', __('The call has been deleted.'));
+            return redirect()->route('lead.leads.show', $lead_id)->with('success', __('The call has been deleted.'));
         } else {
             return back()->with('error', __('Permission denied'));
         }
@@ -862,63 +788,53 @@ class LeadController extends Controller
 
     public function order(Request $request)
     {
-        try {
-            if (Auth::user()->can('lead-move')) {
-                $post       = $request->all();
-                $lead       = Lead::where('id', $post['lead_id'])->where('created_by', creatorId())->first();
-                if (!$lead) {
-                    return back()->with('error', __('Lead not found'));
-                }
-                $lead_users = $lead->userLeads()->with('user')->get()->pluck('user.email', 'user.id')->toArray();
 
-                if ($lead->stage_id != $post['stage_id']) {
-                    $newStage = LeadStage::where('id', $post['stage_id'])
-                        ->where('created_by', creatorId())
-                        ->where('pipeline_id', $lead->pipeline_id)
-                        ->first();
-                    if (!$newStage) {
-                        return back()->with('error', __('Permission denied.'));
-                    }
+        if (Auth::user()->can('lead-move')) {
+            $post       = $request->all();
+            $lead       = Lead::find($post['lead_id']);
+            $lead_users = $lead->userLeads()->with('user')->get()->pluck('user.email', 'user.id')->toArray();
 
-                    LeadActivityLog::create(
-                        [
-                            'user_id' => Auth::user()->id,
-                            'lead_id' => $lead->id,
-                            'log_type' => 'Move',
-                            'remark' => json_encode(
-                                [
-                                    'title' => $lead->name,
-                                    'old_status' => $lead->stage->name,
-                                    'new_status' => $newStage->name,
-                                ]
-                            ),
-                        ]
-                    );
+            if ($lead->stage_id != $post['stage_id']) {
 
-                    if (!empty(company_setting('Lead Moved')) && company_setting('Lead Moved')  == 'on') {
-                        $lArr = [
-                            'lead_name' => $lead->name,
-                            'lead_email' => $lead->email,
-                            'lead_pipeline' => $lead->pipeline->name ?? '',
-                            'lead_stage' => $lead->stage->name,
-                            'lead_old_stage' => $lead->stage->name,
-                            'lead_new_stage' => $newStage->name,
-                        ];
-                        // Send Email
-                        EmailTemplate::sendEmailTemplate('Lead Moved', $lead_users, $lArr);
+                $newStage     = LeadStage::find($post['stage_id']);
+                $oldStage     = $lead->stage;
+
+                LeadActivityLog::create([
+                    'user_id'  => Auth::user()->id,
+                    'lead_id'  => $lead->id,
+                    'log_type' => 'Move',
+                    'remark'   => json_encode([
+                        'title'      => $lead->name,
+                        'old_status' => $oldStage->name,
+                        'new_status' => $newStage->name,
+                    ]),
+                ]);
+
+                if (company_setting('Lead Move') == 'on') {
+                    $emailData = [
+                        'lead_name'      => $lead->name,
+                        'lead_email'     => $lead->email,
+                        'lead_pipeline'  => $lead->pipeline->name ?? '',
+                        'lead_old_stage' => $oldStage->name,
+                        'lead_new_stage' => $newStage->name,
+                    ];
+                    $message = EmailTemplate::sendEmailTemplate('Lead Move', $lead_users, $emailData);
+                    if($message['is_success'] == false && !empty($message['error'])) {
+                        return back()
+                            ->with('success', __('The lead moved successfully.'))
+                            ->with('error', $message['error']);
                     }
                 }
-
-                foreach ($post['order'] as $key => $item) {
-                    Lead::where('id', $item)->where('created_by', creatorId())->update(['order' => $key, 'stage_id' => $post['stage_id']]);
-                }
-                LeadMoved::dispatch($request, $lead);
-                return back()->with('success', __('The lead moved successfully.'));
-            } else {
-                return back()->with('error', __('Permission denied.'));
             }
-        } catch (\Throwable $th) {
-            return back()->with('error', __('Something went wrong.'));
+
+            foreach ($post['order'] as $key => $item) {
+
+                $leads = Lead::where('id', $item)->update(['order' => $key, 'stage_id' => $post['stage_id']]);
+            }
+            LeadMoved::dispatch($request, $lead, $oldStage);
+            return back()->with('success', __('The lead moved successfully.'));
+        } else {
+            return back()->with('error', __('Permission denied.'));
         }
     }
 
@@ -939,11 +855,7 @@ class LeadController extends Controller
     public function saveDefaultPipeline(Request $request)
     {
         $user = Auth::user();
-        $pipelineId = $request->pipeline_id;
-        if ($pipelineId && !Pipeline::where('created_by', creatorId())->where('id', $pipelineId)->exists()) {
-            $pipelineId = null;
-        }
-        $user->default_pipeline = $pipelineId;
+        $user->default_pipeline = $request->pipeline_id;
         $user->save();
 
         return response()->json(['success' => true]);
@@ -952,9 +864,6 @@ class LeadController extends Controller
     public function convertToDeal(ConvertToDealRequest $request, Lead $lead)
     {
         if (Auth::user()->can('edit-leads')) {
-            if ($lead->created_by != creatorId()) {
-                return back()->with('error', __('Permission denied'));
-            }
             $validated = $request->validated();
 
             $creatorId = creatorId();
@@ -975,16 +884,12 @@ class LeadController extends Controller
                 }
 
                 $role = Role::where('name', 'client')->where('created_by', $creatorId)->first();
-                if (!$role) {
-                    return back()->with('error', __('Role not found'));
-                }
                 $enableEmailVerification = admin_setting('enableEmailVerification');
 
                 $client = User::create([
                     'name' => $request->client_name,
                     'email' => $request->client_email,
-                    'mobile_no' => $lead->phone,
-                    'password' => bcrypt($request->client_password),
+                    'password' => \Hash::make($request->client_password),
                     'email_verified_at' => $enableEmailVerification === 'on' ? null : now(),
                     'type' => 'client',
                     'lang' => company_setting('defaultLanguage') ?? 'en',
@@ -1001,15 +906,32 @@ class LeadController extends Controller
                     SetConfigEmail(creatorId());
                     $client->sendEmailVerificationNotification();
                 }
-                $cArr = [
+            }
+
+            // $cArr = [
+            //     'email' => $request->client_email,
+            //     'password' => $request->client_password,
+            // ];
+
+            // // Send Email to client if they are new created.
+            // EmailTemplate::sendEmailTemplate('New User', [$client->id => $client->email], $cArr);
+
+            if(company_setting('New User') == 'on') {
+                $emailData = [
+                    'name' => $request->client_name,
                     'email' => $request->client_email,
                     'password' => $request->client_password,
                 ];
 
-                EmailTemplate::sendEmailTemplate('New User', [$client->id => $client->email], $cArr);
+                $message = EmailTemplate::sendEmailTemplate('New User', [$client->email], $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('The user has been created successfully.'))
+                        ->with('error', $message['error']);
+                }
             }
 
-            $stage = DealStage::where('pipeline_id', $lead->pipeline_id)->where('created_by', $lead->created_by)->first();
+            $stage = DealStage::where('pipeline_id', $lead->pipeline_id)->first();           
             if (!$stage) {
                 return back()->with('error', __('Please create stage for this pipeline.'));
             }
@@ -1047,18 +969,22 @@ class LeadController extends Controller
                 }
             }
 
-            if (!empty(company_setting('Deal Assigned')) && company_setting('Deal Assigned')  == true) {
-
-                // Send Mail
-                $pipeline = Pipeline::where('id', $lead->pipeline_id)->where('created_by', $lead->created_by)->first();
-                $dArr     = [
-                    'deal_name' => $deal->name,
-                    'deal_pipeline' => $pipeline ? $pipeline->name : '',
-                    'deal_stage' => $stage->name,
-                    'deal_status' => $deal->status,
-                    'deal_price' => $deal->price,
+            if (company_setting('Deal Assign') == 'on') {
+                $emailData = [
+                    'deal_name'     => $deal->name,
+                    'deal_pipeline' => $deal->pipeline->name,
+                    'deal_stage'    => $deal->stage->name,
+                    'deal_status'   => $deal->status,
+                    'deal_price'    => $deal->price,
                 ];
-                EmailTemplate::sendEmailTemplate('Deal Assigned', [$client->id => $client->email], $dArr);
+                if (!empty($emailData)) {
+                    $message = EmailTemplate::sendEmailTemplate('Deal Assign', [$client->email],$emailData);
+                    if($message['is_success'] == false && !empty($message['error'])) {
+                        return back()
+                            ->with('success', __('The clients have been assigned successfully.'))
+                            ->with('error', $message['error']);
+                    }
+                }
             }
 
             // Transfer users

@@ -13,7 +13,5 @@ class DestroyDocument
     public function __construct(
           public HrmDocument $hrmDocument
     )
-    {
-        //
-    }
+    {}
 }

@@ -79,7 +79,7 @@ export default function Create({ onSuccess, users = [], auth }: CreateVendorProp
             </DialogHeader>
             <form onSubmit={submit} className="space-y-4">
                 <div>
-                    <Label htmlFor="user_id">{t('User')}</Label>
+                    <Label htmlFor="user_id" required>{t('User')}</Label>
                     <Select value={data.user_id} onValueChange={handleUserSelect}>
                         <SelectTrigger>
                             <SelectValue placeholder={t('Select a user (optional)')} />

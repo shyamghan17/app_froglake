@@ -45,6 +45,7 @@ class DemoRevenueCategoriesSeeder extends Seeder
         ];
 
         $revenueGLAccounts = ChartOfAccount::where('created_by', $userId)
+            ->where('is_active', true)
             ->whereBetween('account_code', ['4000', '4999'])
             ->pluck('id')
             ->toArray();

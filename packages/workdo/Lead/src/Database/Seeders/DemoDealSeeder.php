@@ -174,8 +174,6 @@ class DemoDealSeeder extends Seeder
             $countryCodes = ['+1', '+44', '+91', '+61', '+81', '+49', '+33', '+39', '+55', '+86', '+7', '+27', '+82', '+34'];
 
             foreach ($pipelines as $pipeline) {
-                // Skip Sales pipeline
-                if ($pipeline->name === 'Sales') continue;
                 
                 // Get 6 leads for conversion per pipeline (reduced from 17)
                 $convertibleLeads = Lead::where('created_by', $userId)
@@ -241,10 +239,7 @@ class DemoDealSeeder extends Seeder
                     } else {
                         // Random selection for non-converted deals
                         $sourceIds = Source::where('created_by', $userId)->pluck('id')->toArray();
-                        $productIds = [];
-                        if (Module_is_active('ProductService')) {
                         $productIds = ProductServiceItem::where('created_by', $userId)->pluck('id')->toArray();
-                        }
 
                         $sources = !empty($sourceIds) ? $sourceIds[array_rand($sourceIds)] : null;
                         $products = !empty($productIds) ? $productIds[array_rand($productIds)] : null;

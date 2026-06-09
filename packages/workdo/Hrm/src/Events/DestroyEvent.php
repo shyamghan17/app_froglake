@@ -13,7 +13,5 @@ class DestroyEvent
     public function __construct(
           public Event $event
     )
-    {
-        //
-    }
+    {}
 }

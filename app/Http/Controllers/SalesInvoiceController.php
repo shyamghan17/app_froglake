@@ -152,6 +152,7 @@ class SalesInvoiceController extends Controller
             $this->createInvoiceItems($invoice->id, $request->items);
 
             try {
+
                 CreateSalesInvoice::dispatch($request, $invoice);
                 // Send sales invoice mail
                 if(company_setting('Sales Invoice') == 'on') {
@@ -162,7 +163,12 @@ class SalesInvoiceController extends Controller
                         'total_amount' => $totals['total_amount'] ?? null,
                         'discount_amount' => $totals['discount_amount'] ?? null,
                     ];
-                    EmailTemplate::sendEmailTemplate('Sales Invoice', [$invoice->customer->email], $emailData);
+                    $message = EmailTemplate::sendEmailTemplate('Sales Invoice', [$invoice->customer->email], $emailData);
+                    if($message['is_success'] == false && !empty($message['error'])) {
+                        return back()
+                            ->with('success', __('The sales invoice has been created successfully.'))
+                            ->with('error', $message['error']);
+                    }
                 }
             } catch (\Throwable $th) {
                 return back()->with('error', $th->getMessage());

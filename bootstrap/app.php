@@ -28,6 +28,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 'aamarpay/*',
                 'iyzipay/*',
                 'meta/callback',
+                'payfort/*',
+                'sslcommerz/*',
+                'twocheckout/*',
+                'payu/*',
+                'powertranz/*'
             ]
         );
 

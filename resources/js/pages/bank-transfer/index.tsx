@@ -68,7 +68,7 @@ export default function BankTransferIndex({ requests }: Props) {
     const pageProps = usePage().props as any;
     const { auth, imageUrlPrefix } = pageProps;
     const urlParams = new URLSearchParams(window.location.search);
-    
+
     const [viewingRequest, setViewingRequest] = useState<BankTransferRequest | null>(null);
     const [processingId, setProcessingId] = useState<number | null>(null);
     const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; requestId: number | null }>({ isOpen: false, requestId: null });
@@ -84,7 +84,7 @@ export default function BankTransferIndex({ requests }: Props) {
     const [sortDirection, setSortDirection] = useState(urlParams.get('direction') || 'desc');
     const [viewMode, setViewMode] = useState<'list' | 'grid'>(urlParams.get('view') as 'list' | 'grid' || 'list');
     const [showFilters, setShowFilters] = useState(false);
-    
+
     useFlashMessages();
 
     const getStatusBadge = (status: string) => {
@@ -93,7 +93,7 @@ export default function BankTransferIndex({ requests }: Props) {
             approved: 'px-2 py-1 rounded-full text-sm bg-green-100 text-green-800',
             rejected: 'px-2 py-1 rounded-full text-sm bg-red-100 text-red-800'
         };
-        
+
         return (
             <span className={variants[status as keyof typeof variants]}>
                 {t(status.charAt(0).toUpperCase() + status.slice(1))}
@@ -181,8 +181,8 @@ export default function BankTransferIndex({ requests }: Props) {
             sortable: false,
             render: (_: any, request: BankTransferRequest) => (
                 <div>
-                    <div className="font-medium">{request.user?.name || 'N/A'}</div>
-                    <div className="text-sm text-gray-500">{request.user?.email || 'N/A'}</div>
+                    <div className="font-medium">{request.user?.name || '-'}</div>
+                    <div className="text-sm text-gray-500">{request.user?.email || '-'}</div>
                 </div>
             )
         },
@@ -191,7 +191,7 @@ export default function BankTransferIndex({ requests }: Props) {
             header: t('Plan'),
             render: (_: any, request: BankTransferRequest) => (
                 <div>
-                    <div>{request.plan?.name || 'N/A'}</div>
+                    <div>{request.plan?.name || '-'}</div>
                 </div>
             )
         },
@@ -255,7 +255,7 @@ export default function BankTransferIndex({ requests }: Props) {
                             </>
                         )}
                         <Tooltip delayDuration={0}>
-                            <TooltipTrigger asChild>    
+                            <TooltipTrigger asChild>
                                 <Button
                                     variant="ghost"
                                     size="sm"
@@ -268,7 +268,7 @@ export default function BankTransferIndex({ requests }: Props) {
                             <TooltipContent>
                                 <p>{t('View')}</p>
                             </TooltipContent>
-                        </Tooltip>                        
+                        </Tooltip>
                         {(auth?.user?.roles?.includes('superadmin') || request.status === 'pending') && (
                             <Tooltip delayDuration={0}>
                                 <TooltipTrigger asChild>
@@ -414,15 +414,15 @@ export default function BankTransferIndex({ requests }: Props) {
                             {t('Order')}: {viewingRequest?.order_id}
                         </DialogDescription>
                     </DialogHeader>
-                    
+
                     {viewingRequest && (
                         <div className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <Label className="text-sm font-medium text-gray-500">{t('User')}</Label>
                                     <div className="mt-1">
-                                        <div className="font-medium">{viewingRequest.user?.name || 'N/A'}</div>
-                                        <div className="text-sm text-gray-500">{viewingRequest.user?.email || 'N/A'}</div>
+                                        <div className="font-medium">{viewingRequest.user?.name || '-'}</div>
+                                        <div className="text-sm text-gray-500">{viewingRequest.user?.email || '-'}</div>
                                     </div>
                                 </div>
                                 <div>
@@ -466,7 +466,7 @@ export default function BankTransferIndex({ requests }: Props) {
                                             {t('Download Receipt')}
                                         </Button>
                                     </div>
-                                    
+
                                     {/* Add-on List */}
                                     <div className="mt-3">
                                         <Label className="text-sm font-medium text-gray-500">{t('Add-ons')}</Label>
@@ -479,7 +479,7 @@ export default function BankTransferIndex({ requests }: Props) {
                                                             {requestData.user_module_input.split(',').map((module: string, index: number) => (
                                                                 module.trim() && (
                                                                     <div key={index} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                                                                        <img 
+                                                                        <img
                                                                             src={getPackageFavicon(module.trim())}
                                                                             alt={module.trim()}
                                                                             className="w-6 h-6 flex-shrink-0"

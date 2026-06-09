@@ -286,7 +286,7 @@ function PlanForm({ plan, activeModules, isEdit = false, userSubscriptionInfo }:
                     {t('Cancel')}
                 </Button>
                 <Button type="submit" disabled={processing}>
-                    {processing ? t('Saving...') : (isEdit ? t('Update') : t('Create'))}
+                    {processing ? (isEdit ? t('Updating...') : t('Creating...')) : (isEdit ? t('Update') : t('Create'))}
                 </Button>
             </div>
         </form>

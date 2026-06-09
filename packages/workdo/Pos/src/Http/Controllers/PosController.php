@@ -14,13 +14,17 @@ use Workdo\ProductService\Models\ProductServiceCategory;
 use Workdo\ProductService\Models\ProductServiceItem;
 use Workdo\Pos\Models\Pos;
 use Workdo\Pos\Models\PosItem;
-use Workdo\Pos\Http\Requests\StorePosRequest;
-use Workdo\Pos\Events\CreatePosSale;
+use Workdo\Pos\Http\Requests\StorePosRequest; 
 use Workdo\Pos\Models\PosPayment;
+use Workdo\Pos\Models\PosDiscount;
 use Workdo\ProductService\Models\ProductServiceTax;
+use App\Models\EmailTemplate;
+use Workdo\Pos\Models\PosBillingCounter;
+use Workdo\Pos\Traits\getDiscountFromTrait;
 
 class PosController extends Controller
 {
+    use getDiscountFromTrait;
     public function index(Request $request)
     {
         if(Auth::user()->can('manage-pos-orders')){
@@ -68,7 +72,10 @@ class PosController extends Controller
             $sales = $query->paginate($perPage)->withQueryString();
 
             $sales->getCollection()->transform(function($sale) {
-                $sale->total = $sale->payment ? $sale->payment->discount_amount : 0;
+                // Calculate total from items for accurate display
+                $itemsTotal = PosItem::where('pos_id', $sale->id)
+                    ->sum('total_amount');
+                $sale->total = $itemsTotal > 0 ? $itemsTotal : ($sale->payment ? $sale->payment->discount_amount : 0);
                 return $sale;
             });
 
@@ -96,10 +103,17 @@ class PosController extends Controller
             $categories = ProductServiceCategory::where('created_by', creatorId())
                 ->select('id', 'name', 'color')
                 ->get();
+
+            $counters = PosBillingCounter::where('created_by', creatorId())
+                ->where('status', true)
+                ->select('id', 'name', 'code', 'bank_account_id')
+                ->get();
+
             return Inertia::render('Pos/Pos/Create', [
                 'customers' => $customers,
                 'warehouses' => $warehouses,
                 'categories' => $categories,
+                'counters' => $counters,
             ]);
         }else{
             return redirect()->route('pos.index')->with('error', __('Permission denied'));
@@ -155,8 +169,7 @@ class PosController extends Controller
                     'price' => $product->sale_price,
                     'stock' => $warehouseStock ? $warehouseStock->quantity : 0,
                     'category' => $product->category ? $product->category->name : null,
-                    'image' => $product->image,
-                    'tax_ids_debug' => $product->tax_ids,
+                    'image' => $product->image, 
                     'taxes' => $taxes
                 ];
             });
@@ -169,17 +182,27 @@ class PosController extends Controller
         if(Auth::user()->can('create-pos')){
             $validated = $request->validated();
 
+            // Get bank_account_id from selected billing counter table
+            $bankAccountId = null;
+            if (!empty($validated['billing_counter_id'])) {
+                $counter = PosBillingCounter::find($validated['billing_counter_id']);
+                $bankAccountId = $counter ? $counter->bank_account_id : null;
+            }
+
             $saleNumber = Pos::generateSaleNumber();
             $sale = new Pos();
             $sale->sale_number = $saleNumber;
             $sale->customer_id = $validated['customer_id'] ?? null;
             $sale->warehouse_id = $validated['warehouse_id'];
+            $sale->billing_counter_id = $validated['billing_counter_id'] ?? null;
+            $sale->bank_account_id = $bankAccountId;
             $sale->pos_date = $validated['pos_date'] ?? now()->toDateString();
             $sale->creator_id = Auth::id();
             $sale->created_by = creatorId();
             $sale->save();
 
             $finalAmount = 0;
+            $totalDiscount = 0;
             foreach ($validated['items'] as $item) {
                 $product = ProductServiceItem::find($item['id']);
 
@@ -194,11 +217,13 @@ class PosController extends Controller
                         ->get();
 
                     foreach ($taxes as $tax) {
-                        $taxAmount += $subtotal * ($tax->rate / 100);
+                        $discountedSubtotal = $subtotal - ($item['item_discount_amount'] ?? 0);
+                        $taxAmount += $discountedSubtotal * ($tax->rate / 100);
                     }
                 }
-
-                $totalAmount = $subtotal + $taxAmount;
+                $itemDiscountAmount = $item['item_discount_amount'] ?? 0;
+                $totalDiscount += $itemDiscountAmount;
+                $totalAmount = ($subtotal - $itemDiscountAmount) + $taxAmount;
                 $finalAmount+= $totalAmount;
                 $saleItem = new PosItem();
                 $saleItem->pos_id = $sale->id;
@@ -209,25 +234,48 @@ class PosController extends Controller
                 $saleItem->subtotal = $subtotal;
                 $saleItem->tax_amount = $taxAmount;
                 $saleItem->total_amount = $totalAmount;
+                $saleItem->item_discount_value = $item['item_discount_value'] ?? 0;
+                $saleItem->item_discount_amount = $item['item_discount_amount'] ?? 0;
                 $saleItem->creator_id = Auth::id();
                 $saleItem->created_by = creatorId();
                 $saleItem->save();
-
+           
             }
 
             $posPayment = new PosPayment();
             $posPayment->pos_id = $sale->id;
-            $posPayment->discount = $validated['discount'];
+            $posPayment->discount = $totalDiscount;
             $posPayment->amount = $finalAmount;
-            $posPayment->discount_amount = $finalAmount-$validated['discount'];
+            $posPayment->discount_amount = $finalAmount;
             $posPayment->creator_id = Auth::id();
             $posPayment->created_by = creatorId();
+        
             $posPayment->save();
 
             try {
                 CreatePos::dispatch($request, $sale);
-            } catch (\Throwable $th) {
+                $sale->load('items.product');
                 
+                if(company_setting('Create POS') == 'on') {
+                    $itemDetails = $sale->items->map(function($item) {
+                        return ($item->product->name ?? '-') . ' x ' . $item->quantity;
+                    })->implode(', ');
+                    $emailData = [
+                        'sales_customer_name' => $sale->customer->name ?? null,
+                        'warehouse_name' => $sale->warehouse->name ?? null,
+                        'total_amount' => $posPayment->amount ?? null,
+                        'discount_amount' => $posPayment->discount ?? null,
+                        'item_details' => $itemDetails,
+                    ];
+                    $message = EmailTemplate::sendEmailTemplate('Create POS', [$sale->customer->email ?? null], $emailData);
+                    if($message['is_success'] == false && !empty($message['error'])) {
+                        return back()
+                            ->with('success', __('The POS sale has been created successfully.'))
+                            ->with('error', $message['error']);
+                    }
+                }
+            } catch (\Throwable $th) {
+
             }
 
             return back()->with('success', __('The POS sale has been created successfully.'));
@@ -242,18 +290,18 @@ class PosController extends Controller
             $sale->load([
                 'customer:id,name,email',
                 'warehouse:id,name',
-                'items:id,pos_id,product_id,quantity,price,subtotal,tax_ids,tax_amount,total_amount',
+                'items:id,pos_id,product_id,quantity,price,subtotal,item_discount_amount,tax_ids,tax_amount,total_amount',
                 'items.product:id,name,sku',
                 'payment:pos_id,discount,amount,discount_amount'
             ]);
             $totals = PosItem::where('pos_id', $sale->id)
-                ->selectRaw('SUM(subtotal) as subtotal, SUM(tax_amount) as tax_amount, SUM(total_amount) as total_amount')
+                ->selectRaw('SUM(subtotal) as subtotal, SUM(item_discount_amount) as total_discount, SUM(tax_amount) as tax_amount, SUM(total_amount) as total_amount')
                 ->first();
 
             $sale->subtotal = $totals->subtotal ?? 0;
+            $sale->discount_amount = $totals->total_discount ?? 0;
             $sale->tax_amount = $totals->tax_amount ?? 0;
-            $sale->discount_amount = $sale->payment ? $sale->payment->discount : 0;
-            $sale->total_amount = $sale->payment ? $sale->payment->discount_amount : 0;
+            $sale->total_amount = $totals->total_amount ?? 0;
 
             $sale->items->each(function($item) {
                 $taxes = [];
@@ -308,19 +356,19 @@ class PosController extends Controller
             $sale->load([
                 'customer:id,name,email',
                 'warehouse:id,name',
-                'items:id,pos_id,product_id,quantity,price,subtotal,tax_ids,tax_amount,total_amount',
+                'items:id,pos_id,product_id,quantity,price,subtotal,item_discount_amount,tax_ids,tax_amount,total_amount',
                 'items.product:id,name,sku',
                 'payment:pos_id,discount,amount,discount_amount'
             ]);
 
             $totals = PosItem::where('pos_id', $sale->id)
-                ->selectRaw('SUM(subtotal) as subtotal, SUM(tax_amount) as tax_amount, SUM(total_amount) as total_amount')
+                ->selectRaw('SUM(subtotal) as subtotal, SUM(item_discount_amount) as total_discount, SUM(tax_amount) as tax_amount, SUM(total_amount) as total_amount')
                 ->first();
 
             $sale->subtotal = $totals->subtotal ?? 0;
+            $sale->discount_amount = $totals->total_discount ?? 0;
             $sale->tax_amount = $totals->tax_amount ?? 0;
-            $sale->discount_amount = $sale->payment ? $sale->payment->discount : 0;
-            $sale->total_amount = $sale->payment ? $sale->payment->discount_amount : 0;
+            $sale->total_amount = $totals->total_amount ?? 0;
 
             $sale->items->each(function($item) {
                 $taxes = [];
@@ -344,6 +392,35 @@ class PosController extends Controller
     {
         return response()->json([
             'pos_number' => Pos::generateSaleNumber()
+        ]);
+    }
+
+    public function fetchApplicableDiscount(Request $request)
+    {
+        $productId = $request->product_id;
+        $quantity = $request->quantity ?? 1;
+
+        $product = ProductServiceItem::find($productId);
+        if (!$product) {
+            return response()->json(['discount' => false]);
+        }
+
+        $bestDiscount = $this->getApplicableDiscount($productId, $quantity, $product->category_id);
+
+        if (!$bestDiscount) {
+            return response()->json(['discount' => false]);
+        }
+
+        $discountAmount = $this->calculateDiscountAmount($product->sale_price, $bestDiscount) * $quantity;
+        $subtotal = $product->sale_price * $quantity;
+        $discountAmount = min($discountAmount, $subtotal);
+
+        return response()->json([
+            'discount'       => true,
+            'discount_id'    => $bestDiscount->id,
+            'discount_type'  => $bestDiscount->discount_type,
+            'discount_value' => $bestDiscount->discount_value,
+            'discount_amount'=> $discountAmount,
         ]);
     }
 }

@@ -123,12 +123,12 @@ export default function Addons(props: AddonsProps) {
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-2">{t('Search')}</label>
                                         <div className="relative">
-                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+                                            <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                                             <Input
                                                 placeholder={t("Search addons...")}
                                                 value={searchTerm}
                                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                                className="pl-10"
+                                                className="ps-10"
                                                 onKeyPress={(e) => e.key === 'Enter' && handleFilter()}
                                             />
                                         </div>
@@ -185,7 +185,7 @@ export default function Addons(props: AddonsProps) {
 
                                 <div>
                                     <Button onClick={handleFilter} style={{ backgroundColor: colors.primary }} className="w-full text-white">
-                                        <Filter className="h-4 w-4 mr-2" />
+                                        <Filter className="h-4 w-4 me-2" />
                                         {t('Filter')}
                                     </Button>
                                 </div>

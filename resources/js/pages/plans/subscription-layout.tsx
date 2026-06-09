@@ -5,7 +5,7 @@ import { usePageButtons } from '@/hooks/usePageButtons';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { ModuleCard } from '@/components/ui/module-card';
+
 import { SearchInput } from '@/components/ui/search-input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -44,17 +44,17 @@ interface Module {
 interface Props {
     plan: Plan;
     allModules: Module[];
+    userActiveModules?: string[];
     pricingPeriod: 'monthly' | 'yearly';
     onSubscribe: (planData: any) => void;
     bankTransferEnabled?: boolean;
     bankTransferInstructions?: string;
-    userActiveModules?: string[];
-    totalUsers?: number;
+
     planExpireDate?: string;
     trialExpireDate?: string;
 }
 
-function SubscriptionLayout({ plan, allModules, pricingPeriod, onSubscribe, bankTransferEnabled = false, bankTransferInstructions = '', userActiveModules = [], totalUsers = 0, planExpireDate, trialExpireDate }: Props) {
+function SubscriptionLayout({ plan, allModules, pricingPeriod, onSubscribe, bankTransferEnabled = false, bankTransferInstructions = '', planExpireDate, trialExpireDate }: Props) {
     const { t } = useTranslation();
     const { auth } = usePage().props as any;
     const [moduleSearch, setModuleSearch] = useState('');
@@ -97,8 +97,6 @@ function SubscriptionLayout({ plan, allModules, pricingPeriod, onSubscribe, bank
     const currentValues = getCurrentValues();
 
     const [customPlan, setCustomPlan] = useState(() => ({
-        name: plan.name || 'My Custom Plan',
-        maxUsers: plan.number_of_users,
         storageLimit: 0,
         currentUsers: 0,
         currentStorage: currentValues.currentStorage,
@@ -147,10 +145,6 @@ function SubscriptionLayout({ plan, allModules, pricingPeriod, onSubscribe, bank
         }
     };
 
-
-
-
-
     useEffect(() => {
         // Fetch user's activated modules
         fetch(route('user.active-modules'))
@@ -191,21 +185,6 @@ function SubscriptionLayout({ plan, allModules, pricingPeriod, onSubscribe, bank
                 ? [...prev, moduleId]
                 : prev.filter(id => id !== moduleId)
         );
-    };
-
-    const calculateTotalPrice = () => {
-        return dynamicTotal;
-    };
-
-    const calculateOriginalAmount = () => {
-        const basePrice = pricingPeriod === 'monthly' ? (plan?.package_price_monthly ?? 0) : (plan?.package_price_yearly ?? 0);
-        const userPrice = ((pricingPeriod === 'monthly' ? (plan?.price_per_user_monthly ?? 0) : (plan?.price_per_user_yearly ?? 0)) * (customPlan.currentUsers || 0));
-        const storagePrice = ((pricingPeriod === 'monthly' ? (plan?.price_per_storage_monthly ?? 0) : (plan?.price_per_storage_yearly ?? 0)) * (customPlan.storageLimit || 0));
-        const modulePrice = selectedModules.reduce((total, moduleId) => {
-            const module = allModules.find(m => m.module === moduleId);
-            return total + (module ? (pricingPeriod === 'monthly' ? Number(module.monthly_price) || 0 : Number(module.yearly_price) || 0) : 0);
-        }, 0);
-        return basePrice + userPrice + storagePrice + modulePrice;
     };
 
     const applyCouponWithAmount = async (amount: number) => {
@@ -322,14 +301,7 @@ function SubscriptionLayout({ plan, allModules, pricingPeriod, onSubscribe, bank
 
             router.post(route('payment.bank-transfer.store'), formData, {
                 forceFormData: true,
-                onFinish: () => setIsSubmitting(false),
-                onSuccess: () => {
-                    // Force redirect to plans index to ensure page refresh
-                    router.visit(route('plans.index'), { replace: true });
-                },
-                onError: (errors) => {
-                    console.error('Bank transfer submission failed:', errors);
-                }
+                onFinish: () => setIsSubmitting(false)
             });
         } else if (selectedPaymentMethod && paymentButtons.some(button => button.id.includes(selectedPaymentMethod))) {
             setIsSubmitting(true);
@@ -381,10 +353,10 @@ function SubscriptionLayout({ plan, allModules, pricingPeriod, onSubscribe, bank
                     storageCounter: customPlan.storageLimit
                 },
                 selectedModules,
-                totalPrice: calculateTotalPrice()
+                totalPrice: dynamicTotal
             } : {
                 planId: plan.id,
-                totalPrice: calculateTotalPrice()
+                totalPrice: dynamicTotal
             };
 
             onSubscribe(subscriptionData);
@@ -398,7 +370,7 @@ function SubscriptionLayout({ plan, allModules, pricingPeriod, onSubscribe, bank
                 {/* Current Plan */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('Plan Details')}</h3>
-                    <div className="space-y-3">
+                    <div className="space-y-3 text-sm">
                         <div className="flex justify-between">
                             <span className="text-gray-600 dark:text-gray-400">{t('Users')}</span>
                             <span className="font-medium text-gray-900 dark:text-white">
@@ -418,8 +390,14 @@ function SubscriptionLayout({ plan, allModules, pricingPeriod, onSubscribe, bank
                             </span>
                         </div>
                             <div className="flex justify-between">
-                                <span className="text-gray-600 dark:text-gray-400">{t('Plan Expire Date')}</span>
-                                <span className="font-medium text-gray-900 dark:text-white">
+                                <span className="text-gray-600 dark:text-gray-400">
+                                    {auth?.user?.is_trial_done === 2 ? t('Trial Expire On') : t('Plan Expire Date')}
+                                </span>
+                                <span className={(() => {
+                                    const expireDate = subscriptionDetail.status ? subscriptionDetail.plan_expire_date : planExpireDate;
+                                    const isExpired = expireDate && new Date(expireDate) <= new Date();
+                                    return isExpired ? 'font-medium text-red-600 dark:text-red-400' : 'font-medium text-gray-900 dark:text-white';
+                                })()}>
                                      {subscriptionDetail.status
                                             ? (subscriptionDetail.plan_expire_date ? formatDate(subscriptionDetail.plan_expire_date) : '-')
                                             : (planExpireDate ? formatDate(planExpireDate) : '-')
@@ -693,15 +671,7 @@ function SubscriptionLayout({ plan, allModules, pricingPeriod, onSubscribe, bank
                     {(bankTransferEnabled || paymentButtons.length > 0) && (
                         <div className="space-y-4">
                             <h4 className="font-medium text-gray-900 dark:text-white">{t('Payment Method')}</h4>
-                            <RadioGroup value={selectedPaymentMethod || ''} onValueChange={(value) => {
-                                setSelectedPaymentMethod(value);
-                                // Handle route calling for payment methods
-                                const selectedButton = paymentButtons.find(button => button.id.includes(value));
-                                if (selectedButton && 'route' in selectedButton) {
-                                    // Call the route when radio button is selected
-                                    router.visit(route(selectedButton.route as string));
-                                }
-                            }}>
+                            <RadioGroup value={selectedPaymentMethod || ''} onValueChange={setSelectedPaymentMethod}>
                                 {bankTransferEnabled && (
                                     <div className="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg w-full">
                                         <RadioGroupItem value="bank_transfer" id="bank_transfer" />

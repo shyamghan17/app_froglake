@@ -46,6 +46,7 @@ class BankAccountController extends Controller
             return Inertia::render('Account/BankAccounts/Index', [
                 'bankaccounts' => $bankaccounts,
                 'chartofaccounts' => ChartOfAccount::where('created_by', creatorId())
+                    ->where('is_active', true)
                     ->whereBetween('account_code', ['1000', '1099'])
                     ->select('id', 'account_code', 'account_name')
                     ->orderBy('account_code')

@@ -103,7 +103,7 @@ class ComplaintController extends Controller
 
             UpdateComplaint::dispatch($request, $complaint);
 
-            return redirect()->back()->with('success', __('The complaint details are updated successfully.'));
+            return back()->with('success', __('The complaint details are updated successfully.'));
         } else {
             return redirect()->route('hrm.complaints.index')->with('error', __('Permission denied'));
         }

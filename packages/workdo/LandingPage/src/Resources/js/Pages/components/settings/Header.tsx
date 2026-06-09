@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Repeater } from '@/components/ui/repeater';
-import { Layout } from 'lucide-react';
+import { AlignLeft } from 'lucide-react';
 
 interface CustomPage {
     id: number;
@@ -49,10 +49,10 @@ export default function Header({ data, getSectionData, updateSectionData, update
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-green-100 rounded-lg">
-                                <Layout className="h-5 w-5 text-green-600" />
+                                <AlignLeft className="h-5 w-5 text-green-600" />
                             </div>
                             <div>
-                                <CardTitle>{t('Header Navigation')}</CardTitle>
+                                <CardTitle className="text-base">{t('Header Navigation')}</CardTitle>
                                 <p className="text-sm text-gray-500">{t('Logo and navigation menu')}</p>
                             </div>
                         </div>
@@ -66,39 +66,41 @@ export default function Header({ data, getSectionData, updateSectionData, update
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label>{t('Header Variant')}</Label>
-                        <Select
-                            value={getSectionData('header').variant || 'header1'}
-                            onValueChange={(value) => updateSectionData('header', { variant: value })}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder={t('Select Header Style')} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="header1">{t('Standard')}</SelectItem>
-                                <SelectItem value="header2">{t('Centered')}</SelectItem>
-                                <SelectItem value="header3">{t('Minimal')}</SelectItem>
-                                <SelectItem value="header4">{t('Transparent')}</SelectItem>
-                                <SelectItem value="header5">{t('Gradient')}</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>{t('Company Name')}</Label>
-                        <Input
-                            value={getSectionData('header').company_name || ''}
-                            onChange={(e) => updateSectionData('header', { company_name: e.target.value })}
-                            placeholder={t('WorkDo Dash')}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label>{t('CTA Button Text')}</Label>
-                        <Input
-                            value={getSectionData('header').cta_text || ''}
-                            onChange={(e) => updateSectionData('header', { cta_text: e.target.value })}
-                            placeholder={t('Get Started')}
-                        />
+                    <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <Label>{t('Header Variant')}</Label>
+                            <Select
+                                value={getSectionData('header').variant}
+                                onValueChange={(value) => updateSectionData('header', { variant: value })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder={t('Select Header Style')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="header1">{t('Standard')}</SelectItem>
+                                    <SelectItem value="header2">{t('Centered')}</SelectItem>
+                                    <SelectItem value="header3">{t('Minimal')}</SelectItem>
+                                    <SelectItem value="header4">{t('Transparent')}</SelectItem>
+                                    <SelectItem value="header5">{t('Gradient')}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label>{t('Company Name')}</Label>
+                            <Input
+                                value={getSectionData('header').company_name || ''}
+                                onChange={(e) => updateSectionData('header', { company_name: e.target.value })}
+                                placeholder={t('WorkDo Dash')}
+                            />
+                        </div>
+                        <div>
+                            <Label>{t('CTA Button Text')}</Label>
+                            <Input
+                                value={getSectionData('header').cta_text || ''}
+                                onChange={(e) => updateSectionData('header', { cta_text: e.target.value })}
+                                placeholder={t('Get Started')}
+                            />
+                        </div>
                     </div>
                      <div className="space-y-4">
                         <Label>{t('Display Options')}</Label>

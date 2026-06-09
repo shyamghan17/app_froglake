@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import InputError from '@/components/ui/input-error';
 import { Label } from '@/components/ui/label';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Plus, Edit as EditIcon, Trash2, Eye, Tag as TagIcon, Download, FileImage, Check, X, Play, ChevronDown } from "lucide-react";
+import { Plus, Edit as EditIcon, Trash2, Eye, Tag as TagIcon, Download, FileImage, Check, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FilterButton } from '@/components/ui/filter-button';
 import { Pagination } from "@/components/ui/pagination";
@@ -20,11 +20,8 @@ import { SearchInput } from "@/components/ui/search-input";
 
 import { PerPageSelector } from '@/components/ui/per-page-selector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
 import Create from './Create';
 import EditResignation from './Edit';
-import ResignationStatusModal from './ResignationStatusModal';
 import ResignationView from './View';
 
 import NoRecordsFound from '@/components/no-records-found';
@@ -50,13 +47,6 @@ export default function Index() {
         isOpen: false,
         mode: '',
         data: null
-    });
-    const [statusModalState, setStatusModalState] = useState<{
-        isOpen: boolean;
-        resignation: Resignation | null;
-    }>({
-        isOpen: false,
-        resignation: null
     });
     const [viewingItem, setViewingItem] = useState<Resignation | null>(null);
 
@@ -105,14 +95,6 @@ export default function Index() {
         setModalState({ isOpen: false, mode: '', data: null });
     };
 
-    const openStatusModal = (resignation: Resignation) => {
-        setStatusModalState({ isOpen: true, resignation });
-    };
-
-    const closeStatusModal = () => {
-        setStatusModalState({ isOpen: false, resignation: null });
-    };
-
     const { put: updateStatusForm } = useForm();
 
     const updateStatus = (resignationId: number, newStatus: string) => {
@@ -147,35 +129,12 @@ export default function Index() {
             key: 'status',
             header: t('Status'),
             sortable: false,
-            render: (value: string, row: any) => {
+            render: (value: string) => {
                 const statusColors = {
                     pending: 'bg-yellow-100 text-yellow-700',
                     accepted: 'bg-green-100 text-green-700',
                     rejected: 'bg-red-100 text-red-700'
                 };
-
-                if (auth.user?.permissions?.includes('manage-resignation-status') && value === 'pending') {
-                    return (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className={`px-2 py-1 rounded-full text-sm font-medium h-auto hover:bg-yellow-100 hover:text-yellow-800 ${statusColors[value] || statusColors.pending}`}>
-                                    {t(value?.charAt(0).toUpperCase() + value?.slice(1) || 'Pending')} <ChevronDown className="h-2 w-2 ml-1" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => updateStatus(row.id, 'pending')}>
-                                    {t('Pending')}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => updateStatus(row.id, 'accepted')}>
-                                    {t('Accepted')}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => updateStatus(row.id, 'rejected')}>
-                                    {t('Rejected')}
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    );
-                }
 
                 return (
                     <span className={`px-2 py-1 rounded-full text-sm font-medium ${statusColors[value] || statusColors.pending}`}>
@@ -203,6 +162,30 @@ export default function Index() {
                                     <p>{t('Document')}</p>
                                 </TooltipContent>
                             </Tooltip>
+                        )}
+                        {auth.user?.permissions?.includes('manage-resignation-status') && resignation.status === 'pending' && (
+                            <>
+                                <Tooltip delayDuration={0}>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="sm" onClick={() => updateStatus(resignation.id, 'accepted')} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
+                                            <Check className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{t('Approve')}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                                <Tooltip delayDuration={0}>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="sm" onClick={() => updateStatus(resignation.id, 'rejected')} className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{t('Reject')}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </>
                         )}
                         {auth.user?.permissions?.includes('view-resignations') && (
                             <Tooltip delayDuration={0}>
@@ -413,15 +396,6 @@ export default function Index() {
                 onConfirm={confirmDelete}
                 variant="destructive"
             />
-
-            <Dialog open={statusModalState.isOpen} onOpenChange={closeStatusModal}>
-                {statusModalState.resignation && (
-                    <ResignationStatusModal
-                        resignation={statusModalState.resignation}
-                        onSuccess={closeStatusModal}
-                    />
-                )}
-            </Dialog>
 
             <Dialog open={!!viewingItem} onOpenChange={() => setViewingItem(null)}>
                 {viewingItem && <ResignationView resignation={viewingItem} />}

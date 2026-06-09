@@ -20,7 +20,6 @@ export default function WarningView({ warning, onClose }: WarningViewProps) {
                     </div>
                     <div>
                         <DialogTitle className="text-xl font-semibold">{t('Warning Details')}</DialogTitle>
-                        <p className="text-sm text-muted-foreground">{warning.employee?.name}</p>
                     </div>
                 </div>
             </DialogHeader>
@@ -45,7 +44,7 @@ export default function WarningView({ warning, onClose }: WarningViewProps) {
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Severity')}</label>
-                        <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                        <p className="p-1 rounded">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 warning.severity === 'Minor' ? 'bg-green-100 text-green-800' :
                                 warning.severity === 'Moderate' ? 'bg-yellow-100 text-yellow-800' :
@@ -58,7 +57,7 @@ export default function WarningView({ warning, onClose }: WarningViewProps) {
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Status')}</label>
-                        <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                        <p className="p-1 rounded">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 warning.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                 warning.status === 'approved' ? 'bg-green-100 text-green-800' :

@@ -25,12 +25,21 @@ class PlanModuleCheck
         if ($user->hasRole('superadmin')) {
             return $next($request);
         } elseif ($user->hasRole('company')) {
-            if (($user->plan_expire_date && now()->gt($user->plan_expire_date)) || ($user->active_plan == 0)) {
-                // Plan expired - only allow essential plan routes
+            $planExpired = $user->plan_expire_date && now()->gt($user->plan_expire_date);
+            $isTrialActive = ($user->is_trial_done == 2);
+
+            if ($planExpired || ($user->active_plan == 0)) {
                 $allowedRoutes = ['users.leave-impersonation','plans.index', 'plans.subscribe', 'plans.start-trial', 'plans.apply-coupon', 'payment.*.store','payment.*.status', 'bank-transfer.index','plans.assign-free'];
                 if (!$request->routeIs($allowedRoutes)) {
-                    return redirect()->route('plans.index')
-                        ->with('error', __('Your plan has expired. Please renew your subscription.'));
+                    if ($planExpired && $isTrialActive) {
+                        // Trial expired
+                        return redirect()->route('plans.index')
+                            ->with('error', __("Your trial has expired. Please subscribe to a plan"));
+                    } else {
+                        // Paid plan expired
+                        return redirect()->route('plans.index')
+                            ->with('error', __('Your plan has expired. Please renew your subscription'));
+                    }
                 }
             }
         } else {

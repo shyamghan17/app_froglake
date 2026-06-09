@@ -5,6 +5,7 @@ namespace Workdo\Lead\Events;
 use Workdo\Lead\Models\Lead;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Http\Request;
+use Workdo\Lead\Models\LeadStage;
 
 class LeadMoved
 {
@@ -12,6 +13,7 @@ class LeadMoved
 
     public function __construct(
         public Request $request,
-        public Lead $lead
+        public Lead $lead,
+        public LeadStage $oldStage
     ) {}
 }

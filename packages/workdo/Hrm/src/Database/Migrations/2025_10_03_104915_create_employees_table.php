@@ -15,7 +15,6 @@ return new class extends Migration
                 $table->date('date_of_birth')->nullable();
                 $table->string('gender')->default('Male');
                 $table->foreignId('shift')->nullable()->constrained('shifts')->onDelete('set null');
-                $table->string('attendance_policy')->nullable();
                 $table->date('date_of_joining')->nullable();
                 $table->string('employment_type')->default('0');
                 $table->string('address_line_1')->nullable();

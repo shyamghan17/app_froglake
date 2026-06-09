@@ -44,6 +44,7 @@ class DemoExpenseCategoriesSeeder extends Seeder
         ];
 
         $expenseGLAccounts = ChartOfAccount::where('created_by', $userId)
+            ->where('is_active', true)
             ->whereBetween('account_code', ['5000', '5999'])
             ->pluck('id')
             ->toArray();

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Head, usePage } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import html2pdf from 'html2pdf.js';
@@ -17,6 +17,7 @@ export default function Print() {
     const { invoice } = usePage<PrintProps>().props;
     const [isDownloading, setIsDownloading] = useState(false);
     const [fieldsLoaded, setFieldsLoaded] = useState(false);
+    const downloadInitiatedRef = useRef(false);
 
     const signaturePrintButtons = usePageButtons('signaturePrintBtn', {
         invoice: invoice,
@@ -25,6 +26,7 @@ export default function Print() {
 
     // Custom fields view mode hook
     const customFields = useFormFields('getCustomFields', { ...invoice, module: 'General', sub_module: 'Sales Invoice', id: invoice.id, isPrint: true }, () => {}, {}, 'view', t);
+    const pageButtons = usePageButtons('zatcaQRCodeBtn', invoice);
 
     useEffect(() => {
         // Set fields loaded when custom fields are available
@@ -35,12 +37,68 @@ export default function Print() {
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('download') === 'pdf' && fieldsLoaded) {
-            setTimeout(() => downloadPDF(), 1000);
+        if (urlParams.get('download') === 'pdf' && fieldsLoaded && !downloadInitiatedRef.current) {
+            downloadInitiatedRef.current = true;
+            let attempts = 0;
+            const maxAttempts = 60;
+            let initialPageButtonsLength = pageButtons.length;
+
+            const checkQRCodeOrDownload = () => {
+                const qrContainer = document.getElementById('zatca-qr-container');
+                const qrImg = document.querySelector('[data-zatca-qr] img[src*="data:image"]') as HTMLImageElement;
+                const loadingDiv = document.querySelector('[data-zatca-qr] .animate-spin');
+                const currentPageButtonsLength = pageButtons.length;
+
+                // Check if ZATCA is enabled (pageButtons populated at any point)
+                const isZatcaEnabled = currentPageButtonsLength > 0 || initialPageButtonsLength > 0 || qrContainer !== null;
+
+                // Case 1: Valid QR code loaded and ready
+                if (qrImg && qrImg.complete && qrImg.naturalWidth > 0) {
+                    if (qrContainer) qrContainer.classList.remove('hidden');
+                    setTimeout(() => downloadPDF(), 1000);
+                    return;
+                }
+
+                // Case 2: ZATCA disabled (no page buttons and no container)
+                if (!isZatcaEnabled && attempts > 5) {
+                    setTimeout(() => downloadPDF(), 300);
+                    return;
+                }
+
+                // Case 3: QR container exists but empty after sufficient attempts (validation failed)
+                if (isZatcaEnabled && qrContainer && !qrImg && !loadingDiv && attempts > 15) {
+                    if (qrContainer) qrContainer.classList.add('hidden');
+                    setTimeout(() => downloadPDF(), 300);
+                    return;
+                }
+
+                // Case 4: Still loading - continue waiting
+                if (loadingDiv && attempts <= 40) {
+                    attempts++;
+                    setTimeout(checkQRCodeOrDownload, 300);
+                    return;
+                }
+
+                // Case 5: Max attempts reached - proceed anyway
+                if (attempts >= maxAttempts) {
+                    if (qrContainer && !qrImg) {
+                        qrContainer.classList.add('hidden');
+                    }
+                    setTimeout(() => downloadPDF(), 300);
+                    return;
+                }
+
+                // Continue checking
+                attempts++;
+                setTimeout(checkQRCodeOrDownload, 250);
+            };
+
+            setTimeout(checkQRCodeOrDownload, 500);
         }
     }, [fieldsLoaded]);
 
     const downloadPDF = async () => {
+        if (isDownloading) return;
         setIsDownloading(true);
 
         const printContent = document.querySelector('.invoice-container');
@@ -103,6 +161,18 @@ export default function Print() {
                             <p>{t('Date')}: {formatDate(invoice.invoice_date)}</p>
                             <p>{t('Due')}: {formatDate(invoice.due_date)}</p>
                         </div>
+                        {pageButtons.length > 0 ? (
+                            <div className="mt-4 flex justify-end">
+                                {pageButtons.map((button, index) => (
+                                    <div key={`${button.id}-${index}`} data-zatca-qr className="" id="zatca-qr-container">
+                                        {button.component}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            // Empty container for detection when ZATCA is disabled
+                            <div className="hidden" id="zatca-qr-container-disabled"></div>
+                        )}
                     </div>
                 </div>
 
@@ -136,7 +206,6 @@ export default function Print() {
                         </div>
                     </div>
                 </div>
-
                 {/* Custom Fields Display */}
                 {customFields && customFields.length > 0 && (
                     <div className="mb-8">
@@ -244,7 +313,7 @@ export default function Print() {
                 </div>
 
                 <div className="border-t border-gray-400 pt-4 text-center">
-                     {/* Signature Print Display */}
+                    {/* Signature Print Display */}
                     {signaturePrintButtons.length > 0 && signaturePrintButtons.map((button) => (
                         <div key={button.id}>{button.component}</div>
                     ))}

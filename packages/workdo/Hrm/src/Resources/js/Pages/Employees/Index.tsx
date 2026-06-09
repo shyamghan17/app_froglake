@@ -163,12 +163,6 @@ export default function Index() {
             render: (value: any, row: any) => row.branch?.branch_name || '-'
         },
         {
-            key: 'branch.branch_name',
-            header: t('Branch'),
-            sortable: false,
-            render: (value: any, row: any) => row.branch?.branch_name || '-'
-        },
-        {
             key: 'department.department_name',
             header: t('Department'),
             sortable: false,

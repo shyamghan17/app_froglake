@@ -23,6 +23,7 @@ use Workdo\Hrm\Events\UpdatePayroll;
 use Workdo\Hrm\Events\DestroyPayroll;
 use Workdo\Hrm\Events\DestroySalarySlip;
 use Workdo\Hrm\Events\PaySalary;
+use App\Models\EmailTemplate;
 
 class PayrollController extends Controller
 {
@@ -212,6 +213,42 @@ class PayrollController extends Controller
                     'employee_count' => $employeeCount
                 ]);
 
+                // Send payroll processed email to each employee
+                if (company_setting('Payroll Processed') == 'on') {
+                    $payroll->load('payrollEntries.employee.user');
+                    foreach ($payroll->payrollEntries as $entry) {
+                        $emp = $entry->employee;
+                        $emailData = [
+                            'employee_name'           => $emp->user->name ?? null,
+                            'title'                   => $payroll->title,
+                            'payroll_frequency'       => ucfirst($payroll->payroll_frequency),
+                            'pay_period_start'        => $payroll->pay_period_start ? \Carbon\Carbon::parse($payroll->pay_period_start)->format('d M Y') : null,
+                            'pay_period_end'          => $payroll->pay_period_end ? \Carbon\Carbon::parse($payroll->pay_period_end)->format('d M Y') : null,
+                            'pay_date'                => $payroll->pay_date ? \Carbon\Carbon::parse($payroll->pay_date)->format('d M Y') : null,
+                            'basic_salary'            => number_format($entry->basic_salary, 2),
+                            'total_allowances'        => number_format($entry->total_allowances, 2),
+                            'total_deductions'        => number_format($entry->total_deductions, 2),
+                            'total_loans'             => number_format($entry->total_loans, 2),
+                            'gross_pay'               => number_format($entry->gross_pay, 2),
+                            'net_pay'                 => number_format($entry->net_pay, 2),
+                            'working_days'            => $entry->working_days,
+                            'present_days'            => $entry->present_days,
+                            'absent_days'             => $entry->absent_days,
+                            'half_days'               => $entry->half_days,
+                            'paid_leave_days'         => $entry->paid_leave_days,
+                            'unpaid_leave_days'       => $entry->unpaid_leave_days,
+                            'overtime_hours'          => $entry->overtime_hours,
+                            'status'                  => ucfirst($entry->status),
+                        ];
+                        $message = EmailTemplate::sendEmailTemplate('Payroll Processed', [$emp->user->email ?? null], $emailData);
+                        if($message['is_success'] == false && !empty($message['error'])) {
+                            return back()
+                                ->with('success', __('Payroll processed successfully.'))
+                                ->with('error', $message['error']);
+                        }
+                    }
+                }
+
                 if ($newEntriesCount > 0) {
                     return redirect()->back()->with('success', __('Payroll processed successfully. New payslips created for :new employees. Total employees: :total', [
                         'new' => $newEntriesCount,
@@ -222,6 +259,7 @@ class PayrollController extends Controller
                         'count' => $entries->count(),
                     ]));
                 }
+            
             } catch (\Exception $e) {
                 $payroll->update(['status' => 'draft']);
                 return redirect()->back()->with('error', __('Failed to process payroll: :error', ['error' => $e->getMessage()]));

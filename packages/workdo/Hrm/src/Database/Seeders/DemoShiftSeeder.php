@@ -21,8 +21,6 @@ class DemoShiftSeeder extends Seeder
                 'break_start_time' => '12:00:00',
                 'break_end_time' => '13:00:00',
                 'is_night_shift' => false,
-                'creator_id' => $userId,
-                'created_by' => $userId,
             ],
             [
                 'shift_name' => 'Evening Shift',
@@ -31,8 +29,6 @@ class DemoShiftSeeder extends Seeder
                 'break_start_time' => '18:00:00',
                 'break_end_time' => '19:00:00',
                 'is_night_shift' => false,
-                'creator_id' => $userId,
-                'created_by' => $userId,
             ],
             [
                 'shift_name' => 'Night Shift',
@@ -41,8 +37,6 @@ class DemoShiftSeeder extends Seeder
                 'break_start_time' => '02:00:00',
                 'break_end_time' => '03:00:00',
                 'is_night_shift' => true,
-                'creator_id' => $userId,
-                'created_by' => $userId,
             ],
             [
                 'shift_name' => 'Early Morning Shift',
@@ -51,8 +45,6 @@ class DemoShiftSeeder extends Seeder
                 'break_start_time' => '10:00:00',
                 'break_end_time' => '11:00:00',
                 'is_night_shift' => false,
-                'creator_id' => $userId,
-                'created_by' => $userId,
             ],
             [
                 'shift_name' => 'Flexible Shift',
@@ -61,8 +53,6 @@ class DemoShiftSeeder extends Seeder
                 'break_start_time' => '13:00:00',
                 'break_end_time' => '14:00:00',
                 'is_night_shift' => false,
-                'creator_id' => $userId,
-                'created_by' => $userId,
             ],
             [
                 'shift_name' => 'Weekend Shift',
@@ -71,14 +61,16 @@ class DemoShiftSeeder extends Seeder
                 'break_start_time' => '12:00:00',
                 'break_end_time' => '13:00:00',
                 'is_night_shift' => false,
-                'creator_id' => $userId,
-                'created_by' => $userId,
             ],
         ];
 
         foreach ($shifts as $shift) {
             Shift::updateOrCreate(
-                ['shift_name' => $shift['shift_name'], 'created_by' => $userId],
+                [
+                    'shift_name' => $shift['shift_name'], 
+                    'created_by' => $userId, 
+                    'creator_id' => $userId
+                ],
                 $shift
             );
         }

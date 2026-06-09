@@ -14,7 +14,7 @@ use Workdo\Lead\Http\Controllers\DashboardController;
 use Workdo\Lead\Http\Controllers\ReportController;
 
 Route::middleware(['web', 'auth', 'verified', 'PlanModuleCheck:Lead'])->group(function () {
-    Route::get('/crm', [DashboardController::class, 'index'])->name('lead.index');
+    Route::get('/crm/dashboard', [DashboardController::class, 'index'])->name('lead.index');
 
     Route::resource('crm/pipelines', PipelineController::class)->names('lead.pipelines');
 
@@ -83,6 +83,7 @@ Route::middleware(['web', 'auth', 'verified', 'PlanModuleCheck:Lead'])->group(fu
     Route::post('crm/deals/{deal}/assign-users', [DealController::class, 'assignUsers'])->name('lead.deals.assign-users');
     Route::delete('crm/deals/{deal}/users/{user}', [DealController::class, 'removeUser'])->name('lead.deals.remove-user');
     Route::post('crm/deals/{deal}/assign-products', [DealController::class, 'assignProducts'])->name('lead.deals.assign-products');
+    Route::get('crm/deals/{deal}/available-products', [DealController::class, 'getAvailableProducts'])->name('lead.deals.available-products');
     Route::delete('crm/deals/{deal}/products/{product}', [DealController::class, 'removeProduct'])->name('lead.deals.remove-product');
     Route::post('crm/deals/{deal}/assign-sources', [DealController::class, 'assignSources'])->name('lead.deals.assign-sources');
     Route::delete('crm/deals/{deal}/sources/{source}', [DealController::class, 'removeSource'])->name('lead.deals.remove-source');

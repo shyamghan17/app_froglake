@@ -185,7 +185,12 @@ class PurchaseInvoiceController extends Controller
                         'total_amount' => $totals['total_amount'] ?? null,
                     ];
                    
-                    EmailTemplate::sendEmailTemplate('Purchase Invoice', [$invoice->vendor->email], $emailData);
+                    $message = EmailTemplate::sendEmailTemplate('Purchase Invoice', [$invoice->vendor->email], $emailData);
+                    if($message['is_success'] == false && !empty($message['error'])) {
+                        return back()
+                            ->with('success', __('The purchase invoice has been created successfully.'))
+                            ->with('error', $message['error']);
+                    }
                 }
             } catch (\Throwable $th) {
                 return back()->with('error', $th->getMessage());

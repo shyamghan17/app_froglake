@@ -12,11 +12,6 @@ class DemoClientDealSeeder extends Seeder
 {
     public function run($userId): void
     {
-        if (ClientDeal::whereHas('deal', function($query) use ($userId) {
-            $query->where('created_by', $userId);
-        })->exists()) {
-            return;
-        }
         if (!empty($userId)) {
             // Only get deals that are NOT converted from leads (they already have clients)
             $convertedDealIds = Lead::where('created_by', $userId)

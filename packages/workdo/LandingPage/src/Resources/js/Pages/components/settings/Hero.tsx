@@ -28,7 +28,7 @@ export default function Hero({ data, getSectionData, updateSectionData, updateSe
                                 <Layout className="h-5 w-5 text-orange-600" />
                             </div>
                             <div>
-                                <CardTitle>{t('Hero Content')}</CardTitle>
+                                <CardTitle className="text-base">{t('Hero Content')}</CardTitle>
                                 <p className="text-sm text-gray-500">{t('Main headline and supporting text')}</p>
                             </div>
                         </div>
@@ -42,32 +42,34 @@ export default function Hero({ data, getSectionData, updateSectionData, updateSe
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label>{t('Hero Variant')}</Label>
-                        <Select
-                            value={getSectionData('hero').variant || 'hero1'}
-                            onValueChange={(value) => updateSectionData('hero', { variant: value })}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder={t('Select Hero Style')} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="hero1">{t('Image Left Split')}</SelectItem>
-                                <SelectItem value="hero2">{t('Image Right Split')}</SelectItem>
-                                <SelectItem value="hero3">{t('Background Image')}</SelectItem>
-                                <SelectItem value="hero4">{t('Minimal')}</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <Label>{t('Hero Variant')}</Label>
+                            <Select
+                                value={getSectionData('hero').variant}
+                                onValueChange={(value) => updateSectionData('hero', { variant: value })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder={t('Select Hero Style')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="hero1">{t('Image Left Split')}</SelectItem>
+                                    <SelectItem value="hero2">{t('Image Right Split')}</SelectItem>
+                                    <SelectItem value="hero3">{t('Background Image')}</SelectItem>
+                                    <SelectItem value="hero4">{t('Minimal')}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label>{t('Hero Title')}</Label>
+                            <Input
+                                value={getSectionData('hero').title || ''}
+                                onChange={(e) => updateSectionData('hero', { title: e.target.value })}
+                                placeholder={t('Your main headline')}
+                            />
+                        </div>
                     </div>
-                    <div className="space-y-2">
-                        <Label>{t('Hero Title')}</Label>
-                        <Input
-                            value={getSectionData('hero').title || ''}
-                            onChange={(e) => updateSectionData('hero', { title: e.target.value })}
-                            placeholder={t('Your main headline')}
-                        />
-                    </div>
-                    <div className="space-y-2">
+                    <div>
                         <Label>{t('Hero Subtitle')}</Label>
                         <Textarea
                             value={getSectionData('hero').subtitle || ''}
@@ -78,7 +80,7 @@ export default function Hero({ data, getSectionData, updateSectionData, updateSe
                     </div>
                     <div className="grid grid-cols-1 gap-4">
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
+                            <div>
                                 <Label>{t('Primary Button Text')}</Label>
                                 <Input
                                     value={getSectionData('hero').primary_button_text || ''}
@@ -86,7 +88,7 @@ export default function Hero({ data, getSectionData, updateSectionData, updateSe
                                     placeholder={t('Start Free Trial')}
                                 />
                             </div>
-                            <div className="space-y-2">
+                            <div>
                                 <Label>{t('Primary Button Link')}</Label>
                                 <Input
                                     value={getSectionData('hero').primary_button_link || ''}
@@ -96,7 +98,7 @@ export default function Hero({ data, getSectionData, updateSectionData, updateSe
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
+                            <div>
                                 <Label>{t('Secondary Button Text')}</Label>
                                 <Input
                                     value={getSectionData('hero').secondary_button_text || ''}
@@ -104,7 +106,7 @@ export default function Hero({ data, getSectionData, updateSectionData, updateSe
                                     placeholder={t('Login')}
                                 />
                             </div>
-                            <div className="space-y-2">
+                            <div>
                                 <Label>{t('Secondary Button Link')}</Label>
                                 <Input
                                     value={getSectionData('hero').secondary_button_link || ''}
@@ -114,7 +116,7 @@ export default function Hero({ data, getSectionData, updateSectionData, updateSe
                             </div>
                         </div>
                     </div>
-                    <div className="space-y-2">
+                    <div>
                         <Label>{t('Hero Image')}</Label>
                         <MediaPicker
                             value={getSectionData('hero').image || ''}

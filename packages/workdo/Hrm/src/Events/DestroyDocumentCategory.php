@@ -13,7 +13,5 @@ class DestroyDocumentCategory
     public function __construct(
           public DocumentCategory $documentCategory
     )
-    {
-        //
-    }
+    {}
 }

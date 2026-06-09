@@ -35,6 +35,7 @@ class RevenueCategoriesController extends Controller
             return Inertia::render('Account/SystemSetup/RevenueCategories/Index', [
                 'revenuecategories' => $revenuecategories,
                 'chartofaccounts' => ChartOfAccount::where('created_by', creatorId())
+                    ->where('is_active', true)
                     ->whereBetween('account_code', ['4000', '4999'])
                     ->select('id', 'account_code', 'account_name')
                     ->orderBy('account_code')

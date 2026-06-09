@@ -25,12 +25,7 @@ export default function Index() {
     const { t } = useTranslation();
     const { leadstages, auth, pipelines } = usePage<LeadStagesIndexProps>().props;
 
-    // Filter pipelines that have lead stages
-    const pipelinesWithStages = pipelines.filter((pipeline: any) => 
-        leadstages.some((stage: LeadStage) => stage.pipeline_id === pipeline.id)
-    );
-
-    const [activePipeline, setActivePipeline] = useState<number>(pipelinesWithStages[0]?.id || 0);
+    const [activePipeline, setActivePipeline] = useState<number>(pipelines[0]?.id || 0);
     const [modalState, setModalState] = useState<LeadStageModalState>({
         isOpen: false,
         mode: '',
@@ -152,26 +147,28 @@ export default function Index() {
                                     )}
                                 </div>
 
-                                {/* Pipeline Tabs - Only show pipelines with stages */}
-                                {pipelinesWithStages.length > 0 && (
-                                    <div className="flex border-b border-gray-200 mb-6">
-                                        {pipelinesWithStages.map((pipeline: any) => (
-                                            <button
-                                                key={pipeline.id}
-                                                onClick={() => setActivePipeline(pipeline.id)}
-                                                className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${
-                                                    activePipeline === pipeline.id
-                                                        ? 'text-white rounded-t-lg'
-                                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                                                }`}
-                                                style={activePipeline === pipeline.id ? {
-                                                    backgroundColor: 'hsl(var(--primary))',
-                                                    borderColor: 'hsl(var(--primary))'
-                                                } : {}}
-                                            >
-                                                {pipeline.name}
-                                            </button>
-                                        ))}
+                                {/* Pipeline Tabs */}
+                                {pipelines.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 border-b border-gray-200 mb-6">
+                                        {pipelines.map((pipeline: any) => {
+                                            const count = leadstages.filter((s: LeadStage) => s.pipeline_id === pipeline.id).length;
+                                            return (
+                                                <button
+                                                    key={pipeline.id}
+                                                    onClick={() => setActivePipeline(pipeline.id)}
+                                                    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors flex items-center gap-2 ${
+                                                        activePipeline === pipeline.id
+                                                            ? 'border-primary text-primary'
+                                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    {pipeline.name}
+                                                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                                                        activePipeline === pipeline.id ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'
+                                                    }`}>{count}</span>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 )}
 

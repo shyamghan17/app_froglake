@@ -13,11 +13,6 @@ class DemoDealCallSeeder extends Seeder
 {
     public function run($userId): void
     {
-        if (DealCall::whereHas('deal', function($query) use ($userId) {
-            $query->where('created_by', $userId);
-        })->exists()) {
-            return;
-        }
         if (!empty($userId)) {
             // Only get deals that are NOT converted from leads (they already have DealCalls)
             $convertedDealIds = \Workdo\Lead\Models\Lead::where('created_by', $userId)
@@ -308,10 +303,10 @@ class DemoDealCallSeeder extends Seeder
                 $pipelineName = $deal->pipeline->name ?? 'Sales';
                 $stageName = $deal->stage->name ?? 'Initial Contact';
 
-                // Get assigned users for this deal
+                // Get assigned users for this deal, fallback to userId
                 $assignedUsers = $deal->userDeals->pluck('user_id')->toArray();
                 if (empty($assignedUsers)) {
-                    continue; // Skip deals with no assigned users
+                    $assignedUsers = [$userId];
                 }
 
                 // Generate 1-2 calls per deal

@@ -14,6 +14,7 @@ use Workdo\Hrm\Models\WarningType;
 use Workdo\Hrm\Events\CreateWarning;
 use Workdo\Hrm\Events\DestroyWarning;
 use Workdo\Hrm\Events\UpdateWarning;
+use App\Models\EmailTemplate;
 
 class WarningController extends Controller
 {
@@ -133,6 +134,21 @@ class WarningController extends Controller
             $warning->status = $validated['warning_status'];
             $warning->employee_response = $validated['employee_response'];
             $warning->save();
+
+            if(company_setting('Warning Approval') == 'on') {
+                $emailData = [
+                    'employee_name'      => $warning->employee->name ?? null,
+                    'warning_type_name'  => $warning->warningType->warning_type_name ?? null,
+                    'subject'            => $warning->subject ?? null,
+                    'status'             => $warning->status ?? null,
+                ]; 
+                $message = EmailTemplate::sendEmailTemplate('Warning Approval', [$warning->employee->email ?? null], $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('The warning status has been updated successfully.'))
+                        ->with('error', $message['error']);
+                }
+            }
 
             return redirect()->back()->with('success', __('The warning status has been updated successfully.'));
         } else {

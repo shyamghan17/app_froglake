@@ -26,8 +26,4 @@ class LeaveType extends Model
             'is_paid' => 'boolean'
         ];
     }
-
-
-
-
 }

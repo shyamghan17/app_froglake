@@ -17,8 +17,6 @@ class Holiday extends Model
         'holiday_type_id',
         'description',
         'is_paid',
-        'is_sync_google_calendar',
-        'is_sync_outlook_calendar',
         'creator_id',
         'created_by',
     ];
@@ -30,8 +28,6 @@ class Holiday extends Model
             'end_date' => 'date',
             'holiday_type_id' => 'integer',
             'is_paid' => 'boolean',
-            'is_sync_google_calendar' => 'boolean',
-            'is_sync_outlook_calendar' => 'boolean'
         ];
     }
 
@@ -39,8 +35,4 @@ class Holiday extends Model
     {
         return $this->belongsTo(HolidayType::class, 'holiday_type_id');
     }
-
-
-
-
 }

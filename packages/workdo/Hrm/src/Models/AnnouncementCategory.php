@@ -15,10 +15,4 @@ class AnnouncementCategory extends Model
         'creator_id',
         'created_by',
     ];
-
-   
-
-
-
-
 }

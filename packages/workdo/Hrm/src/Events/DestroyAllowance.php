@@ -13,7 +13,5 @@ class DestroyAllowance
     public function __construct(
           public Allowance $allowance
     )
-    {
-        //
-    }
+    {}
 }

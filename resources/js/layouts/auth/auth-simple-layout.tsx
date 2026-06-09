@@ -43,22 +43,22 @@ export default function AuthSimpleLayout({
                 }
             `}</style>
             {/* Dotted background pattern */}
-            <div className="absolute inset-0 opacity-30 dark:opacity-20" style={{
+            <div className="absolute inset-0 opacity-20 dark:opacity-15" style={{
                 backgroundImage: 'radial-gradient(circle, #94a3b8 2px, transparent 1px)',
                 backgroundSize: '30px 30px',
                 backgroundPosition: '0 0, 15px 15px'
             }}></div>
 
             {/* Decorative shapes */}
-            <div className="absolute top-10 left-10 w-20 h-20 bg-primary/10 dark:bg-primary/20 rounded-full blur-xl"></div>
-            <div className="absolute bottom-10 right-10 w-32 h-32 bg-primary/5 dark:bg-primary/15 rounded-full blur-2xl"></div>
-            <div className="absolute top-1/3 right-20 w-16 h-16 bg-primary/8 dark:bg-primary/18 rounded-full blur-lg"></div>
+            <div className="absolute top-10 left-10 w-32 h-32 bg-primary/10 dark:bg-primary/20 rounded-full blur-xl"></div>
+            <div className="absolute bottom-10 right-10 w-40 h-40 bg-primary/5 dark:bg-primary/15 rounded-full blur-2xl"></div>
+            <div className="absolute top-1/3 right-20 w-24 h-24 bg-primary/8 dark:bg-primary/18 rounded-full blur-lg"></div>
 
             <div className="absolute top-4 right-4 z-10">
                 <LanguageSwitcher />
             </div>
 
-            <div className="w-full max-w-md relative z-10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-slate-700/50 p-8">
+            <div className="w-full max-w-md relative z-10 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-2xl shadow-2xl border border-white/30 dark:border-slate-700/50 p-8">
                 <div className="flex flex-col gap-8">
                     <div className="flex flex-col items-center gap-4">
                         <Link
@@ -70,7 +70,7 @@ export default function AuthSimpleLayout({
                                     <img
                                         src={getImagePath(logoSrc)}
                                         alt={settings.titleText || 'Logo'}
-                                        className="w-auto max-w-24 object-contain"
+                                        className="w-auto max-w-28 object-contain"
                                     />
                                 ) : (
                                     <ApplicationLogo className="h-16 w-16 text-primary" />
@@ -80,8 +80,8 @@ export default function AuthSimpleLayout({
                         </Link>
 
                         <div className="space-y-2 text-center">
-                            <h1 className="text-xl font-medium">{title}</h1>
-                            <p className="text-center text-sm text-muted-foreground">
+                            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h1>
+                            <p className="text-center text-sm text-gray-600 dark:text-gray-400">
                                 {description}
                             </p>
                         </div>

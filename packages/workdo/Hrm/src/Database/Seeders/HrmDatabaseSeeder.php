@@ -15,6 +15,8 @@ class HrmDatabaseSeeder extends Seeder
 
         $this->call(PermissionTableSeeder::class);
         $this->call(MarketplaceSettingSeeder::class);
+        $this->call(EmailTemplatesSeeder::class);
+        $this->call(NotificationsTableSeeder::class);
 
         if (config('app.run_demo_seeder')) {
             // Add here your demo data seeders

@@ -11,6 +11,7 @@ use App\Models\User;
 use Workdo\LandingPage\Models\MarketplaceSetting;
 use Workdo\LandingPage\Models\LandingPageSetting;
 use Illuminate\Support\Facades\Auth;
+use Workdo\LandingPage\Http\Requests\StoreMarketplaceSettingRequest;
 
 class MarketplaceController extends Controller
 {
@@ -77,14 +78,10 @@ class MarketplaceController extends Controller
         }
     }
 
-    public function storeSettings(Request $request)
+    public function storeSettings(StoreMarketplaceSettingRequest $request)
     {
         if(Auth::user()->can('manage-marketplace-settings')){
-            $validated = $request->validate([
-                'module' => 'required|string',
-                'title' => 'nullable|string|max:255',
-                'config_sections' => 'nullable|array'
-            ]);
+            $validated = $request->validated();
 
             // Handle image paths - store only filename
             if (isset($validated['config_sections']['sections'])) {
@@ -93,7 +90,7 @@ class MarketplaceController extends Controller
 
             MarketplaceSetting::updateOrCreate(['module' => $validated['module']], $validated);
         
-            return back()->with('success', 'Marketplace settings saved successfully');
+            return back()->with('success', __('Marketplace settings saved successfully'));
         }
         else{
             return back()->with('error', __('Permission denied'));

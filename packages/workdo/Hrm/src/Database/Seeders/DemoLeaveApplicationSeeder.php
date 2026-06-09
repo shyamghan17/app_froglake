@@ -61,22 +61,32 @@ class DemoLeaveApplicationSeeder extends Seeder
         ];
 
         $statuses = ['pending', 'approved', 'rejected'];
-        $months = [7, 8, 9, 10]; // July, August, September, October
-        $year = 2025;
+        
+        // Get current month and year
+        $currentMonth = Carbon::now()->month;
+        $currentYear = Carbon::now()->year;
+        $months = [$currentMonth]; // Only current month
+        $year = $currentYear;
+        
+        $totalLeaves = 0;
+        $maxLeaves = 35;
 
-        // Create 5 leaves per employee for each of the 4 months (month-wise storage)
+        // Create maximum 30-35 leave applications
         foreach ($months as $monthIndex => $month) {
-            // Get days in month to avoid invalid dates
+            if ($totalLeaves >= $maxLeaves) break;
+            
             $daysInMonth = Carbon::create($year, $month, 1)->daysInMonth;
 
             foreach ($employees as $employeeIndex => $employee) {
-                // Skip if employee user doesn't exist
+                if ($totalLeaves >= $maxLeaves) break;
+                
                 if (!$employee->user_id || !$employee->user) {
                     continue;
                 }
 
-                // Create 5 leave applications per month (3 unpaid + 2 paid)
-                for ($leaveIndex = 0; $leaveIndex < 5; $leaveIndex++) {
+                $leavesPerEmployee = ($monthIndex == 0) ? 2 : 1;
+                for ($leaveIndex = 0; $leaveIndex < $leavesPerEmployee; $leaveIndex++) {
+                    if ($totalLeaves >= $maxLeaves) break;
                     // First 3 leaves are unpaid, last 2 are paid
                     $isPaidLeave = $leaveIndex >= 3;
                     $selectedLeaveTypes = $isPaidLeave ? $paidLeaveTypes : $unpaidLeaveTypes;
@@ -178,6 +188,8 @@ class DemoLeaveApplicationSeeder extends Seeder
                         ],
                         $leaveApplication
                     );
+                    
+                    $totalLeaves++;
                 }
             }
         }

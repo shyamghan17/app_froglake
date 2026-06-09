@@ -82,22 +82,8 @@ class LeadTaskController extends Controller
             $lead       = Lead::find($validated['lead_id']);
             $lead_users = $lead->user->pluck('id')->toArray();
             $usrs       = User::whereIN('id', $lead_users)->get()->pluck('email', 'id')->toArray();
-            if (!empty(company_setting('New Task')) && company_setting('New Task')  == true) {
-                $tArr = [
-                    'lead_name' => $lead->name,
-                    'lead_pipeline' => $lead->pipeline->name,
-                    'lead_stage' => $lead->stage->name,
-                    'lead_status' => $lead->status,
-                    'lead_price' => $lead->price,
-                    'task_name' => $leadTask->name,
-                    'task_priority' => is_numeric($leadTask->priority) ? (LeadTask::$priorities[$leadTask->priority] ?? $leadTask->priority) : $leadTask->priority,
-                    'task_status' => is_numeric($leadTask->status) ? (LeadTask::$status[$leadTask->status] ?? $leadTask->status) : $leadTask->status,
-                ];
-
-                // Send Email
-                $resp = EmailTemplate::sendEmailTemplate('New Task', $usrs, $tArr);
-            }
-            return back()->with('success', __('The task has been created successfully.') . ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
+           
+            return redirect()->route('lead.leads.show', $validated['lead_id'])->with('success', __('The task has been created successfully.'));
         }
         else{
             return back()->with('error', __('Permission denied'));
@@ -119,7 +105,7 @@ class LeadTaskController extends Controller
 
             UpdateLeadTask::dispatch($request, $task);
 
-            return back()->with('success', __('The task details are updated successfully.'));
+            return redirect()->route('lead.leads.show', $task->lead_id)->with('success', __('The task details are updated successfully.'));
         }
         else{
             return back()->with('error', __('Permission denied'));
@@ -129,10 +115,10 @@ class LeadTaskController extends Controller
     public function destroy(LeadTask $task)
     {
         if(Auth::user()->can('delete-lead-tasks')){
-           
+            $lead_id = $task->lead_id;
             DestroyLeadTask::dispatch($task);
             $task->delete();
-            return back()->with('success', __('The task has been deleted.'));
+            return redirect()->route('lead.leads.show', $lead_id)->with('success', __('The task has been deleted.'));
         }
         else{
             return back()->with('error', __('Permission denied'));

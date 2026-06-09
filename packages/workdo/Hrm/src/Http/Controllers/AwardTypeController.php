@@ -79,10 +79,10 @@ class AwardTypeController extends Controller
 
             UpdateAwardType::dispatch($request, $awardtype);
 
-            return redirect()->route('hrm.award-types.index')->with('success', __('The award type details are updated successfully.'));
+            return back()->with('success', __('The award type details are updated successfully.'));
         }
         else{
-            return redirect()->route('hrm.award-types.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 
@@ -92,10 +92,10 @@ class AwardTypeController extends Controller
             DestroyAwardType::dispatch($awardtype);
             $awardtype->delete();
 
-            return redirect()->route('hrm.award-types.index')->with('success', __('The award type has been deleted.'));
+            return back()->with('success', __('The award type has been deleted.'));
         }
         else{
-            return redirect()->route('hrm.award-types.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 

@@ -12,11 +12,11 @@ return new class extends Migration
         {
             Schema::create('leave_types', function (Blueprint $table) {
                 $table->id();
-            $table->string('name');
-            $table->longText('description')->nullable();
-            $table->integer('max_days_per_year')->nullable();
-            $table->boolean('is_paid')->default(false);
-            $table->string('color', 7)->default('#FF6B6B');
+                $table->string('name');
+                $table->longText('description')->nullable();
+                $table->integer('max_days_per_year')->nullable();
+                $table->boolean('is_paid')->default(false);
+                $table->string('color', 7)->default('#FF6B6B');
 
                 $table->foreignId('creator_id')->nullable()->index();
                 $table->foreignId('created_by')->nullable()->index();

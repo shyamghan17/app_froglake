@@ -82,6 +82,16 @@ class PermissionTableSeeder extends Seeder
             ['name' => 'edit-bug-stages', 'module' => 'bug-stages', 'label' => 'Edit Bug Stages'],
             ['name' => 'delete-bug-stages', 'module' => 'bug-stages', 'label' => 'Delete Bug Stages'],
 
+            ['name' => 'manage-project-payments', 'module' => 'project-payment', 'label' => 'Manage Project Payment'],
+            ['name' => 'manage-any-project-payments', 'module' => 'project-payment', 'label' => 'Manage All Project Payment'],
+            ['name' => 'manage-own-project-payments', 'module' => 'project-payment', 'label' => 'Manage Own Project Payment'],
+            ['name' => 'create-project-payments', 'module' => 'project-payment', 'label' => 'Create Project Payment'],
+            ['name' => 'view-project-payments', 'module' => 'project-payment', 'label' => 'View Project Payment'],
+            ['name' => 'edit-project-payments', 'module' => 'project-payment', 'label' => 'Edit Project Payment'],
+            ['name' => 'delete-project-payments', 'module' => 'project-payment', 'label' => 'Delete Project Payment'],
+            ['name' => 'post-project-payments', 'module' => 'project-payment', 'label' => 'Post Project Payment'],
+            ['name' => 'print-project-payments', 'module' => 'project-payment', 'label' => 'Print Project Payment'],
+
         ];
 
         $company_role = Role::where('name', 'company')->first();

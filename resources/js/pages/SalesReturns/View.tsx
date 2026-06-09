@@ -172,8 +172,10 @@ function View() {
                                                 {item.product?.sku && (
                                                     <div className="text-sm text-muted-foreground">SKU: {item.product.sku}</div>
                                                 )}
-                                                {item.product?.description && (
-                                                    <div className="text-sm text-muted-foreground mt-1">{item.product.description}</div>
+                                                {item.reason && (
+                                                    <div className="text-sm text-muted-foreground mt-1">
+                                                        <span className="font-medium">{t('Reason')}:</span> {item.reason}
+                                                    </div>
                                                 )}
                                             </td>
                                             <td className="px-4 py-4 text-right">{item.return_quantity || item.quantity}</td>

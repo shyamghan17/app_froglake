@@ -128,7 +128,7 @@ createInertiaApp({
                 <Suspense fallback={null}>
                     <App {...props} />
                 </Suspense>
-                <Toaster position="top-center" richColors />
+                <Toaster position="top-center" richColors expand={true} />
             </ThemeProvider>
         );
     },

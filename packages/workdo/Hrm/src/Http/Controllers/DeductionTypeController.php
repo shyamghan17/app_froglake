@@ -76,10 +76,10 @@ class DeductionTypeController extends Controller
 
             UpdateDeductionType::dispatch($request, $deductiontype);
 
-            return redirect()->route('hrm.deduction-types.index')->with('success', __('The deduction type details are updated successfully.'));
+            return back()->with('success', __('The deduction type details are updated successfully.'));
         }
         else{
-            return redirect()->route('hrm.deduction-types.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 
@@ -89,12 +89,10 @@ class DeductionTypeController extends Controller
             DestroyDeductionType::dispatch($deductiontype);
             $deductiontype->delete();
 
-            return redirect()->route('hrm.deduction-types.index')->with('success', __('The deduction type has been deleted.'));
+            return back()->with('success', __('The deduction type has been deleted.'));
         }
         else{
-            return redirect()->route('hrm.deduction-types.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
-
-
 }

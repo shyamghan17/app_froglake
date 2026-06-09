@@ -27,6 +27,8 @@ export default function Edit({ attendance, onSuccess }: EditAttendanceProps) {
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         put(route('hrm.attendances.update', attendance.id), {
+            preserveScroll: true,
+            preserveState: false,
             onSuccess: () => {
                 onSuccess();
             }

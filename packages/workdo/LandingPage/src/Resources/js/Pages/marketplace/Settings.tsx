@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import AuthenticatedLayout from "@/layouts/authenticated-layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { Save, Package, Settings as SettingsIcon, Search, Edit3, Plus, Trash2, Shield, Zap, Users, Headphones, Award, RefreshCw, Building2, Calculator, CreditCard, UserCheck, FolderOpen, ArrowUpDown, GripVertical } from 'lucide-react';
+import { Save, Package, Settings as SettingsIcon, Search, Edit3, Plus, Trash2, Shield, Zap, Users, Headphones, Award, RefreshCw, Building2, Calculator, CreditCard, UserCheck, FolderOpen, ArrowUpDown, GripVertical, Layout, Image } from 'lucide-react';
 import MediaPicker from '@/components/MediaPicker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -54,8 +55,24 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
     const [activeModule, setActiveModule] = useState('');
     const [activeModuleName, setActiveModuleName] = useState('');
     const [moduleSearchTerm, setModuleSearchTerm] = useState('');
+    const [dataInitialized, setDataInitialized] = useState(false);
+    const TAB_SECTIONS: Record<string, { key: string; label: string; icon: any }[]> = {
+        setup: [
+            { key: 'hero', label: t('Hero'), icon: Layout },
+            { key: 'order', label: t('Order'), icon: ArrowUpDown },
+        ],
+        content: [
+            { key: 'modules', label: t('Modules'), icon: Package },
+            { key: 'dedication', label: t('Dedication'), icon: Users },
+        ],
+        social: [
+            { key: 'screenshots', label: t('Screenshots'), icon: Image },
+            { key: 'why_choose', label: t('Why Choose'), icon: Shield },
+        ],
+    };
+
     const [activeTab, setActiveTab] = useState<'setup' | 'layout' | 'content' | 'social' | 'engagement'>('setup');
-    const [activeSection, setActiveSection] = useState('general');
+    const [activeSection, setActiveSection] = useState('hero');
 
     const { data, setData, post, processing, reset } = useForm({
         module: activeModule,
@@ -116,7 +133,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
         }
     }, [selectedModule, activeModules]);
 
-    // Update form data when settings change
+    // Update form data when settings change (only on module switch, not on every save)
     React.useEffect(() => {
         if (settings && activeModule) {
             setData({
@@ -137,18 +154,20 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                     section_order: ['header', 'hero', 'modules', 'dedication', 'screenshots', 'why_choose', 'cta', 'footer']
                 }
             });
+            setDataInitialized(true);
         }
     }, [settings, activeModule]);
 
     const saveSettings = () => {
         setIsLoading(true);
 
-        post(route('marketplace.settings.store'), {
+        router.post(route('marketplace.settings.store'), data as any, {
             preserveScroll: true,
+            preserveState: true,
             onSuccess: (page) => {
                 setIsLoading(false);
-                if (page.props.flash?.success) {
-                    toast.success(page.props.flash.success);
+                if ((page.props as any).flash?.success) {
+                    toast.success((page.props as any).flash.success);
                 }
             },
             onError: (errors) => {
@@ -222,7 +241,11 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                         if (activeModule !== module.module) {
                                             setActiveModule(module.module);
                                             setActiveModuleName(module.name);
-                                            window.history.pushState({}, '', route('marketplace.settings') + '?module=' + module.module);
+                                            setDataInitialized(false);
+                                            router.visit(route('marketplace.settings') + '?module=' + module.module, {
+                                                preserveScroll: true,
+                                                preserveState: true,
+                                            });
                                         }
                                     }}
                                 >
@@ -255,63 +278,53 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                             {activeModule && (
                                 <div className="space-y-6">
                                     {/* Tab Navigation */}
-                                    <div className="flex border-b border-gray-200 mb-8">
-                                        {[
-                                            { key: 'setup', label: t('Setup'), sections: ['general', 'hero', 'order'] },
-                                            { key: 'content', label: t('Content'), sections: ['modules', 'dedication'] },
-                                            { key: 'social', label: t('Social'), sections: ['screenshots', 'why_choose'] }
-                                        ].map(tab => (
-                                            <button
-                                                key={tab.key}
-                                                onClick={() => {
-                                                    setActiveTab(tab.key as any);
-                                                    setActiveSection(tab.sections[0]);
-                                                }}
-                                                className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${
-                                                    activeTab === tab.key
-                                                        ? 'text-white rounded-t-lg'
-                                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                                                }`}
-                                                style={activeTab === tab.key ? {
-                                                    backgroundColor: 'hsl(var(--primary))',
-                                                    borderColor: 'hsl(var(--primary))'
-                                                } : {}}
-                                            >
-                                                {tab.label}
-                                            </button>
-                                        ))}
-                                    </div>
+                                    <Tabs
+                                        value={activeTab}
+                                        onValueChange={(val) => {
+                                            const first: Record<string, string> = {
+                                                setup: 'hero',
+                                                content: 'modules',
+                                                social: 'screenshots'
+                                            };
+                                            setActiveTab(val as any);
+                                            setActiveSection(first[val]);
+                                        }}
+                                    >
+                                        <TabsList className="w-full h-auto flex">
+                                            <TabsTrigger value="setup" className="flex-1">{t('Setup')}</TabsTrigger>
+                                            <TabsTrigger value="content" className="flex-1">{t('Content')}</TabsTrigger>
+                                            <TabsTrigger value="social" className="flex-1">{t('Social')}</TabsTrigger>
+                                        </TabsList>
+                                    </Tabs>
 
                                     {/* Section Navigation within Tab */}
-                                    <div className="flex flex-wrap gap-2 mb-8">
-                                        {(() => {
-                                            const tabSections = {
-                                                setup: [{ key: 'general', label: t('General') }, { key: 'hero', label: t('Hero') }, { key: 'order', label: t('Order') }],
-                                                content: [{ key: 'modules', label: t('Modules') }, { key: 'dedication', label: t('Dedication') }],
-                                                social: [{ key: 'screenshots', label: t('Screenshots') }, { key: 'why_choose', label: t('Why Choose') }]
-                                            };
-                                            return tabSections[activeTab].map(section => (
-                                                <Button
-                                                    key={section.key}
-                                                    variant={activeSection === section.key ? "default" : "outline"}
-                                                    size="sm"
-                                                    onClick={() => setActiveSection(section.key)}
-                                                    style={activeSection === section.key ? {
-                                                        backgroundColor: 'hsl(var(--primary))',
-                                                        borderColor: 'hsl(var(--primary))',
-                                                        color: 'white'
-                                                    } : {}}
-                                                >
-                                                    {section.label}
-                                                </Button>
-                                            ));
-                                        })()}
+                                    <div className="border-b border-gray-200 mb-6">
+                                        <nav className="flex">
+                                            {(TAB_SECTIONS[activeTab] || []).map(section => {
+                                                const Icon = section.icon;
+                                                const isActive = activeSection === section.key;
+                                                return (
+                                                    <button
+                                                        key={section.key}
+                                                        onClick={() => setActiveSection(section.key)}
+                                                        className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium border-b-2 -mb-px transition-all ${
+                                                            isActive
+                                                                ? 'border-primary text-primary'
+                                                                : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'
+                                                        }`}
+                                                    >
+                                                        <Icon className="h-4 w-4" />
+                                                        {section.label}
+                                                    </button>
+                                                );
+                                            })}
+                                        </nav>
                                     </div>
 
                                     {/* Section Components */}
-                                    {activeSection === 'general' && (
-                                        <div className="grid grid-cols-1 gap-4">
-                                            <div className="space-y-2">
+                                    {activeSection === 'hero' && (
+                                        <div className="space-y-4">
+                                            <div>
                                                 <label className="text-sm font-medium">{t('Title')}</label>
                                                 <Input
                                                     value={data.title}
@@ -319,12 +332,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                     placeholder={t('Marketplace')}
                                                 />
                                             </div>
-                                        </div>
-                                    )}
-
-                                    {activeSection === 'hero' && (
-                                        <div className="space-y-4">
-                                            <div className="space-y-2">
+                                            <div>
                                                 <label className="text-sm font-medium">{t('Hero Variant')}</label>
                                                 <Select
                                                     value={getSectionData('hero').variant || 'hero1'}
@@ -342,7 +350,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                 </Select>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
+                                                <div>
                                                     <label className="text-sm font-medium">{t('Hero Title')}</label>
                                                     <Input
                                                         value={getSectionData('hero').title || ''}
@@ -350,7 +358,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                         placeholder={t('Discover Premium Business Packages')}
                                                     />
                                                 </div>
-                                                <div className="space-y-2">
+                                                <div>
                                                     <label className="text-sm font-medium">{t('Hero Subtitle')}</label>
                                                     <Input
                                                         value={getSectionData('hero').subtitle || ''}
@@ -361,7 +369,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                             </div>
                                             <div className="grid grid-cols-1 gap-4">
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    <div className="space-y-2">
+                                                    <div>
                                                         <label className="text-sm font-medium">{t('Primary Button Text')}</label>
                                                         <Input
                                                             value={getSectionData('hero').primary_button_text || ''}
@@ -369,7 +377,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                             placeholder={t('Browse Packages')}
                                                         />
                                                     </div>
-                                                    <div className="space-y-2">
+                                                    <div>
                                                         <label className="text-sm font-medium">{t('Primary Button Link')}</label>
                                                         <Input
                                                             value={getSectionData('hero').primary_button_link || ''}
@@ -379,7 +387,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    <div className="space-y-2">
+                                                    <div>
                                                         <label className="text-sm font-medium">{t('Secondary Button Text')}</label>
                                                         <Input
                                                             value={getSectionData('hero').secondary_button_text || ''}
@@ -387,7 +395,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                             placeholder={t('View Categories')}
                                                         />
                                                     </div>
-                                                    <div className="space-y-2">
+                                                    <div>
                                                         <label className="text-sm font-medium">{t('Secondary Button Link')}</label>
                                                         <Input
                                                             value={getSectionData('hero').secondary_button_link || ''}
@@ -397,7 +405,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="space-y-2">
+                                            <div>
                                                 <label className="text-sm font-medium">{t('Hero Image')}</label>
                                                 <MediaPicker
                                                     value={getSectionData('hero').image || ''}
@@ -410,7 +418,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
 
                                     {activeSection === 'modules' && (
                                         <div className="space-y-4">
-                                            <div className="space-y-2">
+                                            <div>
                                                 <label className="text-sm font-medium">{t('Modules Variant')}</label>
                                                 <Select
                                                     value={getSectionData('modules').variant || 'modules1'}
@@ -429,7 +437,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                 </Select>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
+                                                <div>
                                                     <label className="text-sm font-medium">{t('Section Title')}</label>
                                                     <Input
                                                 value={getSectionData('modules').title || ''}
@@ -437,7 +445,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                 placeholder={t('Premium Packages')}
                                             />
                                                 </div>
-                                                <div className="space-y-2">
+                                                <div>
                                                     <label className="text-sm font-medium">{t('Section Subtitle')}</label>
                                                     <Input
                                                 value={getSectionData('modules').subtitle || ''}
@@ -446,7 +454,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                             />
                                                 </div>
                                             </div>
-                                            <div className="space-y-2">
+                                            <div>
                                                 <Label htmlFor="modules-card-variant">{t('Card Variant')}</Label>
                                                 <Select
                                                     value={getSectionData('modules').card_variant || 'card1'}
@@ -469,7 +477,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
 
                                     {activeSection === 'dedication' && (
                                         <div className="space-y-6">
-                                            <div className="space-y-2">
+                                            <div>
                                                 <label className="text-sm font-medium">{t('Dedication Variant')}</label>
                                                 <Select
                                                     value={getSectionData('dedication').variant || 'dedication1'}
@@ -488,7 +496,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                 </Select>
                                             </div>
                                             <div className="grid grid-cols-1 gap-4">
-                                                <div className="space-y-2">
+                                                <div>
                                                     <label className="text-sm font-medium">{t('Section Title')}</label>
                                                     <Input
                                                         value={getSectionData('dedication').title || ''}
@@ -496,7 +504,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                         placeholder={t('Dedicated to Excellence')}
                                                     />
                                                 </div>
-                                                <div className="space-y-2">
+                                                <div>
                                                     <label className="text-sm font-medium">{t('Description')}</label>
                                                     <Input
                                                         value={getSectionData('dedication').description || ''}
@@ -506,7 +514,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-4">
+                                            <div>
                                                 <label className="text-sm font-medium">{t('Sub Sections')}</label>
                                                 <Repeater
                                                     fields={[
@@ -554,7 +562,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
 
                                     {activeSection === 'screenshots' && (
                                         <div className="space-y-6">
-                                            <div className="space-y-2">
+                                            <div>
                                                 <label className="text-sm font-medium">{t('Screenshots Variant')}</label>
                                                 <Select
                                                     value={getSectionData('screenshots').variant || 'screenshots1'}
@@ -573,7 +581,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                 </Select>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
+                                                <div>
                                                     <label className="text-sm font-medium">{t('Section Title')}</label>
                                                     <Input
                                                         value={getSectionData('screenshots').title || ''}
@@ -581,7 +589,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                         placeholder={t('Screenshots')}
                                                     />
                                                 </div>
-                                                <div className="space-y-2">
+                                                <div>
                                                     <label className="text-sm font-medium">{t('Section Subtitle')}</label>
                                                     <Input
                                                         value={getSectionData('screenshots').subtitle || ''}
@@ -591,7 +599,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-4">
+                                            <div>
                                                 <label className="text-sm font-medium">{t('Screenshots')}</label>
                                                 <Repeater
                                                     fields={[
@@ -620,7 +628,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
 
                                     {activeSection === 'why_choose' && (
                                         <div className="space-y-6">
-                                            <div className="space-y-2">
+                                            <div>
                                                 <label className="text-sm font-medium">{t('Why Choose Variant')}</label>
                                                 <Select
                                                     value={getSectionData('why_choose').variant || 'whychoose1'}
@@ -639,7 +647,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                 </Select>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
+                                                <div>
                                                     <label className="text-sm font-medium">{t('Section Title')}</label>
                                                     <Input
                                                         value={getSectionData('why_choose').title || ''}
@@ -647,7 +655,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                         placeholder={t('Why Choose Our Marketplace?')}
                                                     />
                                                 </div>
-                                                <div className="space-y-2">
+                                                <div>
                                                     <label className="text-sm font-medium">{t('Section Subtitle')}</label>
                                                     <Input
                                                         value={getSectionData('why_choose').subtitle || ''}
@@ -657,7 +665,7 @@ export default function Settings({ settings, activeModules, selectedModule }: Se
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-4">
+                                            <div>
                                                 <label className="text-sm font-medium">{t('Benefits')}</label>
                                                 <Repeater
                                                     fields={[

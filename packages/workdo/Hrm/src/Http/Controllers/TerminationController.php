@@ -68,8 +68,6 @@ class TerminationController extends Controller
                     ->with('error', __('This employee already has an approved termination.'));
             }
 
-
-
             $termination = new Termination();
             $termination->notice_date = $validated['notice_date'];
             $termination->termination_date = $validated['termination_date'];
@@ -79,7 +77,6 @@ class TerminationController extends Controller
             $termination->employee_id = $validated['employee_id'];
             $termination->termination_type_id = $validated['termination_type_id'];
             $termination->status = 'pending';
-
             $termination->creator_id = Auth::id();
             $termination->created_by = creatorId();
             $termination->save();

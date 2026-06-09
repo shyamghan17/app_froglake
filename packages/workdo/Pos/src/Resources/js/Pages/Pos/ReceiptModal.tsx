@@ -91,11 +91,13 @@ export default function ReceiptModal({ isOpen, onClose, completedSale, globalSet
                                 <div className="mb-3">
                                     {completedSale.items.map((item: any) => {
                                         const itemSubtotal = item.price * item.quantity;
+                                        const itemDiscount = item.item_discount_amount || 0;
+                                        const discountedSubtotal = itemSubtotal - itemDiscount;
                                         let itemTaxAmount = 0;
                                         let taxDisplay = '';
                                         if (item.taxes && item.taxes.length > 0) {
                                             const taxNames = item.taxes.map((tax: any) => {
-                                                itemTaxAmount += (itemSubtotal * tax.rate) / 100;
+                                                itemTaxAmount += (discountedSubtotal * tax.rate) / 100;
                                                 return `${tax.name} (${tax.rate}%)`;
                                             });
                                             taxDisplay = taxNames.join(', ');
@@ -115,6 +117,16 @@ export default function ReceiptModal({ isOpen, onClose, completedSale, globalSet
                                                         <span className="font-medium">{formatCurrency(item.price)}</span>
                                                     </div>
                                                     <div className="flex justify-between">
+                                                        <span>{t('Subtotal')}:</span>
+                                                        <span className="font-medium">{formatCurrency(itemSubtotal)}</span>
+                                                    </div>
+                                                    {itemDiscount > 0 && (
+                                                        <div className="flex justify-between text-green-600">
+                                                            <span>{t('Discount')}:</span>
+                                                            <span className="font-medium">-{formatCurrency(itemDiscount)}</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex justify-between">
                                                         <span>{t('Tax')}:</span>
                                                         <span className="font-medium">{taxDisplay}</span>
                                                     </div>
@@ -123,8 +135,8 @@ export default function ReceiptModal({ isOpen, onClose, completedSale, globalSet
                                                         <span className="font-medium">{formatCurrency(itemTaxAmount)}</span>
                                                     </div>
                                                     <div className="flex justify-between font-bold border-t border-dotted pt-1">
-                                                        <span>{t('Sub Total')}:</span>
-                                                        <span>{formatCurrency(itemSubtotal)}</span>
+                                                        <span>{t('Total')}:</span>
+                                                        <span>{formatCurrency(discountedSubtotal + itemTaxAmount)}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -132,17 +144,7 @@ export default function ReceiptModal({ isOpen, onClose, completedSale, globalSet
                                     })}
                                 </div>
 
-                                {/* Separator */}
-                                <div className="text-center my-2">
-                                    <div className="border-t-2 border-dashed border-gray-400"></div>
-                                </div>
-
-                                {/* Totals */}
                                 <div className="mb-3">
-                                    <div className="flex justify-between py-1 text-sm">
-                                        <span className="font-medium">{t('Discount')}:</span>
-                                        <span className="font-bold">-{formatCurrency(completedSale.discount)}</span>
-                                    </div>
                                     <div className="flex justify-between py-2 text-base font-bold border-t-2 border-double border-gray-600">
                                         <span>{t('Total')}:</span>
                                         <span className="text-lg">{formatCurrency(completedSale.total)}</span>

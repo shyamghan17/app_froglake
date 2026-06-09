@@ -72,8 +72,6 @@ class EventController extends Controller
         if (Auth::user()->can('create-events')) {
             $validated = $request->validated();
 
-
-
             $event = new Event();
             $event->title = $validated['title'];
             $event->event_type_id = $validated['event_type_id'];
@@ -84,12 +82,9 @@ class EventController extends Controller
             $event->location = $validated['location'];
             $event->description = $validated['description'];
             $event->color = $validated['color'] ?? null;
-            $event->status = 'pending';
             $event->creator_id = Auth::id();
             $event->created_by = creatorId();
-            $event->save();
-
-            
+            $event->save(); 
 
             // Attach departments with creator info
             if (isset($validated['departments']) && is_array($validated['departments'])) {
@@ -114,8 +109,6 @@ class EventController extends Controller
     {
         if (Auth::user()->can('edit-events')) {
             $validated = $request->validated();
-
-
 
             $event->title = $validated['title'];
             $event->event_type_id = $validated['event_type_id'];

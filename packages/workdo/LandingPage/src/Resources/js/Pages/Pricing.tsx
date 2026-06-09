@@ -116,8 +116,8 @@ export default function Pricing(props: PricingProps) {
                             {/* Plans Header Cards */}
                             <div className="grid gap-6" style={{ gridTemplateColumns: `300px repeat(${plans.length}, 280px)`, minWidth: `${300 + (plans.length * 280) + ((plans.length - 1) * 24)}px` }}>
                                 {/* Features Header */}
-                                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-6 border border-slate-200 sticky left-0 z-20">
-                                    <div className="flex items-center justify-center space-x-3">
+                                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-6 border border-slate-200 sticky start-0 z-20">
+                                    <div className="flex items-center justify-center gap-3">
                                         <h3 className="text-xl font-bold text-gray-900">{t("Features & Add-Ons")}</h3>
                                     </div>
                                 </div>
@@ -137,7 +137,7 @@ export default function Pricing(props: PricingProps) {
                                         } : {}}
                                     >
                                         {plan.id === mostPopularPlanId && plans.length > 1 && (
-                                            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                                            <div className="absolute -top-4 start-1/2 transform -translate-x-1/2">
                                                 <div 
                                                     className="text-white px-4 py-2 text-sm font-bold shadow-lg rounded-md whitespace-nowrap"
                                                     style={{ backgroundColor: colors.primary }}
@@ -165,7 +165,7 @@ export default function Pricing(props: PricingProps) {
                                                     </div>
                                                 ) : (
                                                     <div>
-                                                        <div className="flex items-baseline justify-center space-x-1 mb-2">
+                                                        <div className="flex items-baseline justify-center gap-1 mb-2">
                                                             <span className="text-5xl font-black text-gray-900">
                                                                 {priceType === 'monthly' ? formatAdminCurrency(plan.package_price_monthly) : formatAdminCurrency(plan.package_price_yearly)}
                                                             </span>
@@ -178,20 +178,20 @@ export default function Pricing(props: PricingProps) {
                                             </div>
                                             
                                             <div className="space-y-3 py-4">
-                                                <div className="flex items-center space-x-2">
+                                                <div className="flex items-center gap-2">
                                                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colors.primary }}></div>
                                                     <span className="text-sm font-medium text-gray-700">
-                                                        {plan.number_of_users === -1 ? 'Unlimited users' : `${plan.number_of_users} users`}
+                                                        {plan.number_of_users === -1 ? t('Unlimited users') : `${plan.number_of_users} ${t('users')}`}
                                                     </span>
                                                 </div>
-                                                <div className="flex items-center space-x-2">
+                                                <div className="flex items-center gap-2">
                                                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colors.primary }}></div>
                                                     <span className="text-sm font-medium text-gray-700">
                                                         {Math.round(plan.storage_limit / (1024 * 1024))}{t("GB storage")}
                                                     </span>
                                                 </div>
                                                 {plan.trial && (
-                                                    <div className="flex items-center space-x-2">
+                                                    <div className="flex items-center gap-2">
                                                         <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></div>
                                                         <span className="text-sm font-medium text-green-600">
                                                             {plan.trial_days}{t("d trial")}
@@ -208,7 +208,7 @@ export default function Pricing(props: PricingProps) {
                             <div className="space-y-4">
                                 <div className="grid gap-6" style={{ gridTemplateColumns: `300px repeat(${plans.length}, 280px)`, minWidth: `${300 + (plans.length * 280) + ((plans.length - 1) * 24)}px` }}>
                                     {/* All Modules Card */}
-                                    <div className="bg-white rounded-2xl p-6 border border-gray-200 sticky left-0 z-20">
+                                    <div className="bg-white rounded-2xl p-6 border border-gray-200 sticky start-0 z-20">
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-center py-2 h-10 border-b border-gray-200 mb-3">
                                                 <span className="text-gray-900 font-semibold text-sm">

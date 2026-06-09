@@ -31,9 +31,9 @@ class User extends Authenticatable implements MustVerifyEmail
             'type',
             'avatar',
             'lang',
+            'layout_direction',
             'active_plan',
             'plan_expire_date',
-            'trial_expire_date',
             'is_trial_done',
             'total_user',
             'commission_amount',
@@ -67,6 +67,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_trial_done' => 'integer',
         ];
     }
 
@@ -143,8 +144,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'titleText' => admin_setting('titleText'),
             'footerText' => admin_setting('footerText'),
             'sidebarVariant' => admin_setting('sidebarVariant'),
-            'sidebarStyle' => admin_setting('sidebarStyle'),
-            'layoutDirection' => admin_setting('layoutDirection'),
+            'sidebarStyle' => admin_setting('sidebarStyle'), 
             'themeMode' => admin_setting('themeMode'),
             'themeColor' => admin_setting('themeColor'),
             'customColor' => admin_setting('customColor'),

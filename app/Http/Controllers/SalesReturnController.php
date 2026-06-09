@@ -165,6 +165,7 @@ class SalesReturnController extends Controller
         $this->createReturnItems($return->id, $request->items, $request->original_invoice_id);
         try {
             CreateSalesReturn::dispatch($request, $return);
+             
             // Send sales invoice return mail
             if(company_setting('Sales Invoice Return') == 'on') {
                 $emailData = [
@@ -175,7 +176,12 @@ class SalesReturnController extends Controller
                     'reason' => $request->reason ?? null,
                     'total_amount' => $totals['total_amount'] ?? null,
                 ];
-                EmailTemplate::sendEmailTemplate('Sales Invoice Return', [$return->customer->email], $emailData);
+                $message = EmailTemplate::sendEmailTemplate('Sales Invoice Return', [$return->customer->email], $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('The sales return has been created successfully.'))
+                        ->with('error', $message['error']);
+                }
             }
             
         } catch (\Throwable $th) {

@@ -8,6 +8,7 @@ interface AddonCardProps {
         name: string;
         description?: string;
         image?: string;
+        module?: string;
         monthly_price?: number;
         yearly_price?: number;
         package_name: string;

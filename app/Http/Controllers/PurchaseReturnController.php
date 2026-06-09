@@ -175,7 +175,12 @@ class PurchaseReturnController extends Controller
                     'reason' => $request->reason ?? null,
                     'total_amount' => $totals['total_amount'] ?? null,
                 ];
-                EmailTemplate::sendEmailTemplate('Purchase Invoice Return', [$return->vendor->email], $emailData);
+                $message = EmailTemplate::sendEmailTemplate('Purchase Invoice Return', [$return->vendor->email], $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('The purchase return has been created successfully.'))
+                        ->with('error', $message['error']);
+                }
             }
         } catch (\Throwable $th) {
             return back()->with('error', $th->getMessage());

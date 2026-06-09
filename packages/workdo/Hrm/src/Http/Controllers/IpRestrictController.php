@@ -50,8 +50,6 @@ class IpRestrictController extends Controller
         if(Auth::user()->can('create-ip-restricts')){
             $validated = $request->validated();
 
-
-
             $iprestrict = new IpRestrict();
             $iprestrict->ip = $validated['ip'];
 
@@ -73,18 +71,15 @@ class IpRestrictController extends Controller
         if(Auth::user()->can('edit-ip-restricts')){
             $validated = $request->validated();
 
-
-
             $iprestrict->ip = $validated['ip'];
-
             $iprestrict->save();
 
             UpdateIpRestrict::dispatch($request, $iprestrict);
 
-            return redirect()->route('hrm.ip-restricts.index')->with('success', __('The ip restrict details are updated successfully.'));
+            return back()->with('success', __('The ip restrict details are updated successfully.'));
         }
         else{
-            return redirect()->route('hrm.ip-restricts.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 
@@ -94,10 +89,10 @@ class IpRestrictController extends Controller
             DestroyIpRestrict::dispatch($iprestrict);
             $iprestrict->delete();
 
-            return redirect()->route('hrm.ip-restricts.index')->with('success', __('The ip restrict has been deleted.'));
+            return back()->with('success', __('The ip restrict has been deleted.'));
         }
         else{
-            return redirect()->route('hrm.ip-restricts.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 

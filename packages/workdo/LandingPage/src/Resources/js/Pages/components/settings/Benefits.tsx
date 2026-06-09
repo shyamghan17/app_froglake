@@ -27,7 +27,7 @@ export default function Benefits({ data, getSectionData, updateSectionData, upda
                                 <CheckCircle className="h-5 w-5 text-green-600" />
                             </div>
                             <div>
-                                <CardTitle>{t('Benefits Section')}</CardTitle>
+                                <CardTitle className="text-base">{t('Benefits Section')}</CardTitle>
                                 <p className="text-sm text-gray-500">{t('Expandable benefits accordion')}</p>
                             </div>
                         </div>
@@ -41,7 +41,7 @@ export default function Benefits({ data, getSectionData, updateSectionData, upda
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="space-y-2">
+                    <div>
                         <Label>{t('Benefits Variant')}</Label>
                         <Select
                             value={getSectionData('benefits').variant || 'benefits1'}
@@ -59,7 +59,7 @@ export default function Benefits({ data, getSectionData, updateSectionData, upda
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="space-y-2">
+                    <div>
                         <Label>{t('Section Title')}</Label>
                         <Input
                             value={getSectionData('benefits').title || ''}

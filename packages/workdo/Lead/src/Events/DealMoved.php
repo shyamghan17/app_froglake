@@ -3,6 +3,7 @@
 namespace Workdo\Lead\Events;
 
 use Workdo\Lead\Models\Deal;
+use Workdo\Lead\Models\DealStage;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Http\Request;
 
@@ -12,6 +13,7 @@ class DealMoved
 
     public function __construct(
         public Request $request,
-        public Deal $deal
+        public Deal $deal,
+        public DealStage $oldStage
     ) {}
 }

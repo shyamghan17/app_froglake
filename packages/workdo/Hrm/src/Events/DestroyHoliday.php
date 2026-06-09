@@ -13,7 +13,5 @@ class DestroyHoliday
     public function __construct(
           public Holiday $holiday
     )
-    {
-        //
-    }
+    {}
 }

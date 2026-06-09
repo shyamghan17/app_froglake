@@ -25,7 +25,7 @@ use Workdo\Account\Http\Controllers\ReportsController;
 use Workdo\Account\Models\AccountType;
 
 Route::middleware(['web', 'auth', 'verified', 'PlanModuleCheck:Account'])->group(function () {
-    Route::get('/account', [DashboardController::class, 'index'])->name('account.index');
+    Route::get('/account/dashboard', [DashboardController::class, 'index'])->name('account.index');
     Route::resource('account/vendors', VendorController::class, ['as' => 'account']);
     Route::resource('account/customers', CustomerController::class, ['as' => 'account']);
 

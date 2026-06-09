@@ -13,7 +13,5 @@ class DestroyResignation
     public function __construct(
           public Resignation $resignation
     )
-    {
-        //
-    }
+    {}
 }

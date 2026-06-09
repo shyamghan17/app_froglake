@@ -18,6 +18,7 @@ use Illuminate\Validation\Rule;
 use Workdo\Hrm\Events\CreateEmployeeTransfer;
 use Workdo\Hrm\Events\DestroyEmployeeTransfer;
 use Workdo\Hrm\Events\UpdateEmployeeTransfer;
+use App\Models\EmailTemplate;
 
 class EmployeeTransferController extends Controller
 {
@@ -169,8 +170,27 @@ class EmployeeTransferController extends Controller
                     $employee->save();
                 }
             }
-
             $employeetransfer->save();
+
+            if(company_setting('Transfers Approval') == 'on') {
+                $emailData = [
+                    'employee_name'             => $employeetransfer->employee->name ?? null,
+                    'from_branch_name'          => $employeetransfer->from_branch->branch_name ?? null,
+                    'from_department_name'      => $employeetransfer->from_department->department_name ?? null,
+                    'from_designation_name'     => $employeetransfer->from_designation->designation_name ?? null,
+                    'to_branch_name'            => $employeetransfer->to_branch->branch_name ?? null,
+                    'to_department_name'        => $employeetransfer->to_department->department_name ?? null,
+                    'to_designation_name'       => $employeetransfer->to_designation->designation_name ?? null,
+                    'transfer_date'             => $employeetransfer->transfer_date ? $employeetransfer->transfer_date->format('Y-m-d') : null,
+                    'reason'                    => $employeetransfer->reason ?? null,
+                ]; 
+                $message = EmailTemplate::sendEmailTemplate('Transfers Approval', [$employeetransfer->employee->email ?? null], $emailData);
+                if($message['is_success'] == false && !empty($message['error'])) {
+                    return back()
+                        ->with('success', __('The employee transfer status has been updated successfully.'))
+                        ->with('error', $message['error']);
+                }
+            }
 
             return redirect()->back()->with('success', __('The employee transfer status has been updated successfully.'));
         } else {

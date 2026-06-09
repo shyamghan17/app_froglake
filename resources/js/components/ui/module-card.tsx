@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Package, Edit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getPackageFavicon, getPackageAlias, formatAdminCurrency } from '@/utils/helpers';
@@ -41,6 +42,7 @@ export function ModuleCard({
 }: ModuleCardProps) {
     const { t } = useTranslation();
     const [isEditing, setIsEditing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [prices, setPrices] = useState({ monthly: monthlyPrice, yearly: yearlyPrice });
     const [moduleData, setModuleData] = useState({ 
         name: module.alias, 
@@ -50,12 +52,20 @@ export function ModuleCard({
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     const handleSave = () => {
-        onPriceUpdate?.(module.module, { 
-            ...prices, 
-            name: moduleData.name, 
-            imageFile: selectedFile 
-        });
-        setIsEditing(false);
+        if (onPriceUpdate) {
+            setIsSaving(true);
+            onPriceUpdate(module.module, { 
+                ...prices, 
+                name: moduleData.name, 
+                imageFile: selectedFile 
+            });
+            setTimeout(() => {
+                setIsSaving(false);
+                setIsEditing(false);
+                setSelectedFile(null);
+                setPreviewUrl(null);
+            }, 500);
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,14 +137,23 @@ export function ModuleCard({
                         </div>
                         <div className="flex items-center space-x-2">
                             {editable && (
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setIsEditing(true)}
-                                    className="h-6 w-6 p-0 flex-shrink-0"
-                                >
-                                    <Edit className="h-3 w-3" />
-                                </Button>
+                                <TooltipProvider>
+                                    <Tooltip delayDuration={0}>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => setIsEditing(true)}
+                                                className="h-6 w-6 p-0 flex-shrink-0"
+                                            >
+                                                <Edit className="h-3 w-3" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{t('Edit')}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             )}
                             {selectable && (
                                 <input
@@ -224,8 +243,8 @@ export function ModuleCard({
                             <Button variant="outline" onClick={() => setIsEditing(false)}>
                                 {t('Cancel')}
                             </Button>
-                            <Button onClick={handleSave}>
-                                {t('Save')}
+                            <Button onClick={handleSave} disabled={isSaving}>
+                                {isSaving ? t('Saving...') : t('Save')}
                             </Button>
                         </div>
                     </div>

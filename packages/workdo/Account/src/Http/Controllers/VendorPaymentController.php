@@ -19,6 +19,7 @@ use Inertia\Inertia;
 use Workdo\Account\Events\CreateVendorPayment;
 use Workdo\Account\Events\UpdateVendorPaymentStatus;
 use Workdo\Account\Events\DestroyVendorPayment;
+use App\Models\EmailTemplate;
 
 class VendorPaymentController extends Controller
 {
@@ -215,6 +216,26 @@ class VendorPaymentController extends Controller
 
                  // Dispatch event
                  UpdateVendorPaymentStatus::dispatch($request, $vendorPayment);
+
+                if($vendorPayment->status == "cleared"){
+                    // Send email notification
+                    if(company_setting('Vendor Payment') == 'on') {
+                        $vendorPayment->load('vendor');
+                        $emailData = [
+                            'payment_number'   => $vendorPayment->payment_number ?? null,
+                            'payment_date'     => $vendorPayment->payment_date ? \Carbon\Carbon::parse($vendorPayment->payment_date)->format('d M Y') : null,
+                            'vendor_name'      => $vendorPayment->vendor->name ?? null,
+                            'payment_amount'   => number_format($vendorPayment->payment_amount, 2),
+                            'reference_number' => $vendorPayment->reference_number ?? null,
+                        ];
+                        $message = EmailTemplate::sendEmailTemplate('Vendor Payment', [$vendorPayment->vendor->email ?? null], $emailData);
+                        if($message['is_success'] == false && !empty($message['error'])) {
+                            return back()
+                                ->with('success', __('The payment status are updated successfully.'))
+                                ->with('error', $message['error']);
+                        }
+                    }
+                }
 
                 return back()->with('success', __('The payment status are updated successfully.'));
             } catch (\Exception $e) {

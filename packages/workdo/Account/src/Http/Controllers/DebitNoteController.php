@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Workdo\Account\Events\ApproveDebitNote;
 use Workdo\Account\Events\DestroyDebitNote;
 use Workdo\Account\Services\JournalService;
+use App\Models\EmailTemplate;
 
 class DebitNoteController extends Controller
 {
@@ -128,6 +129,24 @@ class DebitNoteController extends Controller
                 ]);
                 ApproveDebitNote::dispatch($debitNote);
 
+                if(company_setting('Debit Note Approval') == 'on') {
+                    $debitNote->load('vendor', 'invoice', 'purchaseReturn');
+                    $emailData = [
+                        'debit_note_number' => $debitNote->debit_note_number ?? null,
+                        'debit_note_date'   => $debitNote->debit_note_date ? \Carbon\Carbon::parse($debitNote->debit_note_date)->format('d M Y') : null,
+                        'vendor_name'       => $debitNote->vendor->name ?? null,
+                        'invoice_number'    => $debitNote->invoice->invoice_number ?? null,
+                        'return_number'     => $debitNote->purchaseReturn->return_number ?? null,
+                        'reason'            => $debitNote->reason ?? null,
+                        'total_amount'      => number_format($debitNote->total_amount, 2),
+                    ];
+                    $message = EmailTemplate::sendEmailTemplate('Debit Note Approval', [$debitNote->vendor->email ?? null], $emailData);
+                    if($message['is_success'] == false && !empty($message['error'])) {
+                        return back()
+                            ->with('success', __('Debit note approved successfully.'))
+                            ->with('error', $message['error']);
+                    }
+                }
                 return back()->with('success', __('Debit note approved successfully.'));
             } catch (\Exception $e) {
                 return back()->with('error', $e->getMessage());

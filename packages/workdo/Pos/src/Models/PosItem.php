@@ -17,6 +17,8 @@ class PosItem extends Model
         'tax_ids',
         'tax_amount',
         'total_amount',
+        'item_discount_value',
+        'item_discount_amount',
         'creator_id',
         'created_by'
     ];
@@ -29,7 +31,9 @@ class PosItem extends Model
             'tax_ids' => 'array',
             'subtotal' => 'decimal:2',
             'tax_amount' => 'decimal:2',
-            'total_amount' => 'decimal:2'
+            'total_amount' => 'decimal:2',
+            'item_discount_value' => 'decimal:2',
+            'item_discount_amount' => 'decimal:2'
         ];
     }
 

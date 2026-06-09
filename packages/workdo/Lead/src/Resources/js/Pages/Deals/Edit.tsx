@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/ui/input-error';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MultiSelectEnhanced } from '@/components/ui/multi-select-enhanced';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
@@ -24,12 +25,13 @@ interface EditDealFormData {
     stage_id: string;
     sources: string[];
     products: string[];
+    clients: string[];
     phone: string;
     notes: string;
 }
 
 export default function EditDeal({ deal, onSuccess }: EditDealProps) {
-    const { pipelines, stages, sources, products } = usePage<any>().props;
+    const { pipelines, stages, sources, products, users } = usePage<any>().props;
     const [filteredStages, setFilteredStages] = useState(stages || []);
     const { t } = useTranslation();
 
@@ -40,6 +42,7 @@ export default function EditDeal({ deal, onSuccess }: EditDealProps) {
         stage_id: deal.stage_id?.toString() ?? '',
         sources: deal.sources ? (Array.isArray(deal.sources) ? deal.sources.map(String) : []) : [],
         products: deal.products ? (Array.isArray(deal.products) ? deal.products.map(String) : []) : [],
+        clients: deal.client_deals ? deal.client_deals.map((cd: any) => cd.client_id?.toString()) : [],
         phone: deal.phone ?? '',
         notes: deal.notes ?? '',
     });
@@ -95,17 +98,13 @@ export default function EditDeal({ deal, onSuccess }: EditDealProps) {
                     </div>
 
                     <div>
-                        <Label htmlFor="price">{t('Price')}</Label>
-                        <Input
-                            id="price"
-                            type="number"
-                            step="0.01"
+                        <CurrencyInput
+                            label={t('Price')}
                             value={data.price}
-                            onChange={(e) => setData('price', e.target.value)}
-                            placeholder={t('Enter Price')}
+                            onChange={(value) => setData('price', value)}
+                            error={errors.price}
                             required
                         />
-                        <InputError message={errors.price} />
                     </div>
                 </div>
 
@@ -149,34 +148,51 @@ export default function EditDeal({ deal, onSuccess }: EditDealProps) {
                     </div>
                 </div>
 
-                <div>
-                    <Label>{t('Sources')}</Label>
-                    <MultiSelectEnhanced
-                        options={sources?.map((source: any) => ({
-                            value: source.id.toString(),
-                            label: source.name
-                        })) || []}
-                        value={data.sources}
-                        onValueChange={(value) => setData('sources', value)}
-                        placeholder={t('Select Sources...')}
-                        searchable={true}
-                    />
-                    <InputError message={errors.sources} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <Label>{t('Sources')}</Label>
+                        <MultiSelectEnhanced
+                            options={sources?.map((source: any) => ({
+                                value: source.id.toString(),
+                                label: source.name
+                            })) || []}
+                            value={data.sources}
+                            onValueChange={(value) => setData('sources', value)}
+                            placeholder={t('Select Sources...')}
+                            searchable={true}
+                        />
+                        <InputError message={errors.sources} />
+                    </div>
+
+                    <div>
+                        <Label>{t('Products')}</Label>
+                        <MultiSelectEnhanced
+                            options={products?.map((product: any) => ({
+                                value: product.id.toString(),
+                                label: product.name
+                            })) || []}
+                            value={data.products}
+                            onValueChange={(value) => setData('products', value)}
+                            placeholder={t('Select Products...')}
+                            searchable={true}
+                        />
+                        <InputError message={errors.products} />
+                    </div>
                 </div>
 
                 <div>
-                    <Label>{t('Products')}</Label>
+                    <Label htmlFor="client_id" required>{t('Clients')}</Label>
                     <MultiSelectEnhanced
-                        options={products?.map((product: any) => ({
-                            value: product.id.toString(),
-                            label: product.name
+                        options={users?.map((user: any) => ({
+                            value: user.id.toString(),
+                            label: user.name
                         })) || []}
-                        value={data.products}
-                        onValueChange={(value) => setData('products', value)}
-                        placeholder={t('Select Products...')}
+                        value={Array.isArray(data.clients) ? data.clients : []}
+                        onValueChange={(value) => setData('clients', value)}
+                        placeholder={t('Select Clients')}
                         searchable={true}
                     />
-                    <InputError message={errors.products} />
+                    <InputError message={errors.clients} />
                 </div>
 
                 <div>

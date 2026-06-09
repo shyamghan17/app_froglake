@@ -2,7 +2,7 @@ import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog
 import { useTranslation } from 'react-i18next';
 import { Clock } from 'lucide-react';
 import { Attendance } from './types';
-import { formatDate, formatTime, formatDateTime, getCurrencySymbol } from '@/utils/helpers';
+import { formatDate, formatTime, formatDateTime, formatCurrency } from '@/utils/helpers';
 
 interface ViewAttendanceProps {
     attendance: Attendance;
@@ -27,7 +27,6 @@ export default function View({ attendance, onSuccess }: ViewAttendanceProps) {
                     </div>
                     <div>
                         <DialogTitle className="text-xl font-semibold">{t('Attendance Details')}</DialogTitle>
-                        <p className="text-sm text-muted-foreground">{attendance.user?.name || 'N/A'}</p>
                     </div>
                 </div>
             </DialogHeader>
@@ -65,7 +64,7 @@ export default function View({ attendance, onSuccess }: ViewAttendanceProps) {
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Overtime Amount')}</label>
                         <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
-                            {attendance.overtime_amount ? `${getCurrencySymbol()}${attendance.overtime_amount}` : `${getCurrencySymbol()}0.00`}
+                            {attendance.overtime_amount ? formatCurrency(attendance.overtime_amount) : 0}
                         </p>
                     </div>
                     <div className="space-y-2">
@@ -74,7 +73,7 @@ export default function View({ attendance, onSuccess }: ViewAttendanceProps) {
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">{t('Status')}</label>
-                        <div className="bg-gray-50 p-2 rounded">
+                        <div className="rounded">
                             <span className={`px-2 py-1 rounded-full text-xs ${attendance.status === 'present' ? 'bg-green-100 text-green-800 text-sm font-medium' :
                                         attendance.status === 'half day' ? 'bg-yellow-100 text-yellow-800 text-xs font-medium' :
                                         attendance.status === 'absent' ? 'bg-red-100 text-red-800 text-sm font-medium' :

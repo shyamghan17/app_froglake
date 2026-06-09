@@ -9,12 +9,20 @@ interface PosItem {
     product_id: number;
     quantity: number;
     price: number;
-    total: number;
+    subtotal: number;
+    item_discount_amount: number;
+    tax_amount: number;
+    total_amount: number;
     product: {
         id: number;
         name: string;
         sku?: string;
     };
+    taxes?: Array<{
+        id: number;
+        tax_name: string;
+        rate: number;
+    }>;
 }
 
 interface PosSale {
@@ -30,7 +38,7 @@ interface PosSale {
     subtotal: number;
     discount_amount: number;
     tax_amount?: number;
-    total: number;
+    total_amount: number;
     created_at: string;
     items: PosItem[];
 }
@@ -141,6 +149,8 @@ export default function Print() {
                                 <th className="text-left py-3 font-bold">{t('Product')}</th>
                                 <th className="text-center py-3 font-bold">{t('Qty')}</th>
                                 <th className="text-right py-3 font-bold">{t('Unit Price')}</th>
+                                <th className="text-right py-3 font-bold">{t('Subtotal')}</th>
+                                <th className="text-right py-3 font-bold">{t('Discount')}</th>
                                 <th className="text-center py-3 font-bold">{t('Tax')}</th>
                                 <th className="text-right py-3 font-bold">{t('Tax Amount')}</th>
                                 <th className="text-right py-3 font-bold">{t('Total')}</th>
@@ -157,6 +167,14 @@ export default function Print() {
                                     </td>
                                     <td className="text-center py-4">{item.quantity}</td>
                                     <td className="text-right py-4">{formatCurrency(item.price)}</td>
+                                    <td className="text-right py-4">{formatCurrency(item.subtotal)}</td>
+                                    <td className="text-right py-4">
+                                        {item.item_discount_amount > 0 ? (
+                                            <span className="text-green-600">-{formatCurrency(item.item_discount_amount)}</span>
+                                        ) : (
+                                            <span>-</span>
+                                        )}
+                                    </td>
                                     <td className="text-center py-4">
                                         {item.taxes && item.taxes.length > 0 ? (
                                             <div className="text-xs">

@@ -13,7 +13,5 @@ class DestroyOverTime
     public function __construct(
           public Overtime $overtime
     )
-    {
-        //
-    }
+    {}
 }

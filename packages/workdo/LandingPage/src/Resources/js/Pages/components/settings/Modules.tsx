@@ -28,7 +28,7 @@ export default function Modules({ data, getSectionData, updateSectionData, updat
                                 <Monitor className="h-5 w-5 text-purple-600" />
                             </div>
                             <div>
-                                <CardTitle>{t('Business Modules')}</CardTitle>
+                                <CardTitle className="text-base">{t('Business Modules')}</CardTitle>
                                 <p className="text-sm text-gray-500">{t('Tabbed modules showcase section')}</p>
                             </div>
                         </div>
@@ -42,10 +42,11 @@ export default function Modules({ data, getSectionData, updateSectionData, updat
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-4">
+                    <div>
                         <Label>{t('Modules Variant')}</Label>
                         <Select
-                            value={getSectionData('modules').variant || 'modules1'}
+                            value={getSectionData('modules').variant}
                             onValueChange={(value) => updateSectionData('modules', { variant: value })}
                         >
                             <SelectTrigger>
@@ -60,15 +61,16 @@ export default function Modules({ data, getSectionData, updateSectionData, updat
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="space-y-2">
+                    <div>
                         <Label>{t('Section Title')}</Label>
                         <Input
                             value={getSectionData('modules').title || ''}
                             onChange={(e) => updateSectionData('modules', { title: e.target.value })}
                             placeholder={t('Complete Business Solutions')}
                         />
-                    </div>
-                    <div className="space-y-2">
+                    </div> 
+                    </div> 
+                    <div>
                         <Label>{t('Section Subtitle')}</Label>
                         <Textarea
                             value={getSectionData('modules').subtitle || ''}

@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Dialog } from "@/components/ui/dialog";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Plus, Edit as EditIcon, Trash2, Eye, Megaphone as MegaphoneIcon, Download, FileImage, Play, ChevronDown } from "lucide-react";
+import { Plus, Edit as EditIcon, Trash2, Eye, Megaphone as MegaphoneIcon, Download, FileImage, Check, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FilterButton } from '@/components/ui/filter-button';
 import { Pagination } from "@/components/ui/pagination";
@@ -17,11 +17,9 @@ import { SearchInput } from "@/components/ui/search-input";
 import { ListGridToggle } from '@/components/ui/list-grid-toggle';
 import { PerPageSelector } from '@/components/ui/per-page-selector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import Create from './Create';
 import EditAnnouncement from './Edit';
 import View from './View';
-import UpdateStatus from './UpdateStatus';
 import NoRecordsFound from '@/components/no-records-found';
 import { Announcement, AnnouncementsIndexProps, AnnouncementFilters, AnnouncementModalState } from './types';
 import { formatDate, formatTime, formatDateTime, formatCurrency, getImagePath } from '@/utils/helpers';
@@ -49,10 +47,6 @@ export default function Index() {
         data: null
     });
     const [viewingItem, setViewingItem] = useState<Announcement | null>(null);
-    const [statusModalState, setStatusModalState] = useState<{
-        isOpen: boolean;
-        announcement: Announcement | null;
-    }>({ isOpen: false, announcement: null });
 
     const [showFilters, setShowFilters] = useState(false);
 
@@ -193,38 +187,15 @@ export default function Index() {
             key: 'status',
             header: t('Status'),
             sortable: false,
-            render: (value: string, row: any) => {
+            render: (value: string) => {
                 const statusColors = {
                     active: 'bg-green-100 text-green-700',
                     inactive: 'bg-red-100 text-red-700',
                     draft: 'bg-blue-100 text-blue-700'
                 };
 
-                if (auth.user?.permissions?.includes('manage-announcements-status')) {
-                    return (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className={`px-2 py-1 rounded-full text-sm font-medium h-auto hover:opacity-80 ${statusColors[value] || statusColors.draft}`}>
-                                    {t(value?.charAt(0).toUpperCase() + value?.slice(1) || 'Draft')} <ChevronDown className="h-2 w-2 ml-1" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => updateStatus(row.id, 'draft')}>
-                                    {t('Draft')}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => updateStatus(row.id, 'active')}>
-                                    {t('Active')}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => updateStatus(row.id, 'inactive')}>
-                                    {t('Inactive')}
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    );
-                }
-
                 return (
-                    <span className={`px-2 py-1 rounded-full text-sm font-medium ${statusColors[value] || 'bg-gray-100 text-gray-800'}`}>
+                    <span className={`px-2 py-1 rounded-full text-sm font-medium ${statusColors[value] || statusColors.draft}`}>
                         {t(value?.charAt(0).toUpperCase() + value?.slice(1) || 'Draft')}
                     </span>
                 );
@@ -237,6 +208,30 @@ export default function Index() {
             render: (_: any, announcement: Announcement) => (
                 <div className="flex gap-1">
                     <TooltipProvider>
+                        {auth.user?.permissions?.includes('manage-announcements-status') && announcement.status === 'draft' && (
+                            <>
+                                <Tooltip delayDuration={0}>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="sm" onClick={() => updateStatus(announcement.id, 'active')} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
+                                            <Check className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{t('Active')}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                                <Tooltip delayDuration={0}>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="sm" onClick={() => updateStatus(announcement.id, 'inactive')} className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{t('Inactive')}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </>
+                        )}
                         {auth.user?.permissions?.includes('view-announcements') && (
                             <Tooltip delayDuration={0}>
                                 <TooltipTrigger asChild>
@@ -582,10 +577,6 @@ export default function Index() {
 
             <Dialog open={!!viewingItem} onOpenChange={() => setViewingItem(null)}>
                 {viewingItem && <View announcement={viewingItem} />}
-            </Dialog>
-
-            <Dialog open={statusModalState.isOpen} onOpenChange={() => setStatusModalState({ isOpen: false, announcement: null })}>
-                {statusModalState.announcement && <UpdateStatus announcement={statusModalState.announcement} onSuccess={() => setStatusModalState({ isOpen: false, announcement: null })} />}
             </Dialog>
 
             <ConfirmationDialog

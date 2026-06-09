@@ -43,7 +43,7 @@ export default function Benefits({ settings }: BenefitsProps) {
     const variant = sectionData.variant || 'benefits1';
     const config = BENEFITS_VARIANTS[variant as keyof typeof BENEFITS_VARIANTS] || BENEFITS_VARIANTS.benefits1;
     
-    const title = sectionData.title || 'Why Choose WorkDo Dash?';
+    const title = sectionData.title;
     const colors = settings?.config_sections?.colors || { primary: '#10b981', secondary: '#059669', accent: '#f59e0b' };
     const [openAccordion, setOpenAccordion] = useState(0);
     const [activeTab, setActiveTab] = useState(0);
@@ -97,7 +97,7 @@ export default function Benefits({ settings }: BenefitsProps) {
     const renderList = () => (
         <div className="space-y-6">
             {benefits.map((benefit: any, index: number) => (
-                <div key={index} className="flex items-start space-x-4 p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div key={index} className="flex items-start gap-4 p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.primary }}>
                         <span className="text-white font-bold text-sm">{index + 1}</span>
                     </div>
@@ -112,10 +112,10 @@ export default function Benefits({ settings }: BenefitsProps) {
 
     const renderTimeline = () => (
         <div className="relative">
-            <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-600"></div>
+            <div className="absolute start-8 top-0 bottom-0 w-0.5 bg-gray-600"></div>
             <div className="space-y-8">
                 {benefits.map((benefit: any, index: number) => (
-                    <div key={index} className="relative flex items-start space-x-6">
+                    <div key={index} className="relative flex items-start gap-6">
                         <div className="flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.primary }}>
                             <CheckCircle className="h-8 w-8 text-white" />
                         </div>

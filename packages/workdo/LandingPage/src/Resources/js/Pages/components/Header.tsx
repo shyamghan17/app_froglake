@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, router } from '@inertiajs/react';
 import { getAdminSetting, getImagePath } from '@/utils/helpers';
 import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from '@/components/language-switcher';
 
 interface HeaderProps {
     settings?: any;
@@ -12,45 +13,45 @@ const HEADER_VARIANTS = {
     header1: {
         nav: 'bg-white border-b border-gray-200 sticky top-0 z-50',
         container: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8',
-        wrapper: 'flex justify-between items-center h-16',
+        wrapper: 'flex justify-between items-center h-16 [direction:ltr]',
         logo: 'text-2xl font-bold',
-        desktop: 'hidden md:flex items-center space-x-2',
+        desktop: 'hidden md:flex items-center gap-2',
         mobile: 'md:hidden text-gray-600 p-2 transition-colors',
         mobileMenu: 'md:hidden bg-white border-t'
     },
     header2: {
         nav: 'bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm',
         container: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8',
-        wrapper: 'flex flex-col items-center py-6 space-y-6',
+        wrapper: 'flex flex-col items-center py-6 gap-6',
         logo: 'text-3xl font-bold',
-        desktop: 'flex items-center space-x-2 bg-gray-50 px-6 py-3 rounded-full',
-        mobile: 'md:hidden text-gray-600 p-2 transition-colors absolute top-4 right-4 hover:bg-gray-100 rounded-lg',
+        desktop: 'flex items-center gap-2 bg-gray-50 px-6 py-3 rounded-full',
+        mobile: 'md:hidden text-gray-600 p-2 transition-colors absolute top-4 end-4 hover:bg-gray-100 rounded-lg',
         mobileMenu: 'md:hidden bg-white border-t w-full shadow-lg'
     },
     header3: {
         nav: 'bg-white/95 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50',
         container: 'max-w-6xl mx-auto px-6 sm:px-8 lg:px-10',
-        wrapper: 'flex justify-between items-center h-14 py-2',
+        wrapper: 'flex justify-between items-center h-14 py-2 [direction:ltr]',
         logo: 'text-xl font-bold',
-        desktop: 'hidden md:flex items-center space-x-2',
+        desktop: 'hidden md:flex items-center gap-2',
         mobile: 'md:hidden text-gray-600 p-2 transition-colors hover:bg-gray-100 rounded-md',
         mobileMenu: 'md:hidden bg-white/95 backdrop-blur-md border-t'
     },
     header4: {
         nav: 'bg-black/20 backdrop-blur-md absolute top-0 left-0 right-0 z-50 border-b border-white/10',
         container: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8',
-        wrapper: 'flex justify-between items-center h-20 py-4',
+        wrapper: 'flex justify-between items-center h-20 py-4 [direction:ltr]',
         logo: 'text-2xl font-bold text-white drop-shadow-lg',
-        desktop: 'hidden md:flex items-center space-x-2',
+        desktop: 'hidden md:flex items-center gap-2',
         mobile: 'md:hidden text-white p-2 transition-colors hover:bg-white/10 rounded-lg',
         mobileMenu: 'md:hidden bg-black/90 backdrop-blur-md border-t border-white/10'
     },
     header5: {
         nav: 'sticky top-0 z-50 shadow-xl',
         container: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8',
-        wrapper: 'flex justify-between items-center h-20 py-4',
+        wrapper: 'flex justify-between items-center h-20 py-4 [direction:ltr]',
         logo: 'text-2xl font-bold text-white drop-shadow-lg',
-        desktop: 'hidden md:flex items-center space-x-2',
+        desktop: 'hidden md:flex items-center gap-2',
         mobile: 'md:hidden text-white p-2 transition-colors hover:bg-white/10 rounded-lg',
         mobileMenu: 'md:hidden border-t border-white/20'
     }
@@ -146,7 +147,7 @@ export default function Header({ settings }: HeaderProps) {
 
         if (enableRegistration) {
             return (
-                <div className={`flex ${isMobile ? 'flex-col space-y-2' : 'space-x-2'}`}>
+                <div className={`flex ${isMobile ? 'flex-col gap-2' : 'gap-2'}`}>
                     <button
                         onClick={() => router.visit(route('login'))}
                         className={`border rounded-md font-medium transition-colors ${
@@ -216,7 +217,7 @@ export default function Header({ settings }: HeaderProps) {
     };
 
     return (
-        <nav className={config.nav} style={getGradientStyle()}>
+        <nav className={`${config.nav} relative`} style={getGradientStyle()}>
             <div className={config.container}>
                 <div className={config.wrapper}>
                     <Link href={route('landing.page')} className={config.logo} style={{ color: colors.primary }}>
@@ -270,6 +271,8 @@ export default function Header({ settings }: HeaderProps) {
                             </Link>
                         )}
                         {renderCTAButtons()}
+                        <div className="w-px h-5 bg-gray-200 mx-2" />
+                        <LanguageSwitcher />
                     </div>
 
                     <button
@@ -287,7 +290,7 @@ export default function Header({ settings }: HeaderProps) {
                 <div className={config.mobileMenu} style={getMobileMenuStyle()}>
                     <div className="px-2 pt-2 pb-3 space-y-1">
                         {renderNavItems(true)}
-                        <div className="px-3 py-2">
+                        <div className="px-3 py-2 space-y-2">
                             {sectionData?.enable_addon_link !== false && (
                                 <Link
                                     href={route("addons.page")}
@@ -305,6 +308,9 @@ export default function Header({ settings }: HeaderProps) {
                                 </Link>
                             )}
                             {renderCTAButtons(true)}
+                            <div className="pt-1">
+                                <LanguageSwitcher />
+                            </div>
                         </div>
                     </div>
                 </div>

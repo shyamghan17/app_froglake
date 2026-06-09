@@ -48,7 +48,7 @@ interface ShowItemPageProps {
 export default function Show() {
     const { t } = useTranslation();
     const { item } = usePage<ShowItemPageProps>().props;
-    const videoHubButtons = usePageButtons('itemShowButtons', { item });
+    const videoHubButtons = usePageButtons('videoHubBtn', { addonModule: 'ProductService', fallbackName: 'Product & Service', itemId: item?.id, subModuleKeyword: item?.type?.toLowerCase() === 'product' ? 'product' : item?.type?.toLowerCase() === 'service' ? 'service' : 'part' });
     let imageUrl = getImagePath(item.image);
     const customFields = useFormFields('getCustomFields', { ...item, module: 'ProductService', sub_module: 'Items', id: item.id }, () => { }, {}, 'view', t);
 

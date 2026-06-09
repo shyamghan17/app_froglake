@@ -74,10 +74,10 @@ class TerminationTypeController extends Controller
 
             UpdateTerminationType::dispatch($request, $terminationtype);
 
-            return redirect()->route('hrm.termination-types.index')->with('success', __('The termination type details are updated successfully.'));
+            return back()->with('success', __('The termination type details are updated successfully.'));
         }
         else{
-            return redirect()->route('hrm.termination-types.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 
@@ -87,10 +87,10 @@ class TerminationTypeController extends Controller
             DestroyTerminationType::dispatch($terminationtype);
             $terminationtype->delete();
 
-            return redirect()->route('hrm.termination-types.index')->with('success', __('The termination type has been deleted.'));
+            return back()->with('success', __('The termination type has been deleted.'));
         }
         else{
-            return redirect()->route('hrm.termination-types.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 

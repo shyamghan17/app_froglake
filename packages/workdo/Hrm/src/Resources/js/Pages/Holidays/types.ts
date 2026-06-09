@@ -9,9 +9,7 @@ export interface Holiday {
     end_date: string;
     holiday_type_id: number;
     description?: string;
-    is_paid: boolean;
-    is_sync_google_calendar: boolean;
-    is_sync_outlook_calendar: boolean;
+    is_paid: boolean; 
     created_at: string;
 }
 
@@ -21,9 +19,7 @@ export interface CreateHolidayFormData {
     end_date: string;
     holiday_type_id: string;
     description: string;
-    is_paid: boolean;
-    is_sync_google_calendar: boolean;
-    is_sync_outlook_calendar: boolean;
+    is_paid: boolean; 
 }
 
 export interface EditHolidayFormData {
@@ -32,9 +28,7 @@ export interface EditHolidayFormData {
     end_date: string;
     holiday_type_id: string;
     description: string;
-    is_paid: boolean;
-    is_sync_google_calendar: boolean;
-    is_sync_outlook_calendar: boolean;
+    is_paid: boolean; 
 }
 
 export interface HolidayFilters {

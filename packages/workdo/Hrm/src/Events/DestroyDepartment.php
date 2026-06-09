@@ -13,7 +13,5 @@ class DestroyDepartment
     public function __construct(
           public Department $department
     )
-    {
-        //
-    }
+    {}
 }

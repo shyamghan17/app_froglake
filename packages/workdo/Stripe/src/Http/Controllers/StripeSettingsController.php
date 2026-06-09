@@ -24,7 +24,8 @@ class StripeSettingsController extends Controller
             } catch (\Exception $e) {
                 return redirect()->back()->with('error', __('Failed to update stripe settings: ') . $e->getMessage());
             }           
+        } else {
+            return back()->with('error', __('Permission denied'));
         }
-        return back()->with('error', __('Permission denied'));
     }
 }

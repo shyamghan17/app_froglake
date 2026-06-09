@@ -31,6 +31,7 @@ export interface SalesReturnItem {
     tax_amount: number;
     total_amount: number;
     taxes?: Array<{id?: number; tax_name: string; tax_rate: number}>;
+    reason?: string;
     product?: ProductServiceItem;
 }
 

@@ -15,10 +15,4 @@ class TerminationType extends Model
         'creator_id',
         'created_by',
     ];
-
-   
-
-
-
-
 }

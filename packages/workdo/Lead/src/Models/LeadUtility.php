@@ -88,6 +88,8 @@ class LeadUtility extends Model
     public static function GivePermissionToRoles($role_id = null, $rolename = null)
     {
         $staff_permission = [
+            'manage-crm-dashboard',
+            'manage-leads',
             'manage-own-lead',
             'create-lead',
         ];

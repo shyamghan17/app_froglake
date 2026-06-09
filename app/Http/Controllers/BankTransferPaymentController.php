@@ -148,7 +148,7 @@ class BankTransferPaymentController extends Controller
                     $plan = Plan::find($requests->plan_id);
                     $counter = [
                         'user_counter' => (isset($requests->user_counter_input)) ? $requests->user_counter_input : -1,
-                        'storage_counter' => (isset($requests->storage_counter_input)) ? $requests->storage_counter_input : 0,
+                        'storage_limit' => (isset($requests->storage_counter_input)) ? $requests->storage_counter_input : 0,
                     ];
                     $user_module = (isset($requests->user_module_input)) ? $requests->user_module_input : '';
                     $duration = (isset($requests->time_period)) ? $requests->time_period : 'Month';

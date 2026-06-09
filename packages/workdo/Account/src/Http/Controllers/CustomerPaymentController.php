@@ -19,6 +19,7 @@ use Inertia\Inertia;
 use Workdo\Account\Events\CreateCustomerPayment;
 use Workdo\Account\Events\UpdateCustomerPaymentStatus;
 use Workdo\Account\Events\DestroyCustomerPayment;
+use App\Models\EmailTemplate;
 
 class CustomerPaymentController extends Controller
 {
@@ -214,10 +215,27 @@ class CustomerPaymentController extends Controller
                 }
 
                 $customerPayment->update(['status' => $request->status]);
-
                  // Dispatch event
-                 UpdateCustomerPaymentStatus::dispatch($request, $customerPayment);
-
+                UpdateCustomerPaymentStatus::dispatch($request, $customerPayment);
+                if($customerPayment->status == "cleared"){
+                    // Send email notification
+                    if(company_setting('Customer Payment') == 'on') {
+                        $customerPayment->load('customer');
+                        $emailData = [
+                            'payment_number'   => $customerPayment->payment_number ?? null,
+                            'payment_date'     => $customerPayment->payment_date ? \Carbon\Carbon::parse($customerPayment->payment_date)->format('d M Y') : null,
+                            'customer_name'    => $customerPayment->customer->name ?? null,
+                            'payment_amount'   => number_format($customerPayment->payment_amount, 2),
+                            'reference_number' => $customerPayment->reference_number ?? null,
+                        ];
+                        $message = EmailTemplate::sendEmailTemplate('Customer Payment', [$customerPayment->customer->email ?? null], $emailData);
+                        if($message['is_success'] == false && !empty($message['error'])) {
+                            return back()
+                                ->with('success', __('The payment status are updated successfully.'))
+                                ->with('error', $message['error']);
+                        }
+                    }
+                }
                 return back()->with('success', __('The payment status are updated successfully.'));
             } catch (\Exception $e) {
                 return back()->with('error', $e->getMessage());

@@ -13,7 +13,5 @@ class DestroyPromotion
     public function __construct(
           public Promotion $promotion
     )
-    {
-        //
-    }
+    {}
 }

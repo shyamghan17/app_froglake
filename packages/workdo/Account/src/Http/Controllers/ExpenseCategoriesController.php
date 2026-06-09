@@ -35,6 +35,7 @@ class ExpenseCategoriesController extends Controller
             return Inertia::render('Account/SystemSetup/ExpenseCategories/Index', [
                 'expensecategories' => $expensecategories,
                 'chartofaccounts' => ChartOfAccount::where('created_by', creatorId())
+                    ->where('is_active', true)
                     ->whereBetween('account_code', ['5000', '5999'])
                     ->select('id', 'account_code', 'account_name')
                     ->orderBy('account_code')

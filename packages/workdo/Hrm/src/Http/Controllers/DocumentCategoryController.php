@@ -79,10 +79,10 @@ class DocumentCategoryController extends Controller
 
             UpdateDocumentCategory::dispatch($request, $documentcategory);
 
-            return redirect()->route('hrm.document-categories.index')->with('success', __('The document category details are updated successfully.'));
+            return back()->with('success', __('The document category details are updated successfully.'));
         }
         else{
-            return redirect()->route('hrm.document-categories.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 
@@ -92,10 +92,10 @@ class DocumentCategoryController extends Controller
             DestroyDocumentCategory::dispatch($documentcategory);
             $documentcategory->delete();
 
-            return redirect()->route('hrm.document-categories.index')->with('success', __('The document category has been deleted.'));
+            return back()->with('success', __('The document category has been deleted.'));
         }
         else{
-            return redirect()->route('hrm.document-categories.index')->with('error', __('Permission denied'));
+            return back()->with('error', __('Permission denied'));
         }
     }
 

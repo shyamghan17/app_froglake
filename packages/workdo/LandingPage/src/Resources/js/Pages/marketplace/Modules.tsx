@@ -167,7 +167,7 @@ export default function Modules({ settings, packages, title: propTitle, subtitle
             <div className="relative max-w-5xl mx-auto">
                 <div className="bg-gradient-to-br from-gray-900 to-gray-800 p-10 rounded-2xl shadow-2xl">
                     <div className="text-center mb-8">
-                        <div className="inline-flex items-center space-x-2 bg-white/10 rounded-full px-4 py-2 mb-4">
+                        <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 mb-4">
                             <Package className="h-4 w-4 text-white" />
                             <span className="text-white text-sm font-medium">{currentSlide + 1} of {packages.length}</span>
                         </div>
@@ -188,7 +188,7 @@ export default function Modules({ settings, packages, title: propTitle, subtitle
                         </div>
                     </div>
                     
-                    <div className="flex items-center justify-center space-x-4">
+                    <div className="flex items-center justify-center gap-4">
                         <button
                             onClick={() => {
                                 setCurrentSlide(currentSlide > 0 ? currentSlide - 1 : packages.length - 1);
@@ -201,7 +201,7 @@ export default function Modules({ settings, packages, title: propTitle, subtitle
                             </svg>
                         </button>
                         
-                        <div className="flex space-x-2" style={{ display: 'none' }}>
+                        <div className="flex gap-2" style={{ display: 'none' }}>
                             {packages.map((_: any, index: number) => (
                                 <button
                                     key={index}

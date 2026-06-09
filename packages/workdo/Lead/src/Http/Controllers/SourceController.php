@@ -63,8 +63,8 @@ class SourceController extends Controller
 
     public function update(UpdateSourceRequest $request, Source $source)
     {
-        try {
-            if(Auth::user()->can('edit-sources')){
+       
+        if(Auth::user()->can('edit-sources')){
             $validated = $request->validated();
 
             $source->name = $validated['name'];
@@ -78,27 +78,18 @@ class SourceController extends Controller
         else{
             return back()->with('error', __('Permission denied'));
         }
-        } catch (\Exception $e) {
-            return back()->with('error', __('Source not found'));
-        }
     }
 
     public function destroy(Source $source)
     {
-        try {
-            if(Auth::user()->can('delete-sources')){
-                DestroySource::dispatch($source);
-                $source->delete();
+        if(Auth::user()->can('delete-sources')){
+            DestroySource::dispatch($source);
+            $source->delete();
 
             return back()->with('success', __('The source has been deleted.'));
         }
         else{
             return back()->with('error', __('Permission denied'));
         }
-        } catch (\Exception $e) {
-            return back()->with('error', __('Source not found'));
-        }
     }
-
-
 }
