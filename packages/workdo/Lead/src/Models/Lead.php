@@ -13,20 +13,11 @@ class Lead extends Model
 
     protected $fillable = [
         'name',
-        'company_name',
         'email',
         'subject',
         'user_id',
         'pipeline_id',
         'stage_id',
-        'category',
-        'address',
-        'district',
-        'province',
-        'remarks',
-        'is_live',
-        'company_pan',
-        'lead_status',
         'sources',
         'products',
         'notes',
@@ -36,7 +27,6 @@ class Lead extends Model
         'is_active',
         'is_converted',
         'date',
-        'website',
         'creator_id',
         'created_by',
     ];
@@ -48,7 +38,6 @@ class Lead extends Model
             'pipeline_id' => 'integer',
             'stage_id' => 'integer',
             'is_active' => 'boolean',
-            'is_live' => 'boolean',
             'date' => 'date',
             'creator_id' => 'integer'
         ];
