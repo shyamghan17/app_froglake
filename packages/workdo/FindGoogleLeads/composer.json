@@ -1,0 +1,25 @@
+{
+    "name": "workdo/find-google-leads",
+    "description": "Description for find-google-leads package",
+    "type": "library",
+    "license": "MIT",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Workdo\\FindGoogleLeads\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "WorkDo",
+            "email": "support@workdo.io"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Workdo\\FindGoogleLeads\\Providers\\FindGoogleLeadsServiceProvider"
+            ]
+        }
+    }
+}

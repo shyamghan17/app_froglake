@@ -1,0 +1,59 @@
+import { DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useForm } from "@inertiajs/react";
+import { useTranslation } from 'react-i18next';
+import { Button } from "@/components/ui/button";
+import { Label } from '@/components/ui/label';
+import InputError from '@/components/ui/input-error';
+import { Input } from '@/components/ui/input';
+
+import { CreateBranchProps, BranchFormData } from './types';
+
+export default function Create({ onSuccess }: CreateBranchProps) {
+    const { t } = useTranslation();
+    const { data, setData, post, processing, errors } = useForm<BranchFormData>({
+        branch_name: '',
+    });
+
+    const submit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(route('rotas.branches.store'), {
+            onSuccess: () => {
+                onSuccess();
+            }
+        });
+    };
+
+    return (
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>{t('Create Branch')}</DialogTitle>
+                <DialogDescription>
+                    {t('Create a new branch for your organization.')}
+                </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={submit} className="space-y-4">
+                <div>
+                    <Label htmlFor="branch_name">{t('Branch Name')}</Label>
+                    <Input
+                        id="branch_name"
+                        type="text"
+                        value={data.branch_name}
+                        onChange={(e) => setData('branch_name', e.target.value)}
+                        placeholder={t('Enter Branch Name')}
+                        required
+                    />
+                    <InputError message={errors.branch_name} />
+                </div>
+
+                <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => onSuccess()}>
+                        {t('Cancel')}
+                    </Button>
+                    <Button type="submit" disabled={processing}>
+                        {processing ? t('Creating...') : t('Create')}
+                    </Button>
+                </div>
+            </form>
+        </DialogContent>
+    );
+}
