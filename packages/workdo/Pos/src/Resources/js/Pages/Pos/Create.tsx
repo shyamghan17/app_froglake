@@ -1,6 +1,7 @@
 import { Head, router, usePage, Link } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import type { ChangeEvent, KeyboardEvent } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,6 +68,11 @@ interface CreateProps {
     }>;
 }
 
+interface ScanFeedback {
+    type: 'success' | 'error';
+    message: string;
+}
+
 function CreateContent({ customers = [], warehouses = [], categories = [], counters = [] }: CreateProps) {
     const { t } = useTranslation();
     const { adminAllSetting, companyAllSetting, auth } = usePage().props as any;
@@ -104,10 +110,13 @@ function CreateContent({ customers = [], warehouses = [], categories = [], count
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [skuInput, setSkuInput] = useState('');
+    const [scanFeedback, setScanFeedback] = useState<ScanFeedback | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [cart, setCart] = useState<CartItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [addingToCart, setAddingToCart] = useState<number | null>(null);
+    const skuInputRef = useRef<HTMLInputElement | null>(null);
+    const lastProcessedScanRef = useRef<{ value: string; timestamp: number } | null>(null);
 
     useEffect(() => {
         if (selectedWarehouse) {
@@ -127,18 +136,100 @@ function CreateContent({ customers = [], warehouses = [], categories = [], count
     // Clear cart only when warehouse changes
     useEffect(() => {
         setCart([]);
+        setSkuInput('');
+        setScanFeedback(null);
     }, [selectedWarehouse]);
 
-    const handleSkuInput = (value: string) => {
+    useEffect(() => {
+        if (!scanFeedback) {
+            return;
+        }
+
+        const timeoutId = window.setTimeout(() => {
+            setScanFeedback(null);
+        }, 2500);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [scanFeedback]);
+
+    const focusSkuInput = () => {
+        window.requestAnimationFrame(() => {
+            skuInputRef.current?.focus();
+        });
+    };
+
+    const normalizeSkuValue = (value: string) => value.replace(/[\r\n\t]+/g, '').trim();
+
+    const hasScannerSuffix = (value: string) => /[\r\n\t]/.test(value) || value !== value.trimEnd();
+
+    const isDuplicateScanSubmission = (value: string) => {
+        const now = Date.now();
+        const lastProcessedScan = lastProcessedScanRef.current;
+
+        if (lastProcessedScan && lastProcessedScan.value === value && now - lastProcessedScan.timestamp < 150) {
+            return true;
+        }
+
+        lastProcessedScanRef.current = {
+            value,
+            timestamp: now,
+        };
+
+        return false;
+    };
+
+    const processSkuInput = async (value: string) => {
+        const normalizedValue = normalizeSkuValue(value);
+        setSkuInput(normalizedValue);
+
+        if (!normalizedValue) {
+            setScanFeedback(null);
+            return;
+        }
+
+        if (!selectedWarehouse) {
+            setScanFeedback({
+                type: 'error',
+                message: t('Select a warehouse before scanning.'),
+            });
+            focusSkuInput();
+            return;
+        }
+
+        if (isDuplicateScanSubmission(normalizedValue)) {
+            return;
+        }
+
+        const matchedProduct = products.find(product =>
+            normalizeSkuValue(product.sku).toLowerCase() === normalizedValue.toLowerCase()
+        );
+
+        if (!matchedProduct) {
+            setScanFeedback({
+                type: 'error',
+                message: t('No product found for code "{{code}}" in this warehouse.', { code: normalizedValue }),
+            });
+            focusSkuInput();
+            return;
+        }
+
+        await addToCart(matchedProduct);
+        setSkuInput('');
+        setScanFeedback({
+            type: 'success',
+            message: t('{{name}} added to cart.', { name: matchedProduct.name }),
+        });
+        focusSkuInput();
+    };
+
+    const handleSkuInputChange = (value: string) => {
         setSkuInput(value);
-        if (value.trim() && selectedWarehouse) {
-            const matchedProduct = products.find(product =>
-                product.sku === value
-            );
-            if (matchedProduct) {
-                addToCart(matchedProduct);
-                setSkuInput('');
-            }
+        if (scanFeedback) {
+            setScanFeedback(null);
+        }
+
+        if (hasScannerSuffix(value)) {
+            void processSkuInput(value);
         }
     };
 
@@ -396,7 +487,7 @@ function CreateContent({ customers = [], warehouses = [], categories = [], count
                                     <Input
                                         placeholder={t('Search products...')}
                                         value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                                         className="pl-10 h-10"
                                     />
                                 </div>
@@ -414,7 +505,7 @@ function CreateContent({ customers = [], warehouses = [], categories = [], count
                                     </SelectContent>
                                 </Select>
 
-                                <Select value={selectedWarehouse} onValueChange={(value) => {
+                                <Select value={selectedWarehouse} onValueChange={(value: string) => {
                                     setSelectedWarehouse(value);
                                     sessionStorage.setItem('pos_selected_warehouse', value);
                                 }}>
@@ -436,15 +527,40 @@ function CreateContent({ customers = [], warehouses = [], categories = [], count
                                             <div className="relative lg:w-72">
                                                 <Barcode className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                                                 <Input
-                                                    placeholder={t('Add To Cart by SKU')}
+                                                    ref={skuInputRef}
+                                                    placeholder={t('Scan barcode or enter SKU')}
                                                     className="pl-10 h-10"
                                                     value={skuInput}
-                                                    onChange={(e) => handleSkuInput(e.target.value)}
+                                                    autoComplete="off"
+                                                    autoCorrect="off"
+                                                    autoCapitalize="off"
+                                                    spellCheck={false}
+                                                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleSkuInputChange(e.target.value)}
+                                                    onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                                                        if (e.key === 'Enter' || e.key === 'Tab') {
+                                                            e.preventDefault();
+                                                            void processSkuInput(skuInput);
+                                                        }
+                                                    }}
                                                 />
+                                                <div className="mt-1 px-1">
+                                                    <p className="text-xs text-gray-500">
+                                                        {t('Scan a barcode or type a SKU and press Enter.')}
+                                                    </p>
+                                                    {scanFeedback && (
+                                                        <p
+                                                            className={`text-xs ${scanFeedback.type === 'error' ? 'text-red-600' : 'text-green-600'}`}
+                                                            role="status"
+                                                            aria-live="polite"
+                                                        >
+                                                            {scanFeedback.message}
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </div>
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                            <p>{t('Enter SKU to add product to cart.')}</p>
+                                            <p>{t('Scan a barcode or enter a SKU to add a product to the cart.')}</p>
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
@@ -542,7 +658,7 @@ function CreateContent({ customers = [], warehouses = [], categories = [], count
                         <CardContent className="p-3 sm:p-4 xl:p-6 border-b flex-shrink-0">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">{t('Billing Counter')} <span className="text-red-500">*</span></label>
-                                <Select value={selectedCounter} onValueChange={(value) => {
+                                <Select value={selectedCounter} onValueChange={(value: string) => {
                                     setSelectedCounter(value);
                                     sessionStorage.setItem('pos_selected_counter', value);
                                 }} required>
@@ -736,7 +852,7 @@ function CreateContent({ customers = [], warehouses = [], categories = [], count
             </div>
 
             {/* Payment Modal */}
-            <Dialog open={showPaymentModal} onOpenChange={(open) => !processing && setShowPaymentModal(open)}>
+            <Dialog open={showPaymentModal} onOpenChange={(open: boolean) => !processing && setShowPaymentModal(open)}>
                 <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-none">
                     <DialogHeader className="pb-4 border-b">
                         <div className="flex items-center gap-3">

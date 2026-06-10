@@ -1,6 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Printer, Download, CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatDate, formatTime } from '@/utils/helpers';
@@ -20,9 +21,29 @@ interface ReceiptModalProps {
 export default function ReceiptModal({ isOpen, onClose, completedSale, globalSettings }: ReceiptModalProps) {
     const { t } = useTranslation();
     const receiptRef = useRef<HTMLDivElement>(null);
+    const promptedReceiptRef = useRef<string | null>(null);
+    const [isPrintConfirmationOpen, setIsPrintConfirmationOpen] = useState(false);
+
+    useEffect(() => {
+        if (!isOpen || !completedSale?.pos_number) {
+            return;
+        }
+
+        if (promptedReceiptRef.current === completedSale.pos_number) {
+            return;
+        }
+
+        promptedReceiptRef.current = completedSale.pos_number;
+        setIsPrintConfirmationOpen(true);
+    }, [isOpen, completedSale?.pos_number]);
 
     const handlePrint = () => {
+        setIsPrintConfirmationOpen(false);
         printReceipt(completedSale, globalSettings);
+    };
+
+    const requestPrintConfirmation = () => {
+        setIsPrintConfirmationOpen(true);
     };
 
     const handleDownload = () => {
@@ -170,7 +191,7 @@ export default function ReceiptModal({ isOpen, onClose, completedSale, globalSet
                             <Download className="h-4 w-4 mr-2" />
                             {t('Download PDF')}
                         </Button>
-                        <Button onClick={handlePrint} className="bg-blue-500 hover:bg-blue-700">
+                        <Button onClick={requestPrintConfirmation} className="bg-blue-500 hover:bg-blue-700">
                             <Printer className="h-4 w-4 mr-2" />
                             {t('Print')}
                         </Button>
@@ -180,6 +201,15 @@ export default function ReceiptModal({ isOpen, onClose, completedSale, globalSet
                     </div>
                 </div>
             </DialogContent>
+            <ConfirmationDialog
+                open={isPrintConfirmationOpen}
+                onOpenChange={setIsPrintConfirmationOpen}
+                title={t('Print Receipt?')}
+                message={t('Do you want to print this receipt on the connected XP-Q890K printer?')}
+                confirmText={t('Print Receipt')}
+                cancelText={t('Skip')}
+                onConfirm={handlePrint}
+            />
         </Dialog>
     );
 }
