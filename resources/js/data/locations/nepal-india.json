@@ -1,0 +1,57 @@
+{
+    "countries": [
+        {
+            "name": "Nepal",
+            "states": [
+                { "name": "Koshi", "cities": ["Biratnagar", "Dharan", "Itahari", "Birtamod", "Damak"] },
+                { "name": "Madhesh", "cities": ["Janakpur", "Birgunj", "Kalaiya", "Gaur", "Rajbiraj"] },
+                { "name": "Bagmati", "cities": ["Kathmandu", "Lalitpur", "Bhaktapur", "Hetauda", "Bharatpur"] },
+                { "name": "Gandaki", "cities": ["Pokhara", "Baglung", "Besisahar", "Damauli", "Gorkha"] },
+                { "name": "Lumbini", "cities": ["Butwal", "Bhairahawa", "Nepalgunj", "Tulsipur", "Ghorahi"] },
+                { "name": "Karnali", "cities": ["Birendranagar", "Jumla", "Dailekh", "Manma", "Chaurjahari"] },
+                { "name": "Sudurpashchim", "cities": ["Dhangadhi", "Mahendranagar", "Dadeldhura", "Baitadi", "Dipayal"] }
+            ]
+        },
+        {
+            "name": "India",
+            "states": [
+                { "name": "Andaman and Nicobar Islands", "cities": ["Port Blair"] },
+                { "name": "Andhra Pradesh", "cities": ["Visakhapatnam", "Vijayawada", "Guntur", "Tirupati"] },
+                { "name": "Arunachal Pradesh", "cities": ["Itanagar"] },
+                { "name": "Assam", "cities": ["Guwahati", "Silchar", "Dibrugarh"] },
+                { "name": "Bihar", "cities": ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur"] },
+                { "name": "Chandigarh", "cities": ["Chandigarh"] },
+                { "name": "Chhattisgarh", "cities": ["Raipur", "Bhilai", "Bilaspur"] },
+                { "name": "Dadra and Nagar Haveli and Daman and Diu", "cities": ["Daman", "Silvassa"] },
+                { "name": "Delhi", "cities": ["New Delhi", "Delhi"] },
+                { "name": "Goa", "cities": ["Panaji", "Margao", "Vasco da Gama"] },
+                { "name": "Gujarat", "cities": ["Ahmedabad", "Surat", "Vadodara", "Rajkot"] },
+                { "name": "Haryana", "cities": ["Gurugram", "Faridabad", "Panipat", "Karnal"] },
+                { "name": "Himachal Pradesh", "cities": ["Shimla", "Dharamshala", "Solan"] },
+                { "name": "Jammu and Kashmir", "cities": ["Srinagar", "Jammu"] },
+                { "name": "Jharkhand", "cities": ["Ranchi", "Jamshedpur", "Dhanbad"] },
+                { "name": "Karnataka", "cities": ["Bengaluru", "Mysuru", "Mangaluru", "Hubballi"] },
+                { "name": "Kerala", "cities": ["Thiruvananthapuram", "Kochi", "Kozhikode"] },
+                { "name": "Ladakh", "cities": ["Leh", "Kargil"] },
+                { "name": "Lakshadweep", "cities": ["Kavaratti"] },
+                { "name": "Madhya Pradesh", "cities": ["Bhopal", "Indore", "Jabalpur", "Gwalior"] },
+                { "name": "Maharashtra", "cities": ["Mumbai", "Pune", "Nagpur", "Nashik"] },
+                { "name": "Manipur", "cities": ["Imphal"] },
+                { "name": "Meghalaya", "cities": ["Shillong"] },
+                { "name": "Mizoram", "cities": ["Aizawl"] },
+                { "name": "Nagaland", "cities": ["Kohima", "Dimapur"] },
+                { "name": "Odisha", "cities": ["Bhubaneswar", "Cuttack", "Rourkela"] },
+                { "name": "Puducherry", "cities": ["Puducherry"] },
+                { "name": "Punjab", "cities": ["Ludhiana", "Amritsar", "Jalandhar", "Patiala"] },
+                { "name": "Rajasthan", "cities": ["Jaipur", "Jodhpur", "Udaipur", "Kota"] },
+                { "name": "Sikkim", "cities": ["Gangtok"] },
+                { "name": "Tamil Nadu", "cities": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli"] },
+                { "name": "Telangana", "cities": ["Hyderabad", "Warangal", "Nizamabad"] },
+                { "name": "Tripura", "cities": ["Agartala"] },
+                { "name": "Uttar Pradesh", "cities": ["Lucknow", "Kanpur", "Varanasi", "Noida"] },
+                { "name": "Uttarakhand", "cities": ["Dehradun", "Haridwar", "Haldwani"] },
+                { "name": "West Bengal", "cities": ["Kolkata", "Howrah", "Siliguri", "Durgapur"] }
+            ]
+        }
+    ]
+}

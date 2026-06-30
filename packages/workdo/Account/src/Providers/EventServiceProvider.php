@@ -2,6 +2,7 @@
 
 namespace Workdo\Account\Providers;
 
+use App\Events\CreateUser;
 use App\Events\ApprovePurchaseReturn;
 use App\Events\ApproveSalesReturn;
 use App\Events\CreateTransfer;
@@ -17,6 +18,7 @@ use Workdo\Account\Listeners\ApprovePettyCashListener;
 use Workdo\Account\Listeners\BankAccountFieldUpdate;
 use Workdo\Account\Listeners\CreateDebitNoteFromReturn;
 use Workdo\Account\Listeners\CreateCreditNoteFromReturn;
+use Workdo\Account\Listeners\SyncAccountPartyFromUserListener;
 use Workdo\Account\Listeners\UpdateMobileServicePaymentStatusLis;
 use Workdo\Account\Listeners\DataDefault;
 use Workdo\Account\Listeners\PostPurchaseInvoiceListener;
@@ -241,6 +243,9 @@ class EventServiceProvider extends ServiceProvider
         // Add your event listeners here
         DefaultData::class => [
             DataDefault::class,
+        ],
+        CreateUser::class => [
+            SyncAccountPartyFromUserListener::class,
         ],
         GivePermissionToRole::class => [
             GiveRoleToPermission::class,

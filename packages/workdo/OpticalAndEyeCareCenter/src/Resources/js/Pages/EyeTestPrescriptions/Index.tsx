@@ -5,11 +5,11 @@ import { useFlashMessages } from '@/hooks/useFlashMessages';
 import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 import AuthenticatedLayout from "@/layouts/authenticated-layout";
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Dialog } from "@/components/ui/dialog";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Plus, Edit as EditIcon, Trash2, Eye, FileText as FileTextIcon } from "lucide-react";
+import { Plus, Edit as EditIcon, Trash2, Eye, Printer, FileText as FileTextIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FilterButton } from '@/components/ui/filter-button';
 import { Pagination } from "@/components/ui/pagination";
@@ -22,7 +22,7 @@ import EditEyeTestPrescription from './Edit';
 import View from './View';
 import NoRecordsFound from '@/components/no-records-found';
 import { EyeTestPrescription, EyeTestPrescriptionsIndexProps, EyeTestPrescriptionFilters, EyeTestPrescriptionModalState } from './types';
-import { formatDate, formatDateTime } from '@/utils/helpers';
+import { formatDate } from '@/utils/helpers';
 
 export default function Index() {
     const { t } = useTranslation();
@@ -97,19 +97,28 @@ export default function Index() {
             key: 'patient.patient_name',
             header: t('Patient Name'),
             sortable: false,
-            render: (value: any, row: any) => row.patient?.patient_name || '-'
-        },
-        {
-            key: 'doctor_name',
-            header: t('Doctor Name'),
-            sortable: true,
-            render: (_: any, row: any) => row.doctor?.name || '-'
+            render: (_: unknown, row: EyeTestPrescription) => (
+                <div className="space-y-0.5">
+                    <p className="font-medium text-gray-900">{row.patient?.patient_name || '-'}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(row.created_at)}</p>
+                </div>
+            ),
         },
         {
             key: 'test_date',
             header: t('Test Date'),
             sortable: false,
-            render: (value: string) => value ? formatDate(value) : '-'
+            render: (value: string) => (
+                <span className="text-sm text-gray-700">{value ? formatDate(value) : '-'}</span>
+            ),
+        },
+        {
+            key: 'follow_up_date',
+            header: t('Follow Up Date'),
+            sortable: false,
+            render: (value: string) => (
+                <span className="text-sm text-gray-700">{value ? formatDate(value) : '-'}</span>
+            ),
         },
         {
             key: 'prescription_expiry_date',
@@ -140,6 +149,23 @@ export default function Index() {
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>{t('View')}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
+                        {auth.user?.permissions?.includes('view-eye-test-prescriptions') && (
+                            <Tooltip delayDuration={0}>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => window.open(`${route('optical-and-eye-care-center.eye-test-prescriptions.print', eyetestprescription.id)}?download=pdf`, '_blank')}
+                                        className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
+                                    >
+                                        <Printer className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{t('Export PDF')}</p>
                                 </TooltipContent>
                             </Tooltip>
                         )}
@@ -214,7 +240,7 @@ export default function Index() {
                                 value={filters.search}
                                 onChange={(value) => setFilters({...filters, search: value})}
                                 onSearch={handleFilter}
-                                placeholder={t('Search by patient or doctor name...')}
+                                placeholder={t('Search by patient, phone, or doctor...')}
                             />
                         </div>
                         <div className="flex items-center gap-3">
@@ -293,7 +319,7 @@ export default function Index() {
                 {/* Table Content */}
                 <CardContent className="p-0">
                     <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 max-h-[70vh] rounded-none w-full">
-                        <div className="min-w-[800px]">
+                        <div className="min-w-[780px]">
                         <DataTable
                             data={eyetestprescriptions?.data || []}
                             columns={tableColumns}

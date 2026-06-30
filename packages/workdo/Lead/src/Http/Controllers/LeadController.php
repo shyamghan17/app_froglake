@@ -154,6 +154,7 @@ class LeadController extends Controller
         if (Auth::user()->can('create-leads')) {
             $validated = $request->validated();
             $validated['is_active'] = $request->boolean('is_active', true);
+            $validated['whatsapp_same_as_phone'] = $request->boolean('whatsapp_same_as_phone', true);
 
             $usr = Auth::user();
             $pipelines = Pipeline::where('created_by', '=', creatorId());
@@ -168,24 +169,46 @@ class LeadController extends Controller
             }
             
             if (!empty($pipeline)) {
-                $stage = LeadStage::where('pipeline_id', '=', $pipeline->id)->first();
+                $stage = LeadStage::where('pipeline_id', '=', $pipeline->id)
+                    ->where('created_by', creatorId())
+                    ->first();
             } else {
                 return redirect()->route('lead.leads.index')->with('error', __('Please create pipeline.'));
             }
             if (empty($stage)) {
                 return redirect()->route('lead.leads.index')->with('error', __('Please create stage for this pipeline.'));
             } else {
-                $lead                 = new Lead();
-                $lead->name           = $request->name;
-                $lead->email          = $request->email;
-                $lead->subject        = $request->subject;
-                $lead->user_id        = $request->user_id;
-                $lead->pipeline_id    = $pipeline->id;
-                $lead->stage_id       = $stage->id;
-                $lead->phone          = $request->phone;
-                $lead->date           = $request->date;
-                $lead->creator_id     = Auth::id();
-                $lead->created_by     = creatorId();
+                $lead = new Lead();
+                $lead->fill([
+                    'name' => $validated['name'],
+                    'email' => $validated['email'] ?? null,
+                    'subject' => $validated['subject'],
+                    'user_id' => $validated['user_id'],
+                    'pipeline_id' => $pipeline->id,
+                    'stage_id' => $stage->id,
+                    'phone' => $validated['phone'] ?? null,
+                    'designation' => $validated['designation'] ?? null,
+                    'company_name' => $validated['company_name'] ?? null,
+                    'pan_vat_number' => $validated['pan_vat_number'] ?? null,
+                    'organization_type' => $validated['organization_type'] ?? null,
+                    'whatsapp_same_as_phone' => $validated['whatsapp_same_as_phone'],
+                    'whatsapp_viber_number' => $validated['whatsapp_same_as_phone']
+                        ? ($validated['phone'] ?? null)
+                        : ($validated['whatsapp_viber_number'] ?? null),
+                    'address_line_1' => $validated['address_line_1'] ?? null,
+                    'address_line_2' => $validated['address_line_2'] ?? null,
+                    'city' => $validated['city'] ?? null,
+                    'state' => $validated['state'] ?? null,
+                    'country' => $validated['country'] ?? null,
+                    'postal_code' => $validated['postal_code'] ?? null,
+                    'sources' => !empty($validated['sources'])
+                        ? implode(',', array_filter($validated['sources']))
+                        : null,
+                    'date' => $validated['date'] ?? null,
+                    'is_active' => $validated['is_active'],
+                    'creator_id' => Auth::id(),
+                    'created_by' => creatorId(),
+                ]);
                 $lead->save();
 
                 if (Auth::user()->type == 'company') {
@@ -351,7 +374,7 @@ class LeadController extends Controller
 
 
             $lead->name        = $validated['name'];
-            $lead->email       = $validated['email'];
+            $lead->email       = $validated['email'] ?? null;
             $lead->subject     = $validated['subject'];
             $lead->user_id     = $validated['user_id'];
             $lead->phone       = $validated['phone'];

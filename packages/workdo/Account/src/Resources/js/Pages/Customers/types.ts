@@ -54,10 +54,3 @@ export interface CustomerFormData {
   same_as_billing: boolean;
   notes?: string;
 }
-
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  mobile_no?: string;
-}

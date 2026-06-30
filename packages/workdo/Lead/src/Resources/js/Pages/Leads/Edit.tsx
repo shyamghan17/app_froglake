@@ -17,7 +17,7 @@ import { formatDate } from '@/utils/helpers';
 import { useFormFields } from '@/hooks/useFormFields';
 
 export default function EditLead({ lead, sources: propSources, products: propProducts, onSuccess }: EditLeadProps & { sources?: any, products?: any }) {
-    const { users, pipelines, products } = usePage<any>().props;
+    const { users, pipelines, products, auth } = usePage<any>().props;
     const [stages, setStages] = useState([]);
     const [sources, setSources] = useState(propSources || []);
     const [productOptions, setProductOptions] = useState(propProducts || []);
@@ -95,11 +95,11 @@ export default function EditLead({ lead, sources: propSources, products: propPro
                     </div>
 
                     <div>
-                        <Label htmlFor="email" required>{t('Email')}</Label>
+                        <Label htmlFor="email">{t('Email')}</Label>
                         <Input
                             id="email"
                             type="email"
-                            value={data.email}
+                            value={data.email || ''}
                             onChange={(e) => setData('email', e.target.value)}
                             placeholder={t('Enter Email')}
                         />
@@ -149,6 +149,7 @@ export default function EditLead({ lead, sources: propSources, products: propPro
                             value={data.phone}
                             onChange={(value) => setData('phone', value || '')}
                             error={errors.phone}
+                            timezone={auth?.user?.timezone}
                         />
                     </div>
 

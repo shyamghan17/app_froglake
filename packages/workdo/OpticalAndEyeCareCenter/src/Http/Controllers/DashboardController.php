@@ -140,11 +140,14 @@ class DashboardController extends Controller
     private function doctorDashboard()
     {
         $userId = Auth::id();
+        $creatorId = creatorId();
 
         $stats = [
             'my_patients' => EyePatient::where('preferred_doctor', $userId)->count(),
             'my_appointments' => EyeCareAppoinment::where('doctor_name', $userId)->count(),
-            'my_prescriptions' => EyeTestPrescription::where('doctor_name', $userId)->count(),
+            'my_prescriptions' => EyeTestPrescription::where('created_by', $creatorId)
+                ->where('doctor_name', $userId)
+                ->count(),
             'pending_appointments' => EyeCareAppoinment::where('doctor_name', $userId)->whereIn('status', ['0', '1'])->count(),
             'today_appointments' => EyeCareAppoinment::where('doctor_name', $userId)
                 ->whereDate('appointment_datetime', today())
@@ -166,7 +169,8 @@ class DashboardController extends Controller
                 ];
             });
 
-        $recentPrescriptions = EyeTestPrescription::where('doctor_name', $userId)
+        $recentPrescriptions = EyeTestPrescription::where('created_by', $creatorId)
+            ->where('doctor_name', $userId)
             ->with('patient')
             ->latest()
             ->take(5)

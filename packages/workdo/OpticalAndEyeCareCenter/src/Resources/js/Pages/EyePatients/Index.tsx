@@ -214,7 +214,7 @@ export default function Index() {
                                 value={filters.patient_name}
                                 onChange={(value) => setFilters({...filters, patient_name: value})}
                                 onSearch={handleFilter}
-                                placeholder={t('Search Eye Patients...')}
+                                placeholder={t('Search by patient name or phone...')}
                             />
                         </div>
                         <div className="flex items-center gap-3">

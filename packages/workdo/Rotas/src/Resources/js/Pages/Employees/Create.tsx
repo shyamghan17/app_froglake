@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trash2 } from 'lucide-react';
 import { CreateEmployeeFormData } from './types';
 import { useEffect, useState } from 'react';
+import { getCityOptions, getCountryOptions, getStateOptions } from '@/utils/locationOptions';
 
 export default function Create() {
     const { users, branches, departments, designations, shifts, documentTypes, generatedEmployeeId } = usePage<any>().props;
@@ -58,6 +59,10 @@ export default function Create() {
         designation_id: '',
         documents: [{ document_type_id: '', file: '' }],
     });
+
+    const countryOptions = getCountryOptions(data.country);
+    const stateOptions = getStateOptions(data.country, data.state);
+    const cityOptions = getCityOptions(data.country, data.state, data.city);
 
     useEffect(() => {
         setFilteredBranches(branches || []);
@@ -438,40 +443,73 @@ export default function Create() {
 
                                     <div>
                                         <Label htmlFor="city">{t('City')}</Label>
-                                        <Input
-                                            id="city"
-                                            type="text"
+                                        <Select
                                             value={data.city}
-                                            onChange={(e) => setData('city', e.target.value)}
-                                            placeholder={t('Enter City')}
+                                            onValueChange={(value) => setData('city', value)}
+                                            disabled={!data.country || !data.state}
                                             required
-                                        />
+                                        >
+                                            <SelectTrigger id="city">
+                                                <SelectValue placeholder={!data.country ? t('Select Country first') : !data.state ? t('Select State first') : t('Select City')} />
+                                            </SelectTrigger>
+                                            <SelectContent searchable={true}>
+                                                {cityOptions.map((city) => (
+                                                    <SelectItem key={city} value={city}>
+                                                        {city}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                         <InputError message={errors.city} />
                                     </div>
 
                                     <div>
                                         <Label htmlFor="state">{t('State')}</Label>
-                                        <Input
-                                            id="state"
-                                            type="text"
+                                        <Select
                                             value={data.state}
-                                            onChange={(e) => setData('state', e.target.value)}
-                                            placeholder={t('Enter State')}
+                                            onValueChange={(value) => {
+                                                setData('state', value);
+                                                setData('city', '');
+                                            }}
+                                            disabled={!data.country}
                                             required
-                                        />
+                                        >
+                                            <SelectTrigger id="state">
+                                                <SelectValue placeholder={!data.country ? t('Select Country first') : t('Select State')} />
+                                            </SelectTrigger>
+                                            <SelectContent searchable={true}>
+                                                {stateOptions.map((state) => (
+                                                    <SelectItem key={state} value={state}>
+                                                        {state}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                         <InputError message={errors.state} />
                                     </div>
 
                                     <div>
                                         <Label htmlFor="country">{t('Country')}</Label>
-                                        <Input
-                                            id="country"
-                                            type="text"
+                                        <Select
                                             value={data.country}
-                                            onChange={(e) => setData('country', e.target.value)}
-                                            placeholder={t('Enter Country')}
+                                            onValueChange={(value) => {
+                                                setData('country', value);
+                                                setData('state', '');
+                                                setData('city', '');
+                                            }}
                                             required
-                                        />
+                                        >
+                                            <SelectTrigger id="country">
+                                                <SelectValue placeholder={t('Select Country')} />
+                                            </SelectTrigger>
+                                            <SelectContent searchable={true}>
+                                                {countryOptions.map((country) => (
+                                                    <SelectItem key={country} value={country}>
+                                                        {country}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                         <InputError message={errors.country} />
                                     </div>
 

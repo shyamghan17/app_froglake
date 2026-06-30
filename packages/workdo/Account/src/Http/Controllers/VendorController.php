@@ -2,7 +2,6 @@
 
 namespace Workdo\Account\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -12,12 +11,15 @@ use Workdo\Account\Http\Requests\UpdateVendorRequest;
 use Workdo\Account\Events\CreateVendor;
 use Workdo\Account\Events\UpdateVendor;
 use Workdo\Account\Events\DestroyVendor;
+use Workdo\Account\Services\UserAccountPartySyncService;
 
 class VendorController extends Controller
 {
     public function index()
     {
         if(Auth::user()->can('manage-vendors')){
+            app(UserAccountPartySyncService::class)->syncVendorsForTenant(creatorId());
+
             $vendors = Vendor::query()
                 ->with('user:id,name,avatar,is_disable')
                 ->where(function($q) {
@@ -36,15 +38,8 @@ class VendorController extends Controller
                 ->paginate(request('per_page', 10))
                 ->withQueryString();
 
-            $users = User::where('type', 'vendor')
-                ->where('created_by', creatorId())
-                ->whereNotIn('id', Vendor::pluck('user_id')->filter())
-                ->select('id', 'name', 'email', 'mobile_no')
-                ->get();
-
             return Inertia::render('Account/Vendors/Index', [
                 'vendors' => $vendors,
-                'users' => $users,
             ]);
         }
         return back()->with('error', __('Permission denied'));
