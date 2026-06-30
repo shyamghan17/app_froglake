@@ -75,8 +75,28 @@ class EyeTestPrescriptionController extends Controller
                         }
                     });
                 })
+                ->when(
+                    request('sort'),
+                    function ($q) {
+                        $sortField = (string) request('sort');
+                        $direction = strtolower((string) request('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+                        $sortableFields = [
+                            'test_date',
+                            'follow_up_date',
+                            'prescription_expiry_date',
+                            'created_at',
+                        ];
 
-                ->when(request('sort'), fn($q) => $q->orderBy(request('sort'), request('direction', 'asc')), fn($q) => $q->latest())
+                        if (in_array($sortField, $sortableFields, true)) {
+                            $q->orderBy($sortField, $direction);
+
+                            return;
+                        }
+
+                        $q->latest();
+                    },
+                    fn($q) => $q->latest()
+                )
                 ->paginate(request('per_page', 10))
                 ->withQueryString();
 

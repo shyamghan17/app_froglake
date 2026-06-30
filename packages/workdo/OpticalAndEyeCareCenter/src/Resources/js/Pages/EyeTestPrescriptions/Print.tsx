@@ -226,7 +226,7 @@ export default function Print() {
                 </div>
 
                 <div className="mb-6">
-                    <PaperSection title={t('Chief Complaints')}>
+                    <PaperSection title={t('Complaints')}>
                         {complaintSummary ? (
                             <p className="text-sm leading-7 text-slate-800">{complaintSummary}</p>
                         ) : (
