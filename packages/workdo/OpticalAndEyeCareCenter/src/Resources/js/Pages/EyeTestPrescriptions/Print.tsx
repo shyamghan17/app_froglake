@@ -43,7 +43,6 @@ export default function Print() {
     const eyeDiagramItems = getEyeDiagramItems(eyetestprescription);
     const patientAge = getAgeFromDob(eyetestprescription.patient?.dob);
     const clinicName = getCompanySetting('company_name') || '';
-    const clinicSubtitle = t('Eye Test Prescription');
     const logoPath = getCompanySetting('logo_dark') || getCompanySetting('logo_light') || '';
     const logoSrc = logoPath ? getImagePath(logoPath) : '';
     const clinicAddressParts = [
@@ -143,7 +142,7 @@ export default function Print() {
                 </div>
             </div>
 
-            <div className="prescription-print-container mx-auto max-w-5xl bg-white px-8 py-8 print:max-w-none">
+            <div className="prescription-print-container mx-auto max-w-5xl bg-white px-8 py-8 text-[11px] leading-[1.45] print:max-w-none">
                 <div className="mb-4 pb-2">
                     <div className="relative px-6 py-6">
                         <div className="absolute right-6 top-6 flex h-20 w-20 items-center justify-center rounded-full bg-sky-700/5">
@@ -160,18 +159,15 @@ export default function Print() {
                         </div>
 
                         <div className="mx-auto max-w-3xl text-center">
-                            <h2 className="pr-24 text-[2rem] font-extrabold leading-tight text-slate-950 md:pr-0">
+                            <h2 className="pr-24 text-[13px] font-bold leading-tight text-slate-950 md:pr-0">
                                 {clinicName || t('Company Name')}
                             </h2>
-                            <p className="mt-1 text-lg font-semibold uppercase tracking-[0.18em] text-sky-700">
-                                {clinicSubtitle}
-                            </p>
                             {clinicAddressParts.length > 0 && (
-                                <p className="mt-3 text-sm font-medium text-slate-600">
+                                <p className="mt-2 text-[11px] font-normal text-slate-600">
                                     {clinicAddressParts.join(', ')}
                                 </p>
                             )}
-                            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-sm text-slate-700">
+                            <div className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-[11px] text-slate-700">
                                 {getCompanySetting('company_email') && (
                                     <p className="break-all"><strong>{t('Email')}:</strong> {getCompanySetting('company_email')}</p>
                                 )}
@@ -191,15 +187,15 @@ export default function Print() {
                 </div>
 
                 <div className="mb-3 border-b border-slate-300 pb-2 text-center">
-                    <h3 className="text-[1.55rem] font-bold leading-tight text-slate-950">
-                        {t('Report')}
+                    <h3 className="text-[12px] font-bold uppercase leading-tight tracking-[0.12em] text-slate-950">
+                        {t('Eye Test Prescription')}
                     </h3>
                 </div>
 
                 <div className="mb-4">
                     <ReportSection title={t('Complaints')}>
                         {complaintSummary ? (
-                            <p className="text-sm leading-6 text-slate-800">{complaintSummary}</p>
+                            <p className="text-[11px] leading-[1.5] text-slate-800">{complaintSummary}</p>
                         ) : (
                             <EmptyState label={t('No complaints recorded.')} />
                         )}
@@ -324,8 +320,8 @@ export default function Print() {
                                 <div className="w-full border-b border-slate-400" />
                             )}
                         </div>
-                        <p className="mt-2 text-sm font-semibold text-slate-900">{doctorDisplayName || '-'}</p>
-                        <p className="text-xs uppercase tracking-[0.16em] text-slate-500">{t('Doctor Signature')}</p>
+                        <p className="mt-2 text-[11px] font-bold text-slate-900">{doctorDisplayName || '-'}</p>
+                        <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">{t('Doctor Signature')}</p>
                     </div>
                 </div>
             </div>
@@ -448,7 +444,7 @@ function ReportSection({
     return (
         <section className="break-inside-avoid">
             <div className="px-0 py-2">
-                <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+                <h3 className="text-[11px] font-bold text-slate-900">{title}</h3>
             </div>
             <div className="py-3">
                 {children}
@@ -470,8 +466,8 @@ function DetailGrid({
         <div className={`grid grid-cols-1 gap-x-6 gap-y-0 ${columnClassName}`}>
             {items.map((item) => (
                 <div key={`${item.label}-${item.value}`} className="py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">{item.label}</p>
-                    <p className="mt-0.5 text-sm text-slate-900">{item.value || '-'}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">{item.label}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-900">{item.value || '-'}</p>
                 </div>
             ))}
         </div>
@@ -502,13 +498,13 @@ function PerEyeTable({
 
     return (
         <div className="overflow-hidden">
-            <div className="grid grid-cols-[1.1fr_1fr_1fr] text-sm font-semibold text-slate-900">
+            <div className="grid grid-cols-[1.1fr_1fr_1fr] text-[11px] font-bold text-slate-900">
                 <div className="px-3 py-2">{'Investigation'}</div>
                 <div className="px-3 py-2 text-center">{'Right Eye'}</div>
                 <div className="px-3 py-2 text-center">{'Left Eye'}</div>
             </div>
             {allLabels.map((label) => (
-                <div key={label} className="grid grid-cols-[1.1fr_1fr_1fr] text-sm text-slate-800">
+                <div key={label} className="grid grid-cols-[1.1fr_1fr_1fr] text-[11px] text-slate-800">
                     <div className="px-3 py-1.5 font-medium text-slate-700">{label}</div>
                     <div className="px-3 py-1.5 text-center">{rightLookup.get(label) || '-'}</div>
                     <div className="px-3 py-1.5 text-center">{leftLookup.get(label) || '-'}</div>
@@ -527,12 +523,12 @@ function TextBlock({
 }) {
     return (
         <div className="space-y-2">
-            <p className="text-sm font-semibold text-slate-700">{title}</p>
-            <p className="whitespace-pre-wrap text-sm text-slate-900">{value}</p>
+            <p className="text-[11px] font-bold text-slate-700">{title}</p>
+            <p className="whitespace-pre-wrap text-[11px] text-slate-900">{value}</p>
         </div>
     );
 }
 
 function EmptyState({ label }: { label: string }) {
-    return <p className="text-sm text-slate-500">{label}</p>;
+    return <p className="text-[11px] text-slate-500">{label}</p>;
 }
