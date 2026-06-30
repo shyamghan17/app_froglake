@@ -42,8 +42,8 @@ export default function Print() {
     const glassesItems = getGlassesItems(eyetestprescription);
     const eyeDiagramItems = getEyeDiagramItems(eyetestprescription);
     const patientAge = getAgeFromDob(eyetestprescription.patient?.dob);
-    const clinicName = getCompanySetting('company_name') || t('Eye Care Clinic');
-    const clinicSubtitle = getCompanySetting('company_tagline_en') || getCompanySetting('company_tagline') || t('Eye Test Prescription');
+    const clinicName = getCompanySetting('company_name') || '';
+    const clinicSubtitle = t('Eye Test Prescription');
     const logoPath = getCompanySetting('logo_dark') || getCompanySetting('logo_light') || '';
     const logoSrc = logoPath ? getImagePath(logoPath) : '';
     const clinicAddressParts = [
@@ -52,11 +52,6 @@ export default function Print() {
         getCompanySetting('company_state'),
         getCompanySetting('company_zipcode'),
         getCompanySetting('company_country'),
-    ].filter(Boolean);
-    const clinicContactParts = [
-        getCompanySetting('company_telephone'),
-        getCompanySetting('company_email'),
-        getCompanySetting('registration_number'),
     ].filter(Boolean);
     const complaintSummary = getComplaintSummary(eyetestprescription);
 
@@ -103,19 +98,18 @@ export default function Print() {
 
     const patientDetails: DisplayItem[] = [
         { label: t('Patient Name'), value: eyetestprescription.patient?.patient_name || '-' },
+        { label: t('Patient ID'), value: String(eyetestprescription.patient_id || '-') },
         { label: t('Age'), value: patientAge || '-' },
         { label: t('Sex'), value: formatGender(eyetestprescription.patient?.gender) },
         { label: t('Date of Birth'), value: eyetestprescription.patient?.dob ? formatDate(eyetestprescription.patient.dob) : '-' },
         { label: t('Contact No'), value: eyetestprescription.patient?.contact_no || '-' },
         { label: t('Address'), value: eyetestprescription.patient?.address || '-' },
-    ];
-
-    const doctorDetails: DisplayItem[] = [
-        { label: t('Doctor Name'), value: doctorDisplayName },
         { label: t('Test Date'), value: eyetestprescription.test_date ? formatDate(eyetestprescription.test_date) : '-' },
         { label: t('Follow Up Date'), value: eyetestprescription.follow_up_date ? formatDate(eyetestprescription.follow_up_date) : '-' },
         { label: t('Prescription Expiry Date'), value: eyetestprescription.prescription_expiry_date ? formatDate(eyetestprescription.prescription_expiry_date) : '-' },
     ];
+    const signaturePath = eyetestprescription.examiner_details?.signature_path || '';
+    const signatureSrc = signaturePath ? getImagePath(signaturePath) : '';
 
     return (
         <div className="min-h-screen bg-slate-100 print:bg-white">
@@ -149,23 +143,10 @@ export default function Print() {
                 </div>
             </div>
 
-            <div className="prescription-print-container mx-auto max-w-5xl bg-white px-8 py-8 shadow-sm print:max-w-none print:shadow-none">
-                <div className="mb-6 overflow-hidden rounded-xl border border-sky-300">
-                    <div className="relative border-b border-sky-300 bg-sky-50 px-6 py-5 text-center">
-                        <div className="mx-auto max-w-3xl">
-                            <h2 className="text-3xl font-extrabold tracking-wide text-sky-900">
-                                {clinicName}
-                            </h2>
-                            <p className="mt-2 text-sm font-semibold uppercase tracking-[0.24em] text-sky-700">
-                                {clinicSubtitle}
-                            </p>
-                            {clinicAddressParts.length > 0 && (
-                                <p className="mt-2 text-sm font-medium text-slate-700">
-                                    {clinicAddressParts.join(', ')}
-                                </p>
-                            )}
-                        </div>
-                        <div className="absolute right-6 top-5 flex h-20 w-20 items-center justify-center">
+            <div className="prescription-print-container mx-auto max-w-5xl bg-white px-8 py-8 print:max-w-none">
+                <div className="mb-4 pb-2">
+                    <div className="relative px-6 py-6">
+                        <div className="absolute right-6 top-6 flex h-20 w-20 items-center justify-center rounded-full bg-sky-700/5">
                             {logoSrc && !logoLoadFailed ? (
                                 <img
                                     src={logoSrc}
@@ -177,107 +158,97 @@ export default function Print() {
                                 <LogoFallback title={clinicName} />
                             )}
                         </div>
-                    </div>
 
-                    {clinicContactParts.length > 0 && (
-                        <div className="grid grid-cols-1 gap-2 border-b border-sky-300 bg-white px-6 py-3 text-sm text-slate-700 md:grid-cols-3">
-                            {getCompanySetting('company_telephone') && (
-                                <div><strong>{t('Contact')}:</strong> {getCompanySetting('company_telephone')}</div>
+                        <div className="mx-auto max-w-3xl text-center">
+                            <h2 className="pr-24 text-[2rem] font-extrabold leading-tight text-slate-950 md:pr-0">
+                                {clinicName || t('Company Name')}
+                            </h2>
+                            <p className="mt-1 text-lg font-semibold uppercase tracking-[0.18em] text-sky-700">
+                                {clinicSubtitle}
+                            </p>
+                            {clinicAddressParts.length > 0 && (
+                                <p className="mt-3 text-sm font-medium text-slate-600">
+                                    {clinicAddressParts.join(', ')}
+                                </p>
                             )}
-                            {getCompanySetting('company_email') && (
-                                <div className="md:text-center"><strong>{t('Email')}:</strong> {getCompanySetting('company_email')}</div>
-                            )}
-                            {getCompanySetting('registration_number') && (
-                                <div className="md:text-right"><strong>{t('Registration')}:</strong> {getCompanySetting('registration_number')}</div>
-                            )}
-                        </div>
-                    )}
-
-                    <div className="grid grid-cols-1 border-b border-sky-300 px-6 py-3 text-sm text-slate-700 md:grid-cols-[1.4fr_0.8fr_0.8fr]">
-                        <div className="border-sky-200 md:border-r md:pr-4">
-                            <strong>{t('Name')}:</strong> {eyetestprescription.patient?.patient_name || '-'}
-                        </div>
-                        <div className="border-sky-200 md:border-r md:px-4">
-                            <strong>{t('Age/Sex')}:</strong> {[patientAge, formatGender(eyetestprescription.patient?.gender)].filter(Boolean).join(' / ') || '-'}
-                        </div>
-                        <div className="md:pl-4 md:text-right">
-                            <strong>{t('Date')}:</strong> {eyetestprescription.test_date ? formatDate(eyetestprescription.test_date) : '-'}
+                            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-sm text-slate-700">
+                                {getCompanySetting('company_email') && (
+                                    <p className="break-all"><strong>{t('Email')}:</strong> {getCompanySetting('company_email')}</p>
+                                )}
+                                {getCompanySetting('company_telephone') && (
+                                    <p className="break-words"><strong>{t('Phone')}:</strong> {getCompanySetting('company_telephone')}</p>
+                                )}
+                            </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 px-6 py-3 text-sm text-slate-700 md:grid-cols-[1.8fr_1fr]">
-                        <div className="border-sky-200 md:border-r md:pr-4">
-                            <strong>{t('Address')}:</strong> {eyetestprescription.patient?.address || '-'}
-                        </div>
-                        <div className="md:pl-4 md:text-right">
-                            <strong>{t('Contact No')}:</strong> {eyetestprescription.patient?.contact_no || '-'}
-                        </div>
-                    </div>
                 </div>
 
-                <div className="mb-6 grid gap-6 xl:grid-cols-[1fr_1fr]">
-                    <PaperSection title={t('Patient Details')}>
-                        <DetailGrid items={patientDetails} columns={2} />
-                    </PaperSection>
-
-                    <PaperSection title={t('Doctor Details')}>
-                        <DetailGrid items={doctorDetails} columns={2} />
-                    </PaperSection>
+                <div className="mb-3">
+                    <ReportSection title={t('Patient Details')}>
+                        <DetailGrid items={patientDetails} columns={3} />
+                    </ReportSection>
                 </div>
 
-                <div className="mb-6">
-                    <PaperSection title={t('Complaints')}>
+                <div className="mb-3 border-b border-slate-300 pb-2 text-center">
+                    <h3 className="text-[1.55rem] font-bold leading-tight text-slate-950">
+                        {t('Report')}
+                    </h3>
+                </div>
+
+                <div className="mb-4">
+                    <ReportSection title={t('Complaints')}>
                         {complaintSummary ? (
-                            <p className="text-sm leading-7 text-slate-800">{complaintSummary}</p>
+                            <p className="text-sm leading-6 text-slate-800">{complaintSummary}</p>
                         ) : (
                             <EmptyState label={t('No complaints recorded.')} />
                         )}
-                    </PaperSection>
+                    </ReportSection>
                 </div>
 
                 {hasStructuredData ? (
                     <>
-                        <div className="grid gap-6 xl:grid-cols-[0.95fr_1.4fr]">
-                            <div className="space-y-6">
-                                <PaperSection title={t('Visual Acuity')}>
-                                    <PerEyeGrid items={visualAcuityItems} emptyLabel={t('No visual acuity data recorded.')} />
-                                </PaperSection>
+                        <div className="grid gap-4 xl:grid-cols-[0.95fr_1.4fr]">
+                            <div className="space-y-4">
+                                <ReportSection title={t('Visual Acuity')}>
+                                    <PerEyeTable items={visualAcuityItems} emptyLabel={t('No visual acuity data recorded.')} />
+                                </ReportSection>
 
-                                <PaperSection title={t('Intraocular Pressure')}>
+                                <ReportSection title={t('Intraocular Pressure')}>
                                     {intraocularPressureItems.length > 0 ? (
                                         <DetailGrid items={intraocularPressureItems} columns={2} />
                                     ) : (
                                         <EmptyState label={t('No IOP data recorded.')} />
                                     )}
-                                </PaperSection>
+                                </ReportSection>
 
-                                <PaperSection title={t('Medical History')}>
+                                <ReportSection title={t('Medical History')}>
                                     {medicalHistoryItems.length > 0 ? (
                                         <DetailGrid items={medicalHistoryItems} columns={2} />
                                     ) : (
                                         <EmptyState label={t('No medical history recorded.')} />
                                     )}
-                                </PaperSection>
+                                </ReportSection>
                             </div>
 
-                            <div className="space-y-6">
-                                <PaperSection title={t('Eye Examination')}>
-                                    <PerEyeGrid items={eyeExaminationItems} emptyLabel={t('No eye examination data recorded.')} />
-                                </PaperSection>
+                            <div className="space-y-4">
+                                <ReportSection title={t('Eye Examination')}>
+                                    <PerEyeTable items={eyeExaminationItems} emptyLabel={t('No eye examination data recorded.')} />
+                                </ReportSection>
 
-                                <PaperSection title={t('Diagnosis')}>
+                                <ReportSection title={t('Diagnosis')}>
                                     {diagnosisItems.length > 0 ? (
                                         <DetailGrid items={diagnosisItems} columns={2} />
                                     ) : (
                                         <EmptyState label={t('No structured diagnosis recorded.')} />
                                     )}
-                                </PaperSection>
+                                </ReportSection>
 
-                                <PaperSection title={t('Medicines')}>
+                                <ReportSection title={t('Medicines')}>
                                     {medicineItems.length > 0 ? (
-                                        <ul className="space-y-2 text-sm text-slate-800">
+                                        <ul className="space-y-0 text-sm text-slate-800">
                                             {medicineItems.map((item) => (
-                                                <li key={item} className="border-b border-sky-100 px-1 pb-2">
+                                                <li key={item} className="px-1 py-1.5">
                                                     {item}
                                                 </li>
                                             ))}
@@ -285,29 +256,29 @@ export default function Print() {
                                     ) : (
                                         <EmptyState label={t('No medicines recorded.')} />
                                     )}
-                                </PaperSection>
+                                </ReportSection>
                             </div>
                         </div>
 
-                        <div className="mt-6 grid gap-6">
-                            <PaperSection title={t('Refraction')}>
-                                <PerEyeGrid items={refractionItems} emptyLabel={t('No refraction data recorded.')} />
-                            </PaperSection>
+                        <div className="mt-4 grid gap-4">
+                            <ReportSection title={t('Refraction')}>
+                                <PerEyeTable items={refractionItems} emptyLabel={t('No refraction data recorded.')} />
+                            </ReportSection>
 
-                            <PaperSection title={t('Glasses Prescription')}>
-                                <PerEyeGrid items={glassesItems} emptyLabel={t('No glasses prescription recorded.')} />
-                            </PaperSection>
+                            <ReportSection title={t('Glasses Prescription')}>
+                                <PerEyeTable items={glassesItems} emptyLabel={t('No glasses prescription recorded.')} />
+                            </ReportSection>
 
-                            <div className="grid gap-6 xl:grid-cols-2">
-                                <PaperSection title={t('Eye Diagram')}>
+                            <div className="grid gap-4 xl:grid-cols-2">
+                                <ReportSection title={t('Eye Diagram')}>
                                     {eyeDiagramItems.length > 0 ? (
                                         <DetailGrid items={eyeDiagramItems} columns={2} />
                                     ) : (
                                         <EmptyState label={t('No eye diagram notes recorded.')} />
                                     )}
-                                </PaperSection>
+                                </ReportSection>
 
-                                <PaperSection title={t('Clinical Notes')}>
+                                <ReportSection title={t('Clinical Notes')}>
                                     {eyetestprescription.notes ? (
                                         <p className="whitespace-pre-wrap text-sm leading-7 text-slate-800">
                                             {eyetestprescription.notes}
@@ -315,12 +286,12 @@ export default function Print() {
                                     ) : (
                                         <EmptyState label={t('No clinical notes recorded.')} />
                                     )}
-                                </PaperSection>
+                                </ReportSection>
                             </div>
                         </div>
                     </>
                 ) : (
-                    <PaperSection title={t('Legacy Clinical Record')}>
+                    <ReportSection title={t('Legacy Clinical Record')}>
                         <div className="space-y-4">
                             {eyetestprescription.test_results && (
                                 <TextBlock title={t('Test Results')} value={eyetestprescription.test_results} />
@@ -332,8 +303,31 @@ export default function Print() {
                                 <TextBlock title={t('Notes')} value={eyetestprescription.notes} />
                             )}
                         </div>
-                    </PaperSection>
+                    </ReportSection>
                 )}
+
+                <div className="mt-5 grid gap-4 pt-3 md:grid-cols-[1fr_220px]">
+                    <div className="text-xs text-slate-600">
+                        <p>{t('Generated on')}: {formatDate(new Date().toISOString())}</p>
+                        <p className="mt-1">{t('Page 1 of 1')}</p>
+                    </div>
+
+                    <div className="text-center">
+                        <div className="flex h-16 items-end justify-center">
+                            {signatureSrc ? (
+                                <img
+                                    src={signatureSrc}
+                                    alt={t('Doctor Signature')}
+                                    className="max-h-14 max-w-[180px] object-contain"
+                                />
+                            ) : (
+                                <div className="w-full border-b border-slate-400" />
+                            )}
+                        </div>
+                        <p className="mt-2 text-sm font-semibold text-slate-900">{doctorDisplayName || '-'}</p>
+                        <p className="text-xs uppercase tracking-[0.16em] text-slate-500">{t('Doctor Signature')}</p>
+                    </div>
+                </div>
             </div>
 
             <style>{`
@@ -346,7 +340,6 @@ export default function Print() {
                     -webkit-print-color-adjust: exact;
                     color-adjust: exact;
                 }
-
                 @media print {
                     body {
                         background: white;
@@ -445,7 +438,7 @@ function LogoFallback({ title }: { title: string }) {
     );
 }
 
-function PaperSection({
+function ReportSection({
     title,
     children,
 }: {
@@ -453,11 +446,11 @@ function PaperSection({
     children: React.ReactNode;
 }) {
     return (
-        <section className="break-inside-avoid overflow-hidden rounded-lg border border-sky-200 bg-white">
-            <div className="border-b border-sky-200 bg-sky-50 px-4 py-2">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.22em] text-sky-800">{title}</h3>
+        <section className="break-inside-avoid">
+            <div className="px-0 py-2">
+                <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
             </div>
-            <div className="p-4">
+            <div className="py-3">
                 {children}
             </div>
         </section>
@@ -474,18 +467,18 @@ function DetailGrid({
     const columnClassName = columns === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2';
 
     return (
-        <div className={`grid grid-cols-1 gap-4 ${columnClassName}`}>
+        <div className={`grid grid-cols-1 gap-x-6 gap-y-0 ${columnClassName}`}>
             {items.map((item) => (
-                <div key={`${item.label}-${item.value}`} className="rounded-md border border-sky-100 bg-slate-50/50 px-4 py-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700">{item.label}</p>
-                    <p className="mt-1 text-sm text-slate-900">{item.value || '-'}</p>
+                <div key={`${item.label}-${item.value}`} className="py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">{item.label}</p>
+                    <p className="mt-0.5 text-sm text-slate-900">{item.value || '-'}</p>
                 </div>
             ))}
         </div>
     );
 }
 
-function PerEyeGrid({
+function PerEyeTable({
     items,
     emptyLabel,
 }: {
@@ -498,38 +491,29 @@ function PerEyeGrid({
         return <EmptyState label={emptyLabel} />;
     }
 
-    return (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <EyePanel title="Right Eye" items={items.right} />
-            <EyePanel title="Left Eye" items={items.left} />
-        </div>
+    const allLabels = Array.from(
+        new Set([
+            ...items.right.map((item) => item.label),
+            ...items.left.map((item) => item.label),
+        ]),
     );
-}
+    const rightLookup = new Map(items.right.map((item) => [item.label, item.value]));
+    const leftLookup = new Map(items.left.map((item) => [item.label, item.value]));
 
-function EyePanel({
-    title,
-    items,
-}: {
-    title: string;
-    items: DisplayItem[];
-}) {
     return (
-        <div className="overflow-hidden rounded-md border border-sky-100">
-            <div className="border-b border-sky-100 bg-slate-50 px-4 py-2">
-                <p className="text-sm font-semibold text-slate-900">{title}</p>
+        <div className="overflow-hidden">
+            <div className="grid grid-cols-[1.1fr_1fr_1fr] text-sm font-semibold text-slate-900">
+                <div className="px-3 py-2">{'Investigation'}</div>
+                <div className="px-3 py-2 text-center">{'Right Eye'}</div>
+                <div className="px-3 py-2 text-center">{'Left Eye'}</div>
             </div>
-            {items.length > 0 ? (
-                <div className="space-y-0">
-                    {items.map((item) => (
-                        <div key={`${title}-${item.label}-${item.value}`} className="grid grid-cols-[0.95fr_1.25fr] border-b border-sky-50 px-4 py-2 last:border-b-0">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700">{item.label}</p>
-                            <p className="text-sm text-slate-900">{item.value}</p>
-                        </div>
-                    ))}
+            {allLabels.map((label) => (
+                <div key={label} className="grid grid-cols-[1.1fr_1fr_1fr] text-sm text-slate-800">
+                    <div className="px-3 py-1.5 font-medium text-slate-700">{label}</div>
+                    <div className="px-3 py-1.5 text-center">{rightLookup.get(label) || '-'}</div>
+                    <div className="px-3 py-1.5 text-center">{leftLookup.get(label) || '-'}</div>
                 </div>
-            ) : (
-                <p className="px-4 py-3 text-sm text-slate-500">-</p>
-            )}
+            ))}
         </div>
     );
 }
@@ -544,7 +528,7 @@ function TextBlock({
     return (
         <div className="space-y-2">
             <p className="text-sm font-semibold text-slate-700">{title}</p>
-            <p className="whitespace-pre-wrap rounded-md border border-sky-100 bg-slate-50/50 px-4 py-3 text-sm text-slate-900">{value}</p>
+            <p className="whitespace-pre-wrap text-sm text-slate-900">{value}</p>
         </div>
     );
 }
