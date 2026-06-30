@@ -2,7 +2,6 @@
 
 namespace Workdo\Account\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -12,12 +11,15 @@ use Workdo\Account\Http\Requests\UpdateCustomerRequest;
 use Workdo\Account\Events\CreateCustomer;
 use Workdo\Account\Events\UpdateCustomer;
 use Workdo\Account\Events\DestroyCustomer;
+use Workdo\Account\Services\UserAccountPartySyncService;
 
 class CustomerController extends Controller
 {
     public function index()
     {
         if(Auth::user()->can('manage-customers')){
+            app(UserAccountPartySyncService::class)->syncCustomersForTenant(creatorId());
+
             $customers = Customer::query()
                 ->with('user:id,name,avatar,is_disable')
                 ->where(function($q) {
@@ -36,15 +38,8 @@ class CustomerController extends Controller
                 ->paginate(request('per_page', 10))
                 ->withQueryString();
 
-            $users = User::where('type', 'client')
-                ->where('created_by', creatorId())
-                ->whereNotIn('id', Customer::pluck('user_id')->filter())
-                ->select('id', 'name', 'email', 'mobile_no')
-                ->get();
-
             return Inertia::render('Account/Customers/Index', [
                 'customers' => $customers,
-                'users' => $users,
             ]);
         }
         return back()->with('error', __('Permission denied'));

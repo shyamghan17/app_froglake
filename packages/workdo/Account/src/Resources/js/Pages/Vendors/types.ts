@@ -60,13 +60,6 @@ export interface CreateVendorFormData {
     notes: string;
 }
 
-export interface User {
-    id: number;
-    name: string;
-    email: string;
-    mobile_no?: string;
-}
-
 export interface VendorFilters {
     company_name: string;
     vendor_code: string;
@@ -78,15 +71,12 @@ export type VendorModalState = ModalState<Vendor>;
 
 export interface VendorsIndexProps {
     vendors: PaginatedVendors;
-    users: User[];
     auth: AuthContext;
     [key: string]: unknown;
 }
 
 export interface CreateVendorProps {
     onSuccess: () => void;
-    users?: User[];
-    auth?: any;
 }
 
 export interface EditVendorProps {

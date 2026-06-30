@@ -1,7 +1,14 @@
 import { PaginatedData, ModalState, AuthContext } from '@/types/common';
 
+export interface LeadUserOption {
+    id: number;
+    name: string;
+}
 
-
+export interface LeadSourceOption {
+    id: number;
+    name: string;
+}
 export interface Lead {
     id: number;
     name: string;
@@ -16,6 +23,18 @@ export interface Lead {
     labels?: string;
     order?: number;
     phone?: string;
+    designation?: string;
+    company_name?: string;
+    pan_vat_number?: string;
+    organization_type?: string;
+    whatsapp_same_as_phone?: boolean;
+    whatsapp_viber_number?: string;
+    address_line_1?: string;
+    address_line_2?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    postal_code?: string;
     is_active: boolean;
     is_converted?: number;
     date?: string;
@@ -44,6 +63,18 @@ export interface LeadFormData {
     sources?: string[];
     products?: string[];
     notes?: string;
+    designation?: string;
+    company_name?: string;
+    pan_vat_number?: string;
+    organization_type?: string;
+    whatsapp_same_as_phone?: boolean;
+    whatsapp_viber_number?: string;
+    address_line_1?: string;
+    address_line_2?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    postal_code?: string;
 }
 
 export interface CreateLeadFormData {
@@ -52,6 +83,19 @@ export interface CreateLeadFormData {
     name: string;
     email: string;
     phone: string;
+    designation: string;
+    company_name: string;
+    pan_vat_number: string;
+    organization_type: string;
+    whatsapp_same_as_phone: boolean;
+    whatsapp_viber_number: string;
+    address_line_1: string;
+    address_line_2: string;
+    city: string;
+    state: string;
+    country: string;
+    postal_code: string;
+    sources: string[];
     date: string;
 }
 
@@ -86,7 +130,8 @@ export type LeadModalState = ModalState<Lead>;
 export interface LeadsIndexProps {
     leads: PaginatedLeads;
     auth: AuthContext;
-    users: any[];
+    users: LeadUserOption[];
+    sources: LeadSourceOption[];
     currentPipelineId?: number | null;
     [key: string]: unknown;
 }

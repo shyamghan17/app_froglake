@@ -33,6 +33,7 @@ Route::middleware(['web', 'auth', 'verified', 'PlanModuleCheck:OpticalAndEyeCare
         Route::post('/', [EyeTestPrescriptionController::class, 'store'])->name('store');
         Route::put('/{eyetestprescription}', [EyeTestPrescriptionController::class, 'update'])->name('update');
         Route::delete('/{eyetestprescription}', [EyeTestPrescriptionController::class, 'destroy'])->name('destroy');
+        Route::get('/{eyetestprescription}/print', [EyeTestPrescriptionController::class, 'print'])->name('print');
     });
 
     Route::prefix('optical-and-eye-care-center/eye-care-appoinments')->name('optical-and-eye-care-center.eye-care-appoinments.')->group(function () {

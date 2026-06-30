@@ -26,7 +26,7 @@ import { VendorsIndexProps, VendorFilters, VendorModalState, Vendor } from './ty
 import { usePageButtons } from '@/hooks/usePageButtons';
 
 export default function Index() {
-    const { vendors, users, auth } = usePage<VendorsIndexProps>().props;
+    const { vendors, auth } = usePage<VendorsIndexProps>().props;
     const { t } = useTranslation();
     const urlParams = new URLSearchParams(window.location.search);
 
@@ -526,7 +526,7 @@ export default function Index() {
 
             <Dialog open={modalState.isOpen} onOpenChange={closeModal}>
                 {modalState.mode === 'add' && (
-                    <Create onSuccess={closeModal} users={users} auth={auth} />
+                    <Create onSuccess={closeModal} />
                 )}
                 {modalState.mode === 'edit' && modalState.data && (
                     <Edit

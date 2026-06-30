@@ -8,8 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import InputError from "@/components/ui/input-error";
 import { PhoneInputComponent } from "@/components/ui/phone-input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Customer, CustomerFormData } from './types';
 import { useFormFields } from '@/hooks/useFormFields';
+import { getCityOptions, getCountryOptions, getStateOptions } from '@/utils/locationOptions';
 interface EditCustomerProps {
     customer: Customer;
     onSuccess: () => void;
@@ -25,6 +27,14 @@ export default function Edit({ customer, onSuccess }: EditCustomerProps) {
 
     // Custom fields hook
     const customFields = useFormFields('getCustomFields', { ...data, module: 'Account', sub_module: 'Customer', id: customer.id }, setData, errors, 'edit', t);
+
+    const billingCountryOptions = getCountryOptions(data.billing_address.country);
+    const billingStateOptions = getStateOptions(data.billing_address.country, data.billing_address.state);
+    const billingCityOptions = getCityOptions(data.billing_address.country, data.billing_address.state, data.billing_address.city);
+
+    const shippingCountryOptions = getCountryOptions(data.shipping_address.country);
+    const shippingStateOptions = getStateOptions(data.shipping_address.country, data.shipping_address.state);
+    const shippingCityOptions = getCityOptions(data.shipping_address.country, data.shipping_address.state, data.shipping_address.city);
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         put(route('account.customers.update', customer.id), {
@@ -70,7 +80,6 @@ export default function Edit({ customer, onSuccess }: EditCustomerProps) {
                         value={data.contact_person_email}
                         onChange={(e) => setData('contact_person_email', e.target.value)}
                         placeholder={t('Enter email address')}
-                        required
                     />
                     <InputError message={errors.contact_person_email} />
                 </div>
@@ -79,7 +88,6 @@ export default function Edit({ customer, onSuccess }: EditCustomerProps) {
                         label={t('Mobile Number')}
                         value={data.contact_person_mobile}
                         onChange={(value) => setData('contact_person_mobile', value)}
-                        placeholder="+1234567890"
                         error={errors.contact_person_mobile}
                     />
                 </div>
@@ -140,24 +148,44 @@ export default function Edit({ customer, onSuccess }: EditCustomerProps) {
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <Label htmlFor="billing_city">{t('City')}</Label>
-                        <Input
-                            id="billing_city"
+                        <Select
                             value={data.billing_address.city}
-                            onChange={(e) => setData('billing_address', {...data.billing_address, city: e.target.value})}
-                            placeholder={t('Enter city')}
+                            onValueChange={(value) => setData('billing_address', { ...data.billing_address, city: value })}
+                            disabled={!data.billing_address.country || !data.billing_address.state}
                             required
-                        />
+                        >
+                            <SelectTrigger id="billing_city">
+                                <SelectValue placeholder={!data.billing_address.country ? t('Select Country first') : !data.billing_address.state ? t('Select State first') : t('Select City')} />
+                            </SelectTrigger>
+                            <SelectContent searchable={true}>
+                                {billingCityOptions.map((city) => (
+                                    <SelectItem key={city} value={city}>
+                                        {city}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         <InputError message={errors['billing_address.city']} />
                     </div>
                     <div>
                         <Label htmlFor="billing_state">{t('State')}</Label>
-                        <Input
-                            id="billing_state"
+                        <Select
                             value={data.billing_address.state}
-                            onChange={(e) => setData('billing_address', {...data.billing_address, state: e.target.value})}
-                            placeholder={t('Enter state')}
+                            onValueChange={(value) => setData('billing_address', { ...data.billing_address, state: value, city: '' })}
+                            disabled={!data.billing_address.country}
                             required
-                        />
+                        >
+                            <SelectTrigger id="billing_state">
+                                <SelectValue placeholder={!data.billing_address.country ? t('Select Country first') : t('Select State')} />
+                            </SelectTrigger>
+                            <SelectContent searchable={true}>
+                                {billingStateOptions.map((state) => (
+                                    <SelectItem key={state} value={state}>
+                                        {state}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         <InputError message={errors['billing_address.state']} />
                     </div>
                 </div>
@@ -165,13 +193,22 @@ export default function Edit({ customer, onSuccess }: EditCustomerProps) {
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <Label htmlFor="billing_country">{t('Country')}</Label>
-                        <Input
-                            id="billing_country"
+                        <Select
                             value={data.billing_address.country}
-                            onChange={(e) => setData('billing_address', {...data.billing_address, country: e.target.value})}
-                            placeholder={t('Enter country')}
+                            onValueChange={(value) => setData('billing_address', { ...data.billing_address, country: value, state: '', city: '' })}
                             required
-                        />
+                        >
+                            <SelectTrigger id="billing_country">
+                                <SelectValue placeholder={t('Select Country')} />
+                            </SelectTrigger>
+                            <SelectContent searchable={true}>
+                                {billingCountryOptions.map((country) => (
+                                    <SelectItem key={country} value={country}>
+                                        {country}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         <InputError message={errors['billing_address.country']} />
                     </div>
                     <div>
@@ -181,7 +218,6 @@ export default function Edit({ customer, onSuccess }: EditCustomerProps) {
                             value={data.billing_address.zip_code}
                             onChange={(e) => setData('billing_address', {...data.billing_address, zip_code: e.target.value})}
                             placeholder={t('Enter zip code')}
-                            required
                         />
                         <InputError message={errors['billing_address.zip_code']} />
                     </div>
@@ -241,37 +277,66 @@ export default function Edit({ customer, onSuccess }: EditCustomerProps) {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label htmlFor="shipping_city">{t('City')}</Label>
-                                <Input
-                                    id="shipping_city"
+                                <Select
                                     value={data.shipping_address.city}
-                                    onChange={(e) => setData('shipping_address', {...data.shipping_address, city: e.target.value})}
-                                    placeholder={t('Enter city')}
+                                    onValueChange={(value) => setData('shipping_address', { ...data.shipping_address, city: value })}
+                                    disabled={!data.shipping_address.country || !data.shipping_address.state}
                                     required
-                                />
+                                >
+                                    <SelectTrigger id="shipping_city">
+                                        <SelectValue placeholder={!data.shipping_address.country ? t('Select Country first') : !data.shipping_address.state ? t('Select State first') : t('Select City')} />
+                                    </SelectTrigger>
+                                    <SelectContent searchable={true}>
+                                        {shippingCityOptions.map((city) => (
+                                            <SelectItem key={city} value={city}>
+                                                {city}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 <InputError message={errors['shipping_address.city']} />
                             </div>
                             <div>
                                 <Label htmlFor="shipping_state">{t('State')}</Label>
-                                <Input
-                                    id="shipping_state"
+                                <Select
                                     value={data.shipping_address.state}
-                                    onChange={(e) => setData('shipping_address', {...data.shipping_address, state: e.target.value})}
-                                    placeholder={t('Enter state')}
+                                    onValueChange={(value) => setData('shipping_address', { ...data.shipping_address, state: value, city: '' })}
+                                    disabled={!data.shipping_address.country}
                                     required
-                                />
+                                >
+                                    <SelectTrigger id="shipping_state">
+                                        <SelectValue placeholder={!data.shipping_address.country ? t('Select Country first') : t('Select State')} />
+                                    </SelectTrigger>
+                                    <SelectContent searchable={true}>
+                                        {shippingStateOptions.map((state) => (
+                                            <SelectItem key={state} value={state}>
+                                                {state}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 <InputError message={errors['shipping_address.state']} />
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label htmlFor="shipping_country">{t('Country')}</Label>
-                                <Input
-                                    id="shipping_country"
+                                <Select
                                     value={data.shipping_address.country}
-                                    onChange={(e) => setData('shipping_address', {...data.shipping_address, country: e.target.value})}
-                                    placeholder={t('Enter country')}
+                                    onValueChange={(value) => setData('shipping_address', { ...data.shipping_address, country: value, state: '', city: '' })}
                                     required
-                                />
+                                >
+                                    <SelectTrigger id="shipping_country">
+                                        <SelectValue placeholder={t('Select Country')} />
+                                    </SelectTrigger>
+                                    <SelectContent searchable={true}>
+                                        {shippingCountryOptions.map((country) => (
+                                            <SelectItem key={country} value={country}>
+                                                {country}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 <InputError message={errors['shipping_address.country']} />
                             </div>
                             <div>
@@ -281,7 +346,6 @@ export default function Edit({ customer, onSuccess }: EditCustomerProps) {
                                     value={data.shipping_address.zip_code}
                                     onChange={(e) => setData('shipping_address', {...data.shipping_address, zip_code: e.target.value})}
                                     placeholder={t('Enter zip code')}
-                                    required
                                 />
                                 <InputError message={errors['shipping_address.zip_code']} />
                             </div>

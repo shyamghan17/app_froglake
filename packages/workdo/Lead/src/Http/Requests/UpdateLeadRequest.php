@@ -3,6 +3,7 @@
 namespace Workdo\Lead\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateLeadRequest extends FormRequest
 {
@@ -15,9 +16,13 @@ class UpdateLeadRequest extends FormRequest
     {
         return [
             'name' => 'required|max:100',
-            'email' => 'required|email',
+            'email' => 'nullable|email',
             'subject' => 'required|max:200',
-            'user_id' => 'required|exists:users,id',
+            'user_id' => [
+                'required',
+                'integer',
+                Rule::exists('users', 'id')->where(fn($query) => $query->where('created_by', creatorId())),
+            ],
             'pipeline_id' => 'nullable|integer',
             'stage_id' => 'nullable|integer',
             'sources' => 'nullable|max:100',

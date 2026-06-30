@@ -35,8 +35,19 @@ class EyePatientController extends Controller
                 })
                 ->when(request('patient_name'), function($q) {
                     $q->where(function($query) {
-                    $query->where('patient_name', 'like', '%' . request('patient_name') . '%');
-                    $query->orWhere('contact_no', 'like', '%' . request('patient_name') . '%');
+                        $searchValue = trim((string) request('patient_name'));
+                        $search = '%' . $searchValue . '%';
+                        $normalizedPhoneSearch = $this->normalizePhoneSearch($searchValue);
+
+                        $query->where('patient_name', 'like', $search)
+                            ->orWhere('contact_no', 'like', $search);
+
+                        if ($normalizedPhoneSearch !== null) {
+                            $query->orWhereRaw(
+                                "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(contact_no, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') LIKE ?",
+                                ['%' . $normalizedPhoneSearch . '%']
+                            );
+                        }
                     });
                 })
                 ->when(request('gender') !== null && request('gender') !== '', fn($q) => $q->where('gender', request('gender')))
@@ -129,4 +140,10 @@ class EyePatientController extends Controller
 
 
 
+    private function normalizePhoneSearch(string $value): ?string
+    {
+        $digits = preg_replace('/\D+/', '', $value);
+
+        return $digits !== '' ? $digits : null;
+    }
 }

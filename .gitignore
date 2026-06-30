@@ -18,22 +18,11 @@
 
 # Frontend build artifacts
 /public/hot
-!/public/build/
-!/public/build/**
+/public/build/
 
 # Laravel cache / runtime files
 /bootstrap/cache/*.php
-/storage/*.key
-/storage/logs/*
-!/storage/logs/.gitignore
-/storage/framework/cache/data/*
-!/storage/framework/cache/data/.gitignore
-/storage/framework/sessions/*
-!/storage/framework/sessions/.gitignore
-/storage/framework/testing/*
-!/storage/framework/testing/.gitignore
-/storage/framework/views/*
-!/storage/framework/views/.gitignore
+/storage/
 
 # Databases / dumps
 /database/*.sqlite
@@ -41,9 +30,15 @@
 /*.sql
 
 # User uploads / symlinked public storage
-/storage/app/public/*
-!/storage/app/public/.gitignore
 /public/storage
+
+# Documentation
+/docs/
+
+# Tests
+/tests/
+**/*.test.*
+**/*.spec.*
 
 # Logs
 *.log
