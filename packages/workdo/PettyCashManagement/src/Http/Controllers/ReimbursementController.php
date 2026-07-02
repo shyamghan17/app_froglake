@@ -8,15 +8,18 @@ use Workdo\PettyCashManagement\Http\Requests\UpdateReimbursementRequest;
 use Workdo\PettyCashManagement\Events\CreateReimbursement;
 use Workdo\PettyCashManagement\Events\UpdateReimbursement;
 use Workdo\PettyCashManagement\Events\UpdateStatusReimbursement;
-use Workdo\PettyCashManagement\Events\DestroyReimbursement;
-use Workdo\PettyCashManagement\Events\CreatePettyCashExpense;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use App\Models\User;
-use Workdo\PettyCashManagement\Models\PettyCash;
 use Workdo\PettyCashManagement\Models\PettyCashCategory;
-use Workdo\PettyCashManagement\Models\PettyCashExpense;
+use App\Services\DynamicStorageService;
+use App\Services\StorageConfigService;
+use Workdo\PettyCashManagement\Services\PettyCashApprovalService;
+use Workdo\PettyCashManagement\Services\PettyCashAuditLogService;
 
 class ReimbursementController extends Controller
 {
@@ -100,6 +103,31 @@ class ReimbursementController extends Controller
             $reimbursement->created_by   = creatorId();
             $reimbursement->save();
 
+            app(PettyCashAuditLogService::class)->write(
+                creatorId(),
+                Auth::id(),
+                'reimbursement.created',
+                'reimbursement',
+                (int) $reimbursement->id,
+                [
+                    'amount' => (float) $reimbursement->amount,
+                    'has_receipt' => !empty($reimbursement->receipt_path),
+                ]
+            );
+
+            if (!empty($reimbursement->receipt_path)) {
+                app(PettyCashAuditLogService::class)->write(
+                    creatorId(),
+                    Auth::id(),
+                    'reimbursement.receipt_uploaded',
+                    'reimbursement',
+                    (int) $reimbursement->id,
+                    [
+                        'receipt_path' => $reimbursement->receipt_path,
+                    ]
+                );
+            }
+
             CreateReimbursement::dispatch($request, $reimbursement);
 
             return redirect()->route('petty-cash-management.reimbursements.index')->with('success', __('The reimbursement has been created successfully.'));
@@ -112,13 +140,18 @@ class ReimbursementController extends Controller
     public function update(UpdateReimbursementRequest $request, PettyCashReimbursement $reimbursement)
     {
         if(Auth::user()->can('edit-reimbursements')){
+            if ((int) $reimbursement->created_by !== (int) creatorId()) {
+                return redirect()->back()->with('error', __('Permission denied'));
+            }
+
             $validated = $request->validated();
 
-            $reimbursement->user_id      = $validated['user_id'];
-            $reimbursement->category_id  = $validated['category_id'];
-            $reimbursement->amount       = $validated['amount'];
-            $reimbursement->status       = 0;
-            $reimbursement->description  = $validated['description'];
+            $data = [
+                'user_id' => $validated['user_id'],
+                'category_id' => $validated['category_id'],
+                'amount' => $validated['amount'],
+                'description' => $validated['description'],
+            ];
             if ($request->hasFile('receipt_path')) {
                 $filenameWithExt = $request->file('receipt_path')->getClientOriginalName();
                 $filename        = pathinfo($filenameWithExt, PATHINFO_FILENAME);
@@ -128,14 +161,28 @@ class ReimbursementController extends Controller
                 $uplaod = upload_file($request,'receipt_path',$fileNameToStore,'petty_cach_reimbursement');
                 if($uplaod['flag'] == 1)
                 {
-                    $reimbursement->receipt_path = $uplaod['url'];
+                    $data['receipt_path'] = $uplaod['url'];
                 }
                 else
                 {
                     return redirect()->back()->with('error', $uplaod['msg']);
                 }
             }
-            $reimbursement->save();
+            try {
+                $reimbursement = app(PettyCashApprovalService::class)->updateReimbursementAfterEdit(
+                    $reimbursement->id,
+                    creatorId(),
+                    Auth::id(),
+                    $data
+                );
+            } catch (\Throwable $e) {
+                app(PettyCashApprovalService::class)->logApprovalException('edit_reimbursement', $e, [
+                    'reimbursement_id' => $reimbursement->id,
+                    'actor_id' => Auth::id(),
+                    'tenant_id' => creatorId(),
+                ]);
+                return redirect()->back()->with('error', __('Something went wrong. Please try again.'));
+            }
 
             UpdateReimbursement::dispatch($request, $reimbursement);
 
@@ -149,9 +196,20 @@ class ReimbursementController extends Controller
     public function destroy(PettyCashReimbursement $reimbursement)
     {
         if(Auth::user()->can('delete-reimbursements')){
-            DestroyReimbursement::dispatch($reimbursement);
+            if ((int) $reimbursement->created_by !== (int) creatorId()) {
+                return redirect()->back()->with('error', __('Permission denied'));
+            }
 
-            $reimbursement->delete();
+            try {
+                app(PettyCashApprovalService::class)->deleteReimbursementWithReversal($reimbursement->id, creatorId(), Auth::id());
+            } catch (\Throwable $e) {
+                app(PettyCashApprovalService::class)->logApprovalException('delete_reimbursement', $e, [
+                    'reimbursement_id' => $reimbursement->id,
+                    'actor_id' => Auth::id(),
+                    'tenant_id' => creatorId(),
+                ]);
+                return redirect()->back()->with('error', __('Something went wrong. Please try again.'));
+            }
 
             return redirect()->back()->with('success', __('The reimbursement has been deleted.'));
         }
@@ -163,67 +221,39 @@ class ReimbursementController extends Controller
     public function updateStatus(PettyCashReimbursement $reimbursement)
     {
         if(Auth::user()->can('approve-reimbursements')){
-            $validated = request()->validate([
-                'status'           => 'required|in:1,2',
-                'approved_date'    => 'nullable|date',
-                'approved_by'      => 'nullable|integer',
-                'approved_amount'  => 'nullable|numeric|min:0',
-                'rejection_reason' => 'nullable|string|max:1000'
-            ]);
-
-            $reimbursement->status = $validated['status'];
-
-            if($validated['status'] == '1') {
-                $pattyCash = PettyCash::latest()->where('created_by', creatorId())->first();
-                if($pattyCash) {
-                    if($pattyCash->status != 1) {
-                        return redirect()->back()->with('error', __('Please approve petty cash first before processing reimbursement.'));
-                    }
-                    $closing_balance = $pattyCash->closing_balance - $validated['approved_amount'];
-                    if($closing_balance < 0) {
-                        return redirect()->back()->with('error', __('Insufficient petty cash balance! Available balance: :balance, Requested amount: :amount', [
-                            'balance' => number_format($pattyCash->closing_balance, 2),
-                            'amount'  => number_format($validated['approved_amount'], 2)
-                        ]));
-                    }
-
-                    $reimbursement->approved_date    = $validated['approved_date'];
-                    $reimbursement->approved_by      = $validated['approved_by'];
-                    $reimbursement->approved_amount  = $validated['approved_amount'];
-                    $reimbursement->rejection_reason = null;
-
-                    $pattyCash->closing_balance = $closing_balance;
-                    $pattyCash->total_expense  += $validated['approved_amount'];
-                    $pattyCash->save();
-
-                    $expense                   = new PettyCashExpense();
-                    $expense->reimbursement_id = $reimbursement->id;
-                    $expense->pettycash_id     = $pattyCash->id;
-                    $expense->type             = 'reimbursement';
-                    $expense->amount           = $validated['approved_amount'];
-                    $expense->remarks          = $reimbursement->description;
-                    $expense->status           = 1;
-                    $expense->approved_at      = now();
-                    $expense->approved_by      = Auth::id();
-                    $expense->creator_id       = Auth::id();
-                    $expense->created_by       = creatorId();
-                    $expense->save();
-
-                    CreatePettyCashExpense::dispatch($expense);
-
-                } else {
-                    return redirect()->back()->with('error', __('Petty cash not found!'));
-                }
-            } else {
-                $reimbursement->approved_date    = null;
-                $reimbursement->approved_by      = null;
-                $reimbursement->approved_amount  = null;
-                $reimbursement->rejection_reason = $validated['rejection_reason'];
+            if ((int) $reimbursement->created_by !== (int) creatorId()) {
+                return redirect()->back()->with('error', __('Permission denied'));
             }
 
-            $reimbursement->save();
+            $validated = request()->validate([
+                'status'           => 'required|in:1,2',
+                'approved_amount'  => 'required_if:status,1|numeric|min:0',
+                'rejection_reason' => 'required_if:status,2|nullable|string|max:1000'
+            ]);
 
-            UpdateStatusReimbursement::dispatch($reimbursement);
+            try {
+                $result = app(PettyCashApprovalService::class)->updateReimbursementStatus(
+                    $reimbursement->id,
+                    creatorId(),
+                    Auth::id(),
+                    $validated
+                );
+            } catch (\Throwable $e) {
+                app(PettyCashApprovalService::class)->logApprovalException('update_reimbursement_status', $e, [
+                    'reimbursement_id' => $reimbursement->id,
+                    'actor_id' => Auth::id(),
+                    'tenant_id' => creatorId(),
+                ]);
+                return redirect()->back()->with('error', __('Something went wrong. Please try again.'));
+            }
+
+            if (!($result['ok'] ?? false)) {
+                return redirect()->back()->with('error', $result['error'] ?? __('Something went wrong. Please try again.'));
+            }
+
+            if (($result['changed'] ?? false) === true) {
+                UpdateStatusReimbursement::dispatch($reimbursement->fresh());
+            }
 
             $message = $validated['status'] == '1' ? __('The reimbursement has been approved.') : __('The reimbursement has been rejected.');
             return redirect()->back()->with('success', $message);
@@ -233,11 +263,116 @@ class ReimbursementController extends Controller
         }
     }
 
+    public function viewReceipt(PettyCashReimbursement $reimbursement)
+    {
+        $user = Auth::user();
+        if ((int) $reimbursement->created_by !== (int) creatorId()) {
+            abort(404);
+        }
+
+        $this->assertCanAccessReceipt($user, $reimbursement);
+
+        if (empty($reimbursement->receipt_path)) {
+            abort(404);
+        }
+
+        return $this->streamReceipt($reimbursement->receipt_path, $this->makeDownloadName($reimbursement->reimbursement_number, $reimbursement->receipt_path), false);
+    }
+
+    public function downloadReceipt(PettyCashReimbursement $reimbursement)
+    {
+        $user = Auth::user();
+        if ((int) $reimbursement->created_by !== (int) creatorId()) {
+            abort(404);
+        }
+
+        $this->assertCanAccessReceipt($user, $reimbursement);
+
+        if (empty($reimbursement->receipt_path)) {
+            abort(404);
+        }
+
+        return $this->streamReceipt($reimbursement->receipt_path, $this->makeDownloadName($reimbursement->reimbursement_number, $reimbursement->receipt_path), true);
+    }
+
+    private function streamReceipt(string $receiptPath, string $downloadName, bool $asAttachment)
+    {
+        DynamicStorageService::configureDynamicDisks();
+        $disk = StorageConfigService::getActiveDisk();
+
+        $storagePath = 'media/' . ltrim($receiptPath, '/');
+
+        if (!Storage::disk($disk)->exists($storagePath)) {
+            abort(404);
+        }
+
+        $stream = Storage::disk($disk)->readStream($storagePath);
+        if ($stream === false) {
+            abort(404);
+        }
+
+        $mimeType = Storage::disk($disk)->mimeType($storagePath) ?: 'application/octet-stream';
+        $disposition = $asAttachment ? 'attachment' : 'inline';
+
+        return response()->stream(function () use ($stream) {
+            fpassthru($stream);
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }, 200, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => $disposition . '; filename="' . $downloadName . '"',
+        ]);
+    }
+
+    private function makeDownloadName(?string $reference, string $receiptPath): string
+    {
+        $referencePart = $reference ? Str::slug($reference) . '_' : '';
+        $basename = basename($receiptPath);
+        $basename = preg_replace('/[^A-Za-z0-9._-]/', '_', $basename) ?: 'receipt';
+
+        return $referencePart . $basename;
+    }
+
+    private function assertCanAccessReceipt($user, PettyCashReimbursement $reimbursement): void
+    {
+        if (!$user) {
+            abort(403);
+        }
+
+        if (
+            $user->can('manage-petty-cash-expenses') ||
+            $user->can('approve-reimbursements') ||
+            $user->can('manage-any-reimbursements')
+        ) {
+            return;
+        }
+
+        $isOwner = (int) $reimbursement->creator_id === (int) $user->id || (int) $reimbursement->user_id === (int) $user->id;
+
+        if ($isOwner && ($user->can('manage-own-reimbursements') || $user->can('view-reimbursements'))) {
+            return;
+        }
+
+        abort(403);
+    }
+
+
+
     public function getCategoriesByUser($userId)
     {
         if(Auth::user()->can('view-categories')){
-            $categories = PettyCashCategory::where('user_id', $userId)
+            $user = User::find($userId);
+            if (!$user || (int) $user->created_by !== (int) creatorId()) {
+                return response()->json([], 404);
+            }
+
+            $categories = PettyCashCategory::query()
                 ->where('created_by', creatorId())
+                ->when(
+                    Schema::hasColumn('petty_cash_categories', 'user_id'),
+                    fn ($q) => $q->where('user_id', $user->id)
+                )
                 ->select('id', 'name')
                 ->get();
 

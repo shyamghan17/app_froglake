@@ -23,7 +23,7 @@ import EditReimbursement from './Edit';
 import View from './View';
 import NoRecordsFound from '@/components/no-records-found';
 import { Reimbursement, ReimbursementsIndexProps, ReimbursementFilters, ReimbursementModalState } from './types';
-import { formatDate, formatTime, formatDateTime, formatCurrency, getImagePath } from '@/utils/helpers';
+import { formatDate, formatTime, formatDateTime, formatCurrency } from '@/utils/helpers';
 import { router as inertiaRouter } from '@inertiajs/react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';

@@ -28,7 +28,7 @@ import View from './View';
 import NoRecordsFound from '@/components/no-records-found';
 import { PettyCashRequest, PettyCashRequestsIndexProps, PettyCashRequestFilters, PettyCashRequestModalState } from './types';
 import { router as inertiaRouter } from '@inertiajs/react';
-import { formatDate, formatTime, formatDateTime, formatCurrency, getImagePath } from '@/utils/helpers';
+import { formatDate, formatTime, formatDateTime, formatCurrency } from '@/utils/helpers';
 
 export default function Index() {
     const { t } = useTranslation();

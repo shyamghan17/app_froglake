@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { DateTimeRangePicker } from '@/components/ui/datetime-range-picker';
 import { Input } from '@/components/ui/input';
 import { EditReimbursementProps, EditReimbursementFormData } from './types';
-import { formatDate, formatTime, formatDateTime, formatCurrency, getImagePath } from '@/utils/helpers';
+import { formatDate, formatTime, formatDateTime, formatCurrency } from '@/utils/helpers';
 import { usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -129,11 +129,44 @@ export default function EditReimbursement({ reimbursement, onSuccess }: EditReim
                             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                                 {t('Current Receipt')}:
                             </p>
-                            <img
-                                src={getImagePath(data.receipt_path)}
-                                alt="Current receipt"
-                                className="max-w-xs max-h-32 object-contain border rounded"
-                            />
+                            {(() => {
+                                const viewUrl = route('petty-cash-management.reimbursements.receipt.view', reimbursement.id);
+                                const downloadUrl = route('petty-cash-management.reimbursements.receipt.download', reimbursement.id);
+                                const isPdf = data.receipt_path.toLowerCase().endsWith('.pdf');
+
+                                return isPdf ? (
+                                    <div className="flex flex-col gap-2">
+                                        <a
+                                            href={viewUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="text-primary underline break-all"
+                                        >
+                                            {t('View Current Receipt (PDF)')}
+                                        </a>
+                                        <a
+                                            href={downloadUrl}
+                                            className="text-primary underline break-all"
+                                        >
+                                            {t('Download Receipt')}
+                                        </a>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        <img
+                                            src={viewUrl}
+                                            alt="Current receipt"
+                                            className="max-w-xs max-h-32 object-contain border rounded"
+                                        />
+                                        <a
+                                            href={downloadUrl}
+                                            className="text-primary underline break-all"
+                                        >
+                                            {t('Download Receipt')}
+                                        </a>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     )}
                     {receiptFile && (

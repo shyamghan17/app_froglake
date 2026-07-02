@@ -69,6 +69,10 @@ class PettyCashCategoryController extends Controller
     public function update(UpdatePettyCashCategoryRequest $request, PettyCashCategory $pettycashcategory)
     {
         if(Auth::user()->can('edit-petty-cash-categories')){
+            if ((int) $pettycashcategory->created_by !== (int) creatorId()) {
+                return redirect()->back()->with('error', __('Permission denied'));
+            }
+
             $validated = $request->validated();
 
             $pettycashcategory->name = $validated['name'];
@@ -86,6 +90,10 @@ class PettyCashCategoryController extends Controller
     public function destroy(PettyCashCategory $pettycashcategory)
     {
         if(Auth::user()->can('delete-petty-cash-categories')){
+            if ((int) $pettycashcategory->created_by !== (int) creatorId()) {
+                return redirect()->back()->with('error', __('Permission denied'));
+            }
+
             DestroyPettyCashCategory::dispatch($pettycashcategory);
             
             $pettycashcategory->delete();

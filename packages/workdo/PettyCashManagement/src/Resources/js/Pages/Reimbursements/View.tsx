@@ -2,7 +2,7 @@ import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog
 import { useTranslation } from 'react-i18next';
 import { Receipt, CheckCircle, XCircle, User, Calendar, DollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { formatDate, formatTime, formatDateTime, formatCurrency, getImagePath } from '@/utils/helpers';
+import { formatDate, formatDateTime, formatCurrency } from '@/utils/helpers';
 import { Reimbursement } from './types';
 
 interface ViewProps {
@@ -97,15 +97,48 @@ export default function View({ reimbursement }: ViewProps) {
                     {/* Receipt Image */}
                     <div className="space-y-4">
                         <h3 className="text-lg font-semibold border-b pb-2">{t('Receipt')}</h3>
-                        {reimbursement.receipt_path ? (
-                            <div className="border rounded-lg p-4">
-                                <img
-                                    src={getImagePath(reimbursement.receipt_path)}
-                                    alt="Receipt"
-                                    className="w-full max-h-64 object-contain rounded"
-                                />
-                            </div>
-                        ) : (
+                        {reimbursement.receipt_path ? (() => {
+                            const viewUrl = route('petty-cash-management.reimbursements.receipt.view', reimbursement.id);
+                            const downloadUrl = route('petty-cash-management.reimbursements.receipt.download', reimbursement.id);
+                            const isPdf = reimbursement.receipt_path.toLowerCase().endsWith('.pdf');
+
+                            return (
+                                <div className="border rounded-lg p-4">
+                                    {isPdf ? (
+                                        <div className="flex flex-col gap-2">
+                                            <a
+                                                href={viewUrl}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-primary underline break-all"
+                                            >
+                                                {t('View Receipt (PDF)')}
+                                            </a>
+                                            <a
+                                                href={downloadUrl}
+                                                className="text-primary underline break-all"
+                                            >
+                                                {t('Download Receipt')}
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            <img
+                                                src={viewUrl}
+                                                alt="Receipt"
+                                                className="w-full max-h-64 object-contain rounded"
+                                            />
+                                            <a
+                                                href={downloadUrl}
+                                                className="text-primary underline break-all"
+                                            >
+                                                {t('Download Receipt')}
+                                            </a>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })() : (
                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                                 <Receipt className="h-12 w-12 text-gray-400 mx-auto mb-2" />
                                 <p className="text-gray-500">{t('No receipt uploaded')}</p>

@@ -52,6 +52,13 @@ class PermissionTableSeeder extends Seeder
             ['name' => 'manage-own-petty-cash-expenses', 'module' => 'petty-cash-expenses', 'label' => 'Manage Own Petty Cash Expenses'],
             ['name' => 'view-petty-cash-expenses', 'module' => 'petty-cash-expenses', 'label' => 'View Petty Cash Expenses'],
 
+            // PettyCashReconciliation management
+            ['name' => 'manage-petty-cash-reconciliations', 'module' => 'petty-cash-reconciliations', 'label' => 'Manage Petty Cash Reconciliations'],
+            ['name' => 'manage-any-petty-cash-reconciliations', 'module' => 'petty-cash-reconciliations', 'label' => 'Manage All Petty Cash Reconciliations'],
+            ['name' => 'manage-own-petty-cash-reconciliations', 'module' => 'petty-cash-reconciliations', 'label' => 'Manage Own Petty Cash Reconciliations'],
+            ['name' => 'view-petty-cash-reconciliations', 'module' => 'petty-cash-reconciliations', 'label' => 'View Petty Cash Reconciliations'],
+            ['name' => 'create-petty-cash-reconciliations', 'module' => 'petty-cash-reconciliations', 'label' => 'Create Petty Cash Reconciliations'],
+
             // Reimbursement management
             ['name' => 'manage-reimbursements', 'module' => 'reimbursements', 'label' => 'Manage Reimbursements'],
             ['name' => 'manage-any-reimbursements', 'module' => 'reimbursements', 'label' => 'Manage All Reimbursements'],

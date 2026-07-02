@@ -7,6 +7,7 @@ import InputError from '@/components/ui/input-error';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { CreatePettyCashRequestProps, CreatePettyCashRequestFormData } from './types';
 import { usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
@@ -17,12 +18,26 @@ export default function Create({ onSuccess }: CreatePettyCashRequestProps) {
     const [filteredCategories, setFilteredCategories] = useState(pettycashcategories || []);
     const [filteredApprovedBies, setFilteredApprovedBies] = useState(users || []);
     const [filteredCreatedBies, setFilteredCreatedBies] = useState(users || []);
+    const [receiptFile, setReceiptFile] = useState<File | null>(null);
     const { t } = useTranslation();
-    const { data, setData, post, processing, errors } = useForm<CreatePettyCashRequestFormData>({
+    const { data, setData, post, processing, errors, transform } = useForm<CreatePettyCashRequestFormData>({
         user_id: '',
         categorie_id: '',
         requested_amount: '',
         remarks: '',
+        receipt_path: '',
+    });
+
+    transform((data) => {
+        const formData = new FormData();
+        formData.append('user_id', data.user_id);
+        formData.append('categorie_id', data.categorie_id);
+        formData.append('requested_amount', data.requested_amount);
+        formData.append('remarks', data.remarks);
+        if (receiptFile) {
+            formData.append('receipt_path', receiptFile);
+        }
+        return formData;
     });
 
     useEffect(() => {
@@ -79,7 +94,7 @@ export default function Create({ onSuccess }: CreatePettyCashRequestProps) {
                             <SelectValue placeholder={t('Select Category')} />
                         </SelectTrigger>
                         <SelectContent>
-                            {pettycashcategories?.map((item: any) => (
+                            {filteredCategories?.map((item: any) => (
                                 <SelectItem key={item.id} value={item.id.toString()}>
                                     {item.name}
                                 </SelectItem>
@@ -97,6 +112,31 @@ export default function Create({ onSuccess }: CreatePettyCashRequestProps) {
                         error={errors.requested_amount}
                         required
                     />
+                </div>
+
+                <div>
+                    <Label htmlFor="receipt">{t('Upload Bill Photo')}</Label>
+                    <Input
+                        id="receipt"
+                        type="file"
+                        accept=".png,.jpg,.jpeg,.pdf"
+                        onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
+                    />
+                    {receiptFile && (
+                        <div className="mt-2">
+                            <p className="text-sm text-green-600 dark:text-green-400 mb-2">
+                                {t('Selected')}: {receiptFile.name}
+                            </p>
+                            {receiptFile.type.startsWith('image/') && (
+                                <img
+                                    src={URL.createObjectURL(receiptFile)}
+                                    alt="Receipt preview"
+                                    className="max-w-xs max-h-32 object-contain border rounded"
+                                />
+                            )}
+                        </div>
+                    )}
+                    <InputError message={errors.receipt_path} />
                 </div>
 
                 <div>

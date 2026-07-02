@@ -7,6 +7,7 @@ import InputError from '@/components/ui/input-error';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { EditPettyCashRequestProps, EditPettyCashRequestFormData } from './types';
 import { usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
@@ -17,12 +18,27 @@ export default function EditPettyCashRequest({ pettycashrequest, onSuccess }: Ed
     const [filteredCategories, setFilteredCategories] = useState(pettycashcategories || []);
     const [filteredApprovedBies, setFilteredApprovedBies] = useState(users || []);
     const [filteredCreatedBies, setFilteredCreatedBies] = useState(users || []);
+    const [receiptFile, setReceiptFile] = useState<File | null>(null);
     const { t } = useTranslation();
-    const { data, setData, put, processing, errors } = useForm<EditPettyCashRequestFormData>({
+    const { data, setData, post, processing, errors, transform } = useForm<EditPettyCashRequestFormData>({
         user_id: pettycashrequest.user_id?.toString() || '',
         categorie_id: pettycashrequest.categorie_id?.toString() || '',
         requested_amount: pettycashrequest.requested_amount ?? '',
         remarks: pettycashrequest.remarks ?? '',
+        receipt_path: pettycashrequest.receipt_path || '',
+    });
+
+    transform((data) => {
+        const formData = new FormData();
+        formData.append('user_id', data.user_id);
+        formData.append('categorie_id', data.categorie_id);
+        formData.append('requested_amount', data.requested_amount);
+        formData.append('remarks', data.remarks);
+        formData.append('_method', 'PUT');
+        if (receiptFile) {
+            formData.append('receipt_path', receiptFile);
+        }
+        return formData;
     });
 
     useEffect(() => {
@@ -42,7 +58,7 @@ export default function EditPettyCashRequest({ pettycashrequest, onSuccess }: Ed
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(route('petty-cash-management.petty-cash-requests.update', pettycashrequest.id), {
+        post(route('petty-cash-management.petty-cash-requests.update', pettycashrequest.id), {
             onSuccess: () => {
                 onSuccess();
             }
@@ -79,7 +95,7 @@ export default function EditPettyCashRequest({ pettycashrequest, onSuccess }: Ed
                             <SelectValue placeholder={t('Select Category')} />
                         </SelectTrigger>
                         <SelectContent>
-                            {pettycashcategories?.map((item: any) => (
+                            {filteredCategories?.map((item: any) => (
                                 <SelectItem key={item.id} value={item.id.toString()}>
                                     {item.name}
                                 </SelectItem>
@@ -97,6 +113,76 @@ export default function EditPettyCashRequest({ pettycashrequest, onSuccess }: Ed
                         error={errors.requested_amount}
                         required
                     />
+                </div>
+
+                <div>
+                    <Label htmlFor="receipt">{t('Upload Bill Photo')}</Label>
+                    <Input
+                        id="receipt"
+                        type="file"
+                        accept=".png,.jpg,.jpeg,.pdf"
+                        onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
+                    />
+                    {data.receipt_path && !receiptFile && (
+                        <div className="mt-2">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                {t('Current Receipt')}:
+                            </p>
+                            {(() => {
+                                const viewUrl = route('petty-cash-management.petty-cash-requests.receipt.view', pettycashrequest.id);
+                                const downloadUrl = route('petty-cash-management.petty-cash-requests.receipt.download', pettycashrequest.id);
+                                const isPdf = data.receipt_path.toLowerCase().endsWith('.pdf');
+
+                                return isPdf ? (
+                                    <div className="flex flex-col gap-2">
+                                        <a
+                                            href={viewUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="text-primary underline break-all"
+                                        >
+                                            {t('View Current Bill (PDF)')}
+                                        </a>
+                                        <a
+                                            href={downloadUrl}
+                                            className="text-primary underline break-all"
+                                        >
+                                            {t('Download Bill')}
+                                        </a>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        <img
+                                            src={viewUrl}
+                                            alt="Current receipt"
+                                            className="max-w-xs max-h-32 object-contain border rounded"
+                                        />
+                                        <a
+                                            href={downloadUrl}
+                                            className="text-primary underline break-all"
+                                        >
+                                            {t('Download Bill')}
+                                        </a>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    )}
+                    {receiptFile && (
+                        <div className="mt-2">
+                            <p className="text-sm text-green-600 dark:text-green-400 mb-2">
+                                {t('New Receipt')}: {receiptFile.name}
+                            </p>
+                            {receiptFile.type.startsWith('image/') && (
+                                <img
+                                    src={URL.createObjectURL(receiptFile)}
+                                    alt="New receipt preview"
+                                    className="max-w-xs max-h-32 object-contain border rounded"
+                                />
+                            )}
+                        </div>
+                    )}
+                    <InputError message={errors.receipt_path} />
                 </div>
 
                 <div>

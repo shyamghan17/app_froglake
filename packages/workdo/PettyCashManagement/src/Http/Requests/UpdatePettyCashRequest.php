@@ -3,6 +3,7 @@
 namespace Workdo\PettyCashManagement\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdatePettyCashRequest extends FormRequest
 {
@@ -15,8 +16,13 @@ class UpdatePettyCashRequest extends FormRequest
     {
         return [
             'date'         => 'required|date',
-            'added_amount' => 'required|numeric',
+            'added_amount' => 'required|numeric|min:0',
             'remarks'      => 'nullable|string|max:1000',
+            'bank_account_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('bank_accounts', 'id')->where(fn ($q) => $q->where('created_by', creatorId())),
+            ],
         ];
     }
 

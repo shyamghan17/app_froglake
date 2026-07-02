@@ -1,8 +1,7 @@
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTranslation } from 'react-i18next';
-import { FileText, User, Calendar, DollarSign, MessageSquare, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { FileText, User, Calendar, DollarSign, MessageSquare, CheckCircle, XCircle, Clock, Receipt } from 'lucide-react';
 import { PettyCashRequest } from './types';
-import { Badge } from '@/components/ui/badge';
 import { formatDate, formatDateTime, formatCurrency } from '@/utils/helpers';
 
 interface ViewProps {
@@ -68,6 +67,57 @@ export default function View({ pettycashrequest }: ViewProps) {
                                 <p className="font-medium">{formatDate(pettycashrequest.created_at)}</p>
                             </div>
                         </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-semibold border-b pb-2">{t('Bill')}</h3>
+                        {pettycashrequest.receipt_path ? (() => {
+                            const viewUrl = route('petty-cash-management.petty-cash-requests.receipt.view', pettycashrequest.id);
+                            const downloadUrl = route('petty-cash-management.petty-cash-requests.receipt.download', pettycashrequest.id);
+                            const isPdf = pettycashrequest.receipt_path.toLowerCase().endsWith('.pdf');
+
+                            return (
+                                <div className="border rounded-lg p-4">
+                                    {isPdf ? (
+                                        <div className="flex flex-col gap-2">
+                                            <a
+                                                href={viewUrl}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-primary underline break-all"
+                                            >
+                                                {t('View Bill (PDF)')}
+                                            </a>
+                                            <a
+                                                href={downloadUrl}
+                                                className="text-primary underline break-all"
+                                            >
+                                                {t('Download Bill')}
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            <img
+                                                src={viewUrl}
+                                                alt="Receipt"
+                                                className="w-full max-h-64 object-contain rounded"
+                                            />
+                                            <a
+                                                href={downloadUrl}
+                                                className="text-primary underline break-all"
+                                            >
+                                                {t('Download Bill')}
+                                            </a>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })() : (
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                                <Receipt className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                                <p className="text-gray-500">{t('No bill uploaded')}</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Approval/Rejection Information */}

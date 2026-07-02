@@ -32,6 +32,21 @@ export const pettycashmanagementCompanyMenu = (t: (key: string) => string) => [
                 permission: 'manage-petty-cash-expenses',
             },
             {
+                title: t('Reconciliations'),
+                href: route('petty-cash-management.reconciliations.index'),
+                permission: 'manage-petty-cash-reconciliations',
+            },
+            {
+                title: t('Reports'),
+                href: route('petty-cash-management.reports.petty-cash'),
+                permission: 'manage-petty-cash-expenses',
+            },
+            {
+                title: t('Audit Logs'),
+                href: route('petty-cash-management.audit-logs.index'),
+                permission: 'manage-petty-cash-expenses',
+            },
+            {
                 title: t('Categories'),
                 href: route('petty-cash-management.petty-cash-categories.index'),
                 permission: 'manage-petty-cash-categories',

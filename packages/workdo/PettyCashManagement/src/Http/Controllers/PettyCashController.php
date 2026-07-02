@@ -11,7 +11,7 @@ use Workdo\PettyCashManagement\Events\DestroyPettyCash;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use Workdo\PettyCashManagement\Events\ApprovePettyCash;
+use Workdo\PettyCashManagement\Services\PettyCashApprovalService;
 
 class PettyCashController extends Controller
 {
@@ -85,6 +85,7 @@ class PettyCashController extends Controller
             $pettycash->total_expense   = 0;
             $pettycash->closing_balance = $closingBalance;
             $pettycash->remarks         = $validated['remarks'];
+            $pettycash->bank_account_id = $validated['bank_account_id'] ?? null;
             $pettycash->status          = 0;
             $pettycash->creator_id      = Auth::id();
             $pettycash->created_by      = creatorId();
@@ -100,6 +101,10 @@ class PettyCashController extends Controller
     public function update(UpdatePettyCashRequest $request, PettyCash $pettycash)
     {
         if(Auth::user()->can('edit-petty-cashes')){
+            if ((int) $pettycash->created_by !== (int) creatorId()) {
+                return redirect()->back()->with('error', __('Permission denied'));
+            }
+
             $validated = $request->validated();
 
             if ($validated['date'] !== $pettycash->date) {
@@ -124,6 +129,7 @@ class PettyCashController extends Controller
             $pettycash->total_balance   = $totalBalance;
             $pettycash->closing_balance = $closingBalance;
             $pettycash->remarks         = $validated['remarks'];
+            $pettycash->bank_account_id = $validated['bank_account_id'] ?? $pettycash->bank_account_id;
             $pettycash->save();
 
             UpdatePettyCash::dispatch($request, $pettycash);
@@ -136,6 +142,10 @@ class PettyCashController extends Controller
     public function destroy(PettyCash $pettycash)
     {
         if(Auth::user()->can('delete-petty-cashes')){
+            if ((int) $pettycash->created_by !== (int) creatorId()) {
+                return redirect()->back()->with('error', __('Permission denied'));
+            }
+
             DestroyPettyCash::dispatch($pettycash);
 
             $pettycash->delete();
@@ -150,13 +160,24 @@ class PettyCashController extends Controller
     public function approve(PettyCash $pettycash)
     {
         if(Auth::user()->can('approve-petty-cashes')){
-            try {
-                ApprovePettyCash::dispatch($pettycash);
-            } catch (\Throwable $th) {
-                return back()->with('error', $th->getMessage());
+            if ($pettycash->created_by != creatorId()) {
+                return redirect()->back()->with('error', __('Permission denied'));
             }
-            $pettycash->status = 1;
-            $pettycash->save();
+
+            try {
+                $changed = app(PettyCashApprovalService::class)->approvePettyCash($pettycash->id, creatorId(), Auth::id());
+            } catch (\Throwable $e) {
+                app(PettyCashApprovalService::class)->logApprovalException('approve_petty_cash', $e, [
+                    'pettycash_id' => $pettycash->id,
+                    'actor_id' => Auth::id(),
+                    'tenant_id' => creatorId(),
+                ]);
+                return back()->with('error', __('Something went wrong. Please try again.'));
+            }
+
+            if (!$changed) {
+                return redirect()->back()->with('success', __('Petty cash approved successfully.'));
+            }
 
             return redirect()->back()->with('success', __('Petty cash approved successfully.'));
         }

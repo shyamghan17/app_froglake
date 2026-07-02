@@ -8,15 +8,18 @@ use Workdo\PettyCashManagement\Http\Requests\UpdatePettyCashRequestRequest;
 use Workdo\PettyCashManagement\Events\CreatePettyCashRequest;
 use Workdo\PettyCashManagement\Events\UpdatePettyCashRequest;
 use Workdo\PettyCashManagement\Events\UpdateStatusPettyCashRequest;
-use Workdo\PettyCashManagement\Events\DestroyPettyCashRequest;
-use Workdo\PettyCashManagement\Events\CreatePettyCashExpense;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Workdo\PettyCashManagement\Models\PettyCashCategory;
 use App\Models\User;
-use Workdo\PettyCashManagement\Models\PettyCash;
-use Workdo\PettyCashManagement\Models\PettyCashExpense;
+use App\Services\DynamicStorageService;
+use App\Services\StorageConfigService;
+use Workdo\PettyCashManagement\Services\PettyCashApprovalService;
+use Workdo\PettyCashManagement\Services\PettyCashAuditLogService;
 
 class PettyCashRequestController extends Controller
 {
@@ -79,9 +82,47 @@ class PettyCashRequestController extends Controller
             $pettycashrequest->requested_amount = $validated['requested_amount'];
             $pettycashrequest->status           = 0;
             $pettycashrequest->remarks          = $validated['remarks'];
+            if ($request->hasFile('receipt_path')) {
+                $filenameWithExt = $request->file('receipt_path')->getClientOriginalName();
+                $filename        = pathinfo($filenameWithExt, PATHINFO_FILENAME);
+                $extension       = $request->file('receipt_path')->getClientOriginalExtension();
+                $fileNameToStore = $filename . '_' . time() . '.' . $extension;
+
+                $uplaod = upload_file($request, 'receipt_path', $fileNameToStore, 'petty_cash_request');
+                if ($uplaod['flag'] == 1) {
+                    $pettycashrequest->receipt_path = $uplaod['url'];
+                } else {
+                    return redirect()->back()->with('error', $uplaod['msg']);
+                }
+            }
             $pettycashrequest->creator_id       = Auth::id();
             $pettycashrequest->created_by       = creatorId();
             $pettycashrequest->save();
+
+            app(PettyCashAuditLogService::class)->write(
+                creatorId(),
+                Auth::id(),
+                'petty_cash_request.created',
+                'petty_cash_request',
+                (int) $pettycashrequest->id,
+                [
+                    'requested_amount' => (float) $pettycashrequest->requested_amount,
+                    'has_receipt' => !empty($pettycashrequest->receipt_path),
+                ]
+            );
+
+            if (!empty($pettycashrequest->receipt_path)) {
+                app(PettyCashAuditLogService::class)->write(
+                    creatorId(),
+                    Auth::id(),
+                    'petty_cash_request.receipt_uploaded',
+                    'petty_cash_request',
+                    (int) $pettycashrequest->id,
+                    [
+                        'receipt_path' => $pettycashrequest->receipt_path,
+                    ]
+                );
+            }
 
             CreatePettyCashRequest::dispatch($request, $pettycashrequest);
 
@@ -95,14 +136,46 @@ class PettyCashRequestController extends Controller
     public function update(UpdatePettyCashRequestRequest $request, PettyCashRequest $pettycashrequest)
     {
         if(Auth::user()->can('edit-petty-cash-requests')){
+            if ((int) $pettycashrequest->created_by !== (int) creatorId()) {
+                return redirect()->back()->with('error', __('Permission denied'));
+            }
+
             $validated = $request->validated();
 
-            $pettycashrequest->user_id          = $validated['user_id'];
-            $pettycashrequest->categorie_id     = $validated['categorie_id'];
-            $pettycashrequest->requested_amount = $validated['requested_amount'];
-            $pettycashrequest->status           = '0';
-            $pettycashrequest->remarks          = $validated['remarks'];
-            $pettycashrequest->save();
+            $data = [
+                'user_id' => $validated['user_id'],
+                'categorie_id' => $validated['categorie_id'],
+                'requested_amount' => $validated['requested_amount'],
+                'remarks' => $validated['remarks'],
+            ];
+            if ($request->hasFile('receipt_path')) {
+                $filenameWithExt = $request->file('receipt_path')->getClientOriginalName();
+                $filename        = pathinfo($filenameWithExt, PATHINFO_FILENAME);
+                $extension       = $request->file('receipt_path')->getClientOriginalExtension();
+                $fileNameToStore = $filename . '_' . time() . '.' . $extension;
+
+                $uplaod = upload_file($request, 'receipt_path', $fileNameToStore, 'petty_cash_request');
+                if ($uplaod['flag'] == 1) {
+                    $data['receipt_path'] = $uplaod['url'];
+                } else {
+                    return redirect()->back()->with('error', $uplaod['msg']);
+                }
+            }
+            try {
+                $pettycashrequest = app(PettyCashApprovalService::class)->updatePettyCashRequestAfterEdit(
+                    $pettycashrequest->id,
+                    creatorId(),
+                    Auth::id(),
+                    $data
+                );
+            } catch (\Throwable $e) {
+                app(PettyCashApprovalService::class)->logApprovalException('edit_petty_cash_request', $e, [
+                    'request_id' => $pettycashrequest->id,
+                    'actor_id' => Auth::id(),
+                    'tenant_id' => creatorId(),
+                ]);
+                return redirect()->back()->with('error', __('Something went wrong. Please try again.'));
+            }
 
             UpdatePettyCashRequest::dispatch($request, $pettycashrequest);
 
@@ -116,68 +189,39 @@ class PettyCashRequestController extends Controller
     public function updateStatus(PettyCashRequest $pettycashrequest)
     {
         if(Auth::user()->can('approve-petty-cash-requests')){
-            $validated = request()->validate([
-                'status'           => 'required|in:1,2',
-                'approved_at'      => 'nullable|date',
-                'approved_by'      => 'nullable|integer',
-                'approved_amount'  => 'nullable|numeric|min:0',
-                'rejection_reason' => 'nullable|string|max:1000'
-            ]);
-
-            $pettycashrequest->status = $validated['status'];
-
-            if($validated['status'] == '1') {
-                // Approval
-                $pattyCash = PettyCash::latest()->where('created_by', creatorId())->first();
-                if ($pattyCash->status != 1) {
-                    return redirect()->back()->with('error', __('Please approve petty cash first before processing request.'));
-                }
-                if($pattyCash) {
-                    $closing_balance = $pattyCash->closing_balance - $validated['approved_amount'];
-                    if($closing_balance < 0) {
-                        return redirect()->back()->with('error', __('Insufficient petty cash balance! Available balance: :balance, Requested amount: :amount', [
-                            'balance' => number_format($pattyCash->closing_balance, 2),
-                            'amount' => number_format($validated['approved_amount'], 2)
-                        ]));
-                    }
-
-                    $pettycashrequest->approved_at      = $validated['approved_at'];
-                    $pettycashrequest->approved_by      = $validated['approved_by'];
-                    $pettycashrequest->approved_amount  = $validated['approved_amount'];
-                    $pettycashrequest->rejection_reason = null;
-
-                    $pattyCash->closing_balance = $closing_balance;
-                    $pattyCash->total_expense  += $validated['approved_amount'];
-                    $pattyCash->save();
-
-                    $expense               = new PettyCashExpense();
-                    $expense->request_id   = $pettycashrequest->id;
-                    $expense->pettycash_id = $pattyCash->id;
-                    $expense->type         = 'pettycash';
-                    $expense->amount       = $validated['approved_amount'];
-                    $expense->remarks      = $pettycashrequest->remarks;
-                    $expense->status       = 1;
-                    $expense->approved_at  = now();
-                    $expense->approved_by  = Auth::id();
-                    $expense->creator_id   = Auth::id();
-                    $expense->created_by   = creatorId();
-                    $expense->save();
-
-                    CreatePettyCashExpense::dispatch($expense);
-                } else {
-                    return redirect()->back()->with('error', __('No petty cash record found!'));
-                }
-            } else {
-                // Rejection
-                $pettycashrequest->approved_at      = null;
-                $pettycashrequest->approved_by      = null;
-                $pettycashrequest->approved_amount  = null;
-                $pettycashrequest->rejection_reason = $validated['rejection_reason'];
+            if ((int) $pettycashrequest->created_by !== (int) creatorId()) {
+                return redirect()->back()->with('error', __('Permission denied'));
             }
 
-            $pettycashrequest->save();
+            $validated = request()->validate([
+                'status'           => 'required|in:1,2',
+                'approved_amount'  => 'required_if:status,1|numeric|min:0',
+                'rejection_reason' => 'required_if:status,2|nullable|string|max:1000'
+            ]);
 
-            UpdateStatusPettyCashRequest::dispatch($pettycashrequest);
+            try {
+                $result = app(PettyCashApprovalService::class)->updatePettyCashRequestStatus(
+                    $pettycashrequest->id,
+                    creatorId(),
+                    Auth::id(),
+                    $validated
+                );
+            } catch (\Throwable $e) {
+                app(PettyCashApprovalService::class)->logApprovalException('update_petty_cash_request_status', $e, [
+                    'request_id' => $pettycashrequest->id,
+                    'actor_id' => Auth::id(),
+                    'tenant_id' => creatorId(),
+                ]);
+                return redirect()->back()->with('error', __('Something went wrong. Please try again.'));
+            }
+
+            if (!($result['ok'] ?? false)) {
+                return redirect()->back()->with('error', $result['error'] ?? __('Something went wrong. Please try again.'));
+            }
+
+            if (($result['changed'] ?? false) === true) {
+                UpdateStatusPettyCashRequest::dispatch($pettycashrequest->fresh());
+            }
 
             $message = $validated['status'] == '1' ? __('The petty cash request has been approved.') : __('The petty cash request has been rejected.');
             return redirect()->back()->with('success', $message);
@@ -190,9 +234,20 @@ class PettyCashRequestController extends Controller
     public function destroy(PettyCashRequest $pettycashrequest)
     {
         if(Auth::user()->can('delete-petty-cash-requests')){
-            DestroyPettyCashRequest::dispatch($pettycashrequest);
+            if ((int) $pettycashrequest->created_by !== (int) creatorId()) {
+                return redirect()->back()->with('error', __('Permission denied'));
+            }
 
-            $pettycashrequest->delete();
+            try {
+                app(PettyCashApprovalService::class)->deletePettyCashRequestWithReversal($pettycashrequest->id, creatorId(), Auth::id());
+            } catch (\Throwable $e) {
+                app(PettyCashApprovalService::class)->logApprovalException('delete_petty_cash_request', $e, [
+                    'request_id' => $pettycashrequest->id,
+                    'actor_id' => Auth::id(),
+                    'tenant_id' => creatorId(),
+                ]);
+                return redirect()->back()->with('error', __('Something went wrong. Please try again.'));
+            }
 
             return redirect()->back()->with('success', __('The petty cash request has been deleted.'));
         }
@@ -201,11 +256,19 @@ class PettyCashRequestController extends Controller
         }
     }
 
-    public function getCategoriesByUser($userId)
+    public function getCategoriesByUser(User $user)
     {
         if(Auth::user()->can('view-categories')){
-            $categories = PettyCashCategory::where('user_id', $userId)
+            if ((int) $user->created_by !== (int) creatorId()) {
+                return response()->json([], 404);
+            }
+
+            $categories = PettyCashCategory::query()
                 ->where('created_by', creatorId())
+                ->when(
+                    Schema::hasColumn('petty_cash_categories', 'user_id'),
+                    fn ($q) => $q->where('user_id', $user->id)
+                )
                 ->select('id', 'name')
                 ->get();
 
@@ -214,5 +277,99 @@ class PettyCashRequestController extends Controller
         else{
             return response()->json([], 403);
         }
+    }
+
+    public function viewReceipt(PettyCashRequest $pettycashrequest)
+    {
+        $user = Auth::user();
+        if ((int) $pettycashrequest->created_by !== (int) creatorId()) {
+            abort(404);
+        }
+
+        $this->assertCanAccessReceipt($user, $pettycashrequest);
+
+        if (empty($pettycashrequest->receipt_path)) {
+            abort(404);
+        }
+
+        return $this->streamReceipt($pettycashrequest->receipt_path, $this->makeDownloadName($pettycashrequest->request_number, $pettycashrequest->receipt_path), false);
+    }
+
+    public function downloadReceipt(PettyCashRequest $pettycashrequest)
+    {
+        $user = Auth::user();
+        if ((int) $pettycashrequest->created_by !== (int) creatorId()) {
+            abort(404);
+        }
+
+        $this->assertCanAccessReceipt($user, $pettycashrequest);
+
+        if (empty($pettycashrequest->receipt_path)) {
+            abort(404);
+        }
+
+        return $this->streamReceipt($pettycashrequest->receipt_path, $this->makeDownloadName($pettycashrequest->request_number, $pettycashrequest->receipt_path), true);
+    }
+
+    private function streamReceipt(string $receiptPath, string $downloadName, bool $asAttachment)
+    {
+        DynamicStorageService::configureDynamicDisks();
+        $disk = StorageConfigService::getActiveDisk();
+
+        $storagePath = 'media/' . ltrim($receiptPath, '/');
+
+        if (!Storage::disk($disk)->exists($storagePath)) {
+            abort(404);
+        }
+
+        $stream = Storage::disk($disk)->readStream($storagePath);
+        if ($stream === false) {
+            abort(404);
+        }
+
+        $mimeType = Storage::disk($disk)->mimeType($storagePath) ?: 'application/octet-stream';
+        $disposition = $asAttachment ? 'attachment' : 'inline';
+
+        return response()->stream(function () use ($stream) {
+            fpassthru($stream);
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }, 200, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => $disposition . '; filename="' . $downloadName . '"',
+        ]);
+    }
+
+    private function makeDownloadName(?string $reference, string $receiptPath): string
+    {
+        $referencePart = $reference ? Str::slug($reference) . '_' : '';
+        $basename = basename($receiptPath);
+        $basename = preg_replace('/[^A-Za-z0-9._-]/', '_', $basename) ?: 'receipt';
+
+        return $referencePart . $basename;
+    }
+
+    private function assertCanAccessReceipt($user, PettyCashRequest $pettycashrequest): void
+    {
+        if (!$user) {
+            abort(403);
+        }
+
+        if (
+            $user->can('manage-petty-cash-expenses') ||
+            $user->can('approve-petty-cash-requests') ||
+            $user->can('manage-any-petty-cash-requests')
+        ) {
+            return;
+        }
+
+        $isOwner = (int) $pettycashrequest->creator_id === (int) $user->id || (int) $pettycashrequest->user_id === (int) $user->id;
+
+        if ($isOwner && ($user->can('manage-own-petty-cash-requests') || $user->can('view-petty-cash-requests'))) {
+            return;
+        }
+
+        abort(403);
     }
 }

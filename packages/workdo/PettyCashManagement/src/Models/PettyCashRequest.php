@@ -17,6 +17,7 @@ class PettyCashRequest extends Model
         'requested_amount',
         'status',
         'remarks',
+        'receipt_path',
         'approved_at',
         'approved_by',
         'approved_amount',

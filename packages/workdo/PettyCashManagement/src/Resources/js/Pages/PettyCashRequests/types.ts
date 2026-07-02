@@ -17,6 +17,7 @@ export interface PettyCashRequest {
     requested_amount: number;
     status: string;
     remarks?: string;
+    receipt_path?: string;
     approved_at?: any;
     approved_by?: number;
     user?: User;
@@ -31,22 +32,16 @@ export interface CreatePettyCashRequestFormData {
     user_id: string;
     categorie_id: string;
     requested_amount: string;
-    status: string;
     remarks: string;
-    approved_at: any;
-    approved_by: string;
-    created_by: string;
+    receipt_path: string;
 }
 
 export interface EditPettyCashRequestFormData {
     user_id: string;
     categorie_id: string;
     requested_amount: string;
-    status: string;
     remarks: string;
-    approved_at: any;
-    approved_by: string;
-    created_by: string;
+    receipt_path: string;
 }
 
 export interface PettyCashRequestFilters {
