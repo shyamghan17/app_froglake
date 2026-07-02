@@ -15,7 +15,6 @@ use App\Models\SalesProposalItemTax;
 use App\Models\SalesInvoice;
 use App\Models\SalesInvoiceItem;
 use App\Models\SalesInvoiceItemTax;
-use App\Models\User;
 use App\Models\Warehouse;
 use App\Http\Requests\StoreSalesProposalRequest;
 use App\Http\Requests\UpdateSalesProposalRequest;
@@ -24,6 +23,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Workdo\ProductService\Models\ProductServiceItem;
+use Workdo\Account\Services\AccountPartyUserOptionsService;
 use App\Models\EmailTemplate;
 
 class SalesProposalController extends Controller
@@ -92,7 +92,7 @@ class SalesProposalController extends Controller
 
             $perPage = $request->get('per_page', 10);
             $proposals = $query->paginate($perPage);
-            $customers = User::where('type', 'client')->select('id', 'name', 'email')->where('created_by', creatorId())->get();
+            $customers = app(AccountPartyUserOptionsService::class)->customerUsers(creatorId(), ['id', 'name', 'email']);
 
             return Inertia::render('SalesProposals/Index', [
                 'proposals' => $proposals,
@@ -107,7 +107,7 @@ class SalesProposalController extends Controller
     public function create()
     {
         if(Auth::user()->can('create-sales-proposals')){
-            $customers = User::where('type', 'client')->select('id', 'name', 'email')->where('created_by', creatorId())->get();
+            $customers = app(AccountPartyUserOptionsService::class)->customerUsers(creatorId(), ['id', 'name', 'email']);
             $warehouses = Warehouse::where('is_active', true)->select('id', 'name', 'address')->where('created_by', creatorId())->get();
 
             return Inertia::render('SalesProposals/Create', [
@@ -185,7 +185,7 @@ class SalesProposalController extends Controller
             }
 
             $salesProposal->load(['items.taxes']);
-            $customers = User::where('type', 'client')->select('id', 'name', 'email')->where('created_by', creatorId())->get();
+            $customers = app(AccountPartyUserOptionsService::class)->customerUsers(creatorId(), ['id', 'name', 'email']);
             $warehouses = Warehouse::where('is_active', true)->select('id', 'name', 'address')->where('created_by', creatorId())->get();
 
             return Inertia::render('SalesProposals/Edit', [

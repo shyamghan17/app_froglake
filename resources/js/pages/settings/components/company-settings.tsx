@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Building, Save } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { router } from '@inertiajs/react';
+import { getCityOptions, getCountryOptions, getStateOptions } from '@/utils/locationOptions';
 
 interface CompanySettings {
   company_name: string;
@@ -53,6 +54,10 @@ export default function CompanySettings({ userSettings, auth }: CompanySettingsP
     tax_number: userSettings?.tax_number || '',
   });
 
+  const countryOptions = getCountryOptions(settings.company_country);
+  const stateOptions = getStateOptions(settings.company_country, settings.company_state);
+  const cityOptions = getCityOptions(settings.company_country, settings.company_state, settings.company_city);
+
   useEffect(() => {
     if (userSettings) {
       setSettings({
@@ -75,7 +80,28 @@ export default function CompanySettings({ userSettings, auth }: CompanySettingsP
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setSettings(prev => ({ ...prev, [name]: value }));
+    setSettings((previous) => {
+      if (name === 'company_country') {
+        const changed = previous.company_country.trim().toLowerCase() !== value.trim().toLowerCase();
+        return {
+          ...previous,
+          company_country: value,
+          company_state: changed ? '' : previous.company_state,
+          company_city: changed ? '' : previous.company_city,
+        };
+      }
+
+      if (name === 'company_state') {
+        const changed = previous.company_state.trim().toLowerCase() !== value.trim().toLowerCase();
+        return {
+          ...previous,
+          company_state: value,
+          company_city: changed ? '' : previous.company_city,
+        };
+      }
+
+      return { ...previous, [name]: value };
+    });
   };
 
   const handleSwitchChange = (checked: boolean) => {
@@ -175,11 +201,17 @@ export default function CompanySettings({ userSettings, auth }: CompanySettingsP
             <Input
               id="company_city"
               name="company_city"
+              list="company_city_options"
               value={settings.company_city}
               onChange={handleInputChange}
               placeholder={t('Enter city')}
               disabled={!canEdit}
             />
+            <datalist id="company_city_options">
+              {cityOptions.map((city) => (
+                <option key={city} value={city} />
+              ))}
+            </datalist>
           </div>
 
           <div className="space-y-3">
@@ -187,11 +219,17 @@ export default function CompanySettings({ userSettings, auth }: CompanySettingsP
             <Input
               id="company_state"
               name="company_state"
+              list="company_state_options"
               value={settings.company_state}
               onChange={handleInputChange}
               placeholder={t('Enter state')}
               disabled={!canEdit}
             />
+            <datalist id="company_state_options">
+              {stateOptions.map((state) => (
+                <option key={state} value={state} />
+              ))}
+            </datalist>
           </div>
 
           <div className="space-y-3">
@@ -199,11 +237,17 @@ export default function CompanySettings({ userSettings, auth }: CompanySettingsP
             <Input
               id="company_country"
               name="company_country"
+              list="company_country_options"
               value={settings.company_country}
               onChange={handleInputChange}
               placeholder={t('Enter country')}
               disabled={!canEdit}
             />
+            <datalist id="company_country_options">
+              {countryOptions.map((country) => (
+                <option key={country} value={country} />
+              ))}
+            </datalist>
           </div>
 
           <div className="space-y-3">

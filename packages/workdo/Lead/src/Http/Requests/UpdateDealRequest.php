@@ -3,6 +3,7 @@
 namespace Workdo\Lead\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateDealRequest extends FormRequest
 {
@@ -24,7 +25,11 @@ class UpdateDealRequest extends FormRequest
             'products'      => 'nullable|array',
             'notes'         => 'nullable|string',
             'clients'       => 'nullable|array',
-            'clients.*'     => 'integer|exists:users,id',
+            'clients.*'     => [
+                'integer',
+                Rule::exists('users', 'id')->where(fn ($q) => $q->where('created_by', creatorId())),
+                Rule::exists('customers', 'user_id')->where(fn ($q) => $q->where('created_by', creatorId())),
+            ],
         ];
         
     }

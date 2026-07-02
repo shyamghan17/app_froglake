@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseInvoiceItem;
 use App\Models\PurchaseInvoiceItemTax;
-use App\Models\User;
 use App\Models\Warehouse;
 use App\Http\Requests\StorePurchaseInvoiceRequest;
 use App\Http\Requests\UpdatePurchaseInvoiceRequest;
 use Workdo\ProductService\Models\ProductServiceItem;
+use Workdo\Account\Services\AccountPartyUserOptionsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -96,7 +96,7 @@ class PurchaseInvoiceController extends Controller
 
         $perPage = $request->get('per_page', 10);
         $invoices = $query->paginate($perPage);
-        $vendors = User::where('type', 'vendor')->select('id', 'name', 'email')->where('created_by', creatorId())->get();
+        $vendors = app(AccountPartyUserOptionsService::class)->vendorUsers(creatorId(), ['id', 'name', 'email']);
         $warehouses = Warehouse::where('is_active', true)->select('id', 'name')->where('created_by', creatorId())->get();
 
             return Inertia::render('Purchase/Index', [
@@ -114,7 +114,7 @@ class PurchaseInvoiceController extends Controller
     public function create()
     {
         if(Auth::user()->can('create-purchase-invoices')){
-            $vendors = User::where('type', 'vendor')->select('id', 'name', 'email')->where('created_by', creatorId())->get();
+            $vendors = app(AccountPartyUserOptionsService::class)->vendorUsers(creatorId(), ['id', 'name', 'email']);
             $products = ProductServiceItem::select('id', 'name', 'sku', 'purchase_price', 'tax_ids', 'unit', 'type')
             ->where('is_active', true)->where('created_by', creatorId())
             ->get()
@@ -237,7 +237,7 @@ class PurchaseInvoiceController extends Controller
 
             EditPurchaseInvoice::dispatch($purchaseInvoice);
 
-            $vendors = User::where('type', 'vendor')->select('id', 'name', 'email')->where('created_by', creatorId())->get();
+            $vendors = app(AccountPartyUserOptionsService::class)->vendorUsers(creatorId(), ['id', 'name', 'email']);
             $products = ProductServiceItem::select('id', 'name', 'sku', 'purchase_price', 'tax_ids', 'unit', 'type')
                 ->where('is_active', true)->where('created_by', creatorId())
                 ->get()

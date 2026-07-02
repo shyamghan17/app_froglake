@@ -7,7 +7,6 @@ use Workdo\Pos\Models\PosReturnItem;
 use Workdo\Pos\Models\PosReturnItemTax;
 use Workdo\Pos\Models\Pos;
 use Workdo\Pos\Models\PosItem;
-use App\Models\User;
 use App\Models\Warehouse;
 use Workdo\ProductService\Models\ProductServiceTax;
 use Workdo\Pos\Events\ApprovePosReturn;
@@ -19,6 +18,7 @@ use Workdo\Pos\Http\Requests\StorePosReturnRequest;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use App\Models\EmailTemplate;
+use Workdo\Account\Services\AccountPartyUserOptionsService;
 
 class PosReturnController extends \Illuminate\Routing\Controller
 {
@@ -95,7 +95,7 @@ class PosReturnController extends \Illuminate\Routing\Controller
             $perPage = $request->get('per_page', 10);
             $returns = $query->paginate($perPage);
 
-            $customers = User::where('type', 'client')->select('id', 'name', 'email')->where('created_by', creatorId())->get();
+            $customers = app(AccountPartyUserOptionsService::class)->customerUsers(creatorId(), ['id', 'name', 'email']);
             $warehouses = Warehouse::where('is_active', true)->select('id', 'name')->where('created_by', creatorId())->get();
 
             return Inertia::render('Pos/PosReturn/Index', [

@@ -11,6 +11,8 @@ use Workdo\Account\Http\Requests\UpdateCustomerRequest;
 use Workdo\Account\Events\CreateCustomer;
 use Workdo\Account\Events\UpdateCustomer;
 use Workdo\Account\Events\DestroyCustomer;
+use Illuminate\Support\Facades\DB;
+use Workdo\Account\Services\AccountPartyUserProvisioningService;
 use Workdo\Account\Services\UserAccountPartySyncService;
 
 class CustomerController extends Controller
@@ -50,21 +52,40 @@ class CustomerController extends Controller
         if(Auth::user()->can('create-customers')){
             $validated = $request->validated();
 
-            $customer = new Customer();
-            $customer->user_id = $validated['user_id'] ?? null;
-            $customer->company_name = $validated['company_name'];
-            $customer->contact_person_name = $validated['contact_person_name'];
-            $customer->contact_person_email = $validated['contact_person_email'] ?? null;
-            $customer->contact_person_mobile = $validated['contact_person_mobile'] ?? null;
-            $customer->tax_number = $validated['tax_number'] ?? null;
-            $customer->payment_terms = $validated['payment_terms'] ?? null;
-            $customer->billing_address = $validated['billing_address'];
-            $customer->shipping_address = $validated['same_as_billing'] ? $validated['billing_address'] : $validated['shipping_address'];
-            $customer->same_as_billing = $validated['same_as_billing'] ?? false;
-            $customer->notes = $validated['notes'] ?? null;
-            $customer->creator_id = Auth::id();
-            $customer->created_by = creatorId();
-            $customer->save();
+            $customer = DB::transaction(function () use ($validated) {
+                if (empty($validated['user_id'])) {
+                    $user = app(AccountPartyUserProvisioningService::class)->createLoginDisabledUser(
+                        'client',
+                        $validated['company_name'],
+                        $validated['contact_person_email'] ?? null,
+                        $validated['contact_person_mobile'] ?? null
+                    );
+
+                    $validated['user_id'] = $user->id;
+
+                    if (empty($validated['contact_person_email'])) {
+                        $validated['contact_person_email'] = $user->email;
+                    }
+                }
+
+                $customer = new Customer();
+                $customer->user_id = $validated['user_id'] ?? null;
+                $customer->company_name = $validated['company_name'];
+                $customer->contact_person_name = $validated['contact_person_name'];
+                $customer->contact_person_email = $validated['contact_person_email'] ?? null;
+                $customer->contact_person_mobile = $validated['contact_person_mobile'] ?? null;
+                $customer->tax_number = $validated['tax_number'] ?? null;
+                $customer->payment_terms = $validated['payment_terms'] ?? null;
+                $customer->billing_address = $validated['billing_address'];
+                $customer->shipping_address = $validated['same_as_billing'] ? $validated['billing_address'] : $validated['shipping_address'];
+                $customer->same_as_billing = $validated['same_as_billing'] ?? false;
+                $customer->notes = $validated['notes'] ?? null;
+                $customer->creator_id = Auth::id();
+                $customer->created_by = creatorId();
+                $customer->save();
+
+                return $customer;
+            });
 
             CreateCustomer::dispatch($request, $customer);
 

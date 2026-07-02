@@ -2,11 +2,11 @@
 
 namespace Workdo\Taskly\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Workdo\Account\Services\AccountPartyUserOptionsService;
 use Workdo\Taskly\Events\CreateProjectPayment;
 use Workdo\Taskly\Events\UpdateProjectPayment;
 use Workdo\Taskly\Events\DestroyProjectPayment;
@@ -98,7 +98,7 @@ class ProjectPaymentController extends Controller
         }
         $projects = $projectsQuery->get();
         
-        $customers = User::where('type', 'client')->select('id', 'name', 'email')->where('created_by', creatorId())->get();
+        $customers = app(AccountPartyUserOptionsService::class)->customerUsers(creatorId(), ['id', 'name', 'email']);
 
             return Inertia::render('Taskly/ProjectPayment/Index', [
                 'payments' => $payments,
@@ -119,7 +119,7 @@ class ProjectPaymentController extends Controller
                 ->where('created_by', creatorId())
                 ->select('id', 'name')
                 ->get();
-            $customers = User::where('type', 'client')->select('id', 'name', 'email')->where('created_by', creatorId())->get();
+            $customers = app(AccountPartyUserOptionsService::class)->customerUsers(creatorId(), ['id', 'name', 'email']);
 
             return Inertia::render('Taskly/ProjectPayment/Create', [
                 'projects' => $projects,
@@ -205,7 +205,7 @@ class ProjectPaymentController extends Controller
                 ->where('created_by', creatorId())
                 ->select('id', 'name')
                 ->get();
-            $customers = User::where('type', 'client')->select('id', 'name', 'email')->where('created_by', creatorId())->get();
+            $customers = app(AccountPartyUserOptionsService::class)->customerUsers(creatorId(), ['id', 'name', 'email']);
 
             return Inertia::render('Taskly/ProjectPayment/Edit', [
                 'payment' => $projectPayment,

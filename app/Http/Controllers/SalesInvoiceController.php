@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\SalesInvoice;
 use App\Models\SalesInvoiceItem;
 use App\Models\SalesInvoiceItemTax;
-use App\Models\User;
 use App\Models\Warehouse;
 use App\Http\Requests\StoreSalesInvoiceRequest;
 use App\Http\Requests\UpdateSalesInvoiceRequest;
 use Workdo\ProductService\Models\ProductServiceItem;
+use Workdo\Account\Services\AccountPartyUserOptionsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -95,7 +95,7 @@ class SalesInvoiceController extends Controller
 
         $perPage = $request->get('per_page', 10);
         $invoices = $query->paginate($perPage);
-        $customers = User::where('type', 'client')->select('id', 'name', 'email')->where('created_by', creatorId())->get();
+        $customers = app(AccountPartyUserOptionsService::class)->customerUsers(creatorId(), ['id', 'name', 'email']);
         $warehouses = Warehouse::where('is_active', true)->select('id', 'name')->where('created_by', creatorId())->get();
 
             return Inertia::render('Sales/Index', [
@@ -113,7 +113,7 @@ class SalesInvoiceController extends Controller
     public function create()
     {
         if(Auth::user()->can('create-sales-invoices')){
-            $customers = User::where('type', 'client')->select('id', 'name', 'email')->where('created_by', creatorId())->get();
+            $customers = app(AccountPartyUserOptionsService::class)->customerUsers(creatorId(), ['id', 'name', 'email']);
             $warehouses = Warehouse::where('is_active', true)->select('id', 'name', 'address')->where('created_by', creatorId())->get();
 
             return Inertia::render('Sales/Create', [
@@ -216,7 +216,7 @@ class SalesInvoiceController extends Controller
 
             EditSalesInvoice::dispatch($salesInvoice);
 
-            $customers = User::where('type', 'client')->select('id', 'name', 'email')->where('created_by', creatorId())->get();
+            $customers = app(AccountPartyUserOptionsService::class)->customerUsers(creatorId(), ['id', 'name', 'email']);
             $warehouses = Warehouse::where('is_active', true)->select('id', 'name', 'address')->where('created_by', creatorId())->get();
 
             return Inertia::render('Sales/Edit', [

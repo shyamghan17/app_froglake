@@ -8,11 +8,10 @@ import { Input } from '@/components/ui/input';
 import { PhoneInputComponent } from '@/components/ui/phone-input';
 import { EditBulkSmsContactProps, EditBulkSmsContactFormData } from './types';
 import { usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { getCityOptions, getStateOptions } from '@/utils/locationOptions';
 
 export default function EditBulkSmsContact({ bulksmscontact, onSuccess }: EditBulkSmsContactProps) {
-    const {  } = usePage<any>().props;
+    const { companyAllSetting } = usePage<any>().props;
 
     const { t } = useTranslation();
     const { data, setData, put, processing, errors } = useForm<EditBulkSmsContactFormData>({
@@ -24,7 +23,9 @@ export default function EditBulkSmsContact({ bulksmscontact, onSuccess }: EditBu
         zip_code: bulksmscontact.zip_code ?? '',
     });
 
-
+    const countryName = companyAllSetting?.company_country;
+    const stateOptions = getStateOptions(countryName, data.state);
+    const cityOptions = getCityOptions(countryName, data.state || companyAllSetting?.company_state, data.city);
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -82,11 +83,17 @@ export default function EditBulkSmsContact({ bulksmscontact, onSuccess }: EditBu
                     <Input
                         id="city"
                         type="text"
+                        list="bulk_sms_contact_edit_city_options"
                         value={data.city}
                         onChange={(e) => setData('city', e.target.value)}
                         placeholder={t('Enter City')}
                         required
                     />
+                    <datalist id="bulk_sms_contact_edit_city_options">
+                        {cityOptions.map((city) => (
+                            <option key={city} value={city} />
+                        ))}
+                    </datalist>
                     <InputError message={errors.city} />
                 </div>
                 
@@ -95,11 +102,27 @@ export default function EditBulkSmsContact({ bulksmscontact, onSuccess }: EditBu
                     <Input
                         id="state"
                         type="text"
+                        list="bulk_sms_contact_edit_state_options"
                         value={data.state}
-                        onChange={(e) => setData('state', e.target.value)}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            setData((previousData) => ({
+                                ...previousData,
+                                state: value,
+                                city:
+                                    previousData.state.trim().toLowerCase() !== value.trim().toLowerCase()
+                                        ? ''
+                                        : previousData.city,
+                            }));
+                        }}
                         placeholder={t('Enter State')}
                         required
                     />
+                    <datalist id="bulk_sms_contact_edit_state_options">
+                        {stateOptions.map((state) => (
+                            <option key={state} value={state} />
+                        ))}
+                    </datalist>
                     <InputError message={errors.state} />
                 </div>
                 

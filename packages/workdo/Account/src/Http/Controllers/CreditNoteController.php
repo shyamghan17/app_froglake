@@ -4,7 +4,6 @@ namespace Workdo\Account\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\SalesInvoiceReturn;
-use App\Models\User;
 use Workdo\Account\Models\CreditNote;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Workdo\Account\Events\ApproveCreditNote;
 use Workdo\Account\Events\DestroyCreditNote;
 use Workdo\Account\Services\JournalService;
+use Workdo\Account\Services\AccountPartyUserOptionsService;
 use App\Models\EmailTemplate;
 
 class CreditNoteController extends Controller
@@ -78,7 +78,7 @@ class CreditNoteController extends Controller
 
             $creditNotes = $query->paginate($request->per_page ?? 10)->withQueryString();
 
-            $customers = User::where('type', 'client')->where('created_by', creatorId())->get(['id', 'name']);
+            $customers = app(AccountPartyUserOptionsService::class)->customerUsers(creatorId(), ['id', 'name']);
             $salesReturns = SalesInvoiceReturn::where('created_by', creatorId())->get(['id', 'return_number']);
 
             return Inertia::render('Account/CreditNotes/Index', [

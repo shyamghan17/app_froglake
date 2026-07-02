@@ -1,4 +1,4 @@
-import locationData from '@/data/locations/nepal-india.json';
+import locationData from '@/data/locations/global.json';
 
 export type LocationCountry = {
     name: string;
@@ -63,4 +63,3 @@ export const getCityOptions = (countryName?: string, stateName?: string, current
     const cities = state ? state.cities : [];
     return withCurrentOption(cities, currentCity);
 };
-

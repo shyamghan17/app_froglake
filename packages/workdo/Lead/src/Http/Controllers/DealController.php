@@ -49,6 +49,7 @@ use Workdo\Lead\Events\DestroyDealCall;
 use Workdo\Lead\Events\DealAddEmail;
 use Workdo\Lead\Models\Source;
 use \Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Workdo\Account\Services\AccountPartyUserOptionsService;
 
 class DealController extends Controller
 {
@@ -105,7 +106,7 @@ class DealController extends Controller
 
             $pipelines = Pipeline::where('created_by', creatorId())->get(['id', 'name']);
             $stages = DealStage::where('created_by', creatorId())->get(['id', 'name', 'pipeline_id']);
-            $users = User::where('created_by', creatorId())->where('type', 'client')->get(['id', 'name']);
+            $users = app(AccountPartyUserOptionsService::class)->customerUsers(creatorId(), ['id', 'name']);
             $sources = Source::where('created_by', creatorId())->get(['id', 'name']);
             $products = Module_is_active('ProductService') ? ProductServiceItem::where('created_by', creatorId())->get(['id', 'name']) : [];
             $labels = Label::with('pipeline')->where('created_by', creatorId())->select('id', 'name', 'color', 'pipeline_id')->get();
@@ -155,7 +156,15 @@ class DealController extends Controller
                 $deal->created_by  = creatorId();
                 $deal->save();
 
-                $clients = User::whereIN('id', array_filter($validated['clients']))->get()->pluck('email', 'id')->toArray();
+                $clients = app(AccountPartyUserOptionsService::class)
+                    ->customerUsersByIds(creatorId(), array_filter($validated['clients']), ['id', 'email'])
+                    ->pluck('email', 'id')
+                    ->toArray();
+
+                if (empty($clients)) {
+                    return redirect()->route('lead.deals.index')->with('error', __('Please select valid client.'));
+                }
+
                 foreach (array_keys($clients) as $client) {
                     ClientDeal::create(
                         [
@@ -241,10 +250,10 @@ class DealController extends Controller
                 $availableProducts = module_is_active('ProductService') ? ProductServiceItem::where('created_by', creatorId())->get(['id', 'name']) : [];
                 $availableSources = Source::where('created_by', creatorId())->get(['id', 'name']);
                 $assignedClientIds = $deal->clientDeals->pluck('client_id')->toArray();
-                $availableClients = User::where('created_by', creatorId())
-                    ->where('type', 'client')
-                    ->whereNotIn('id', $assignedClientIds)
-                    ->get(['id', 'name']);
+                $availableClients = app(AccountPartyUserOptionsService::class)
+                    ->customerUsers(creatorId(), ['id', 'name'])
+                    ->reject(fn ($u) => in_array($u->id, $assignedClientIds, true))
+                    ->values();
                 return Inertia::render('Lead/Deals/Show', [
                     'deal' => $deal,
                     'availableUsers' => $availableUsers,
@@ -260,6 +269,10 @@ class DealController extends Controller
     public function update(UpdateDealRequest $request, Deal $deal)
     {
         if (Auth::user()->can('edit-deals')) {
+            if ($deal->created_by != creatorId()) {
+                return back()->with('error', __('Permission denied'));
+            }
+
             $validated = $request->validated();
             $deal->name        = $validated['name'];
             $deal->price       = $validated['price'];
@@ -274,7 +287,12 @@ class DealController extends Controller
             // Sync clients
             if (isset($validated['clients'])) {
                 ClientDeal::where('deal_id', $deal->id)->delete();
-                foreach (array_filter($validated['clients']) as $clientId) {
+                $validClients = app(AccountPartyUserOptionsService::class)
+                    ->customerUsersByIds(creatorId(), array_filter($validated['clients']), ['id'])
+                    ->pluck('id')
+                    ->all();
+
+                foreach ($validClients as $clientId) {
                     ClientDeal::firstOrCreate([
                         'deal_id'   => $deal->id,
                         'client_id' => $clientId,
@@ -562,8 +580,15 @@ class DealController extends Controller
     public function assignClients(Request $request, Deal $deal)
     {
         if (Auth::user()->can('create-deal-clients')) {
+            if ($deal->created_by != creatorId()) {
+                return back()->with('error', __('Permission denied'));
+            }
+
             $clientIds = $request->input('client_ids', []);
-            $clients = User::whereIn('id', array_filter($clientIds))->get()->pluck('email', 'id')->toArray();
+            $clients = app(AccountPartyUserOptionsService::class)
+                ->customerUsersByIds(creatorId(), array_filter($clientIds), ['id', 'email'])
+                ->pluck('email', 'id')
+                ->toArray();
 
             foreach (array_keys($clients) as $clientId) {
                 ClientDeal::firstOrCreate([
@@ -604,6 +629,10 @@ class DealController extends Controller
     public function removeClient(Deal $deal, User $client)
     {
         if (Auth::user()->can('delete-deal-clients')) {
+            if ($deal->created_by != creatorId() || $client->created_by != creatorId()) {
+                return back()->with('error', __('Permission denied'));
+            }
+
             ClientDeal::where('deal_id', $deal->id)->where('client_id', $client->id)->delete();
             DestroyDealClient::dispatch($deal);
             return back()->with('success', __('The client has been deleted.'));

@@ -12,6 +12,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Schema;
+use Workdo\Account\Services\AccountPartyUserOptionsService;
 
 class AuthApiController extends Controller
 {
@@ -219,7 +220,7 @@ class AuthApiController extends Controller
     public function getClientUser()
     {
         try {
-            $users = User::where('type', 'client')->where('created_by', creatorId())->orderBy('id', 'desc')->get();
+            $users = app(AccountPartyUserOptionsService::class)->customerUsers(creatorId(), ['id', 'name', 'email', 'avatar', 'type']);
             $users = $users->map(function ($user) {
                 return [
                     'id'              => $user->id,
@@ -237,7 +238,7 @@ class AuthApiController extends Controller
     public function getVendorUser()
     {
         try {
-            $users = User::where('type', 'vendor')->where('created_by', creatorId())->orderBy('id', 'desc')->get();
+            $users = app(AccountPartyUserOptionsService::class)->vendorUsers(creatorId(), ['id', 'name', 'email', 'avatar', 'type']);
             $users = $users->map(function ($user) {
                 return [
                     'id'              => $user->id,

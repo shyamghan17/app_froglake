@@ -6,7 +6,6 @@ use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnItem;
 use App\Models\PurchaseReturnItemTax;
 use App\Models\PurchaseInvoice;
-use App\Models\User;
 use App\Models\Warehouse;
 use App\Events\ApprovePurchaseReturn;
 use App\Events\CompletePurchaseReturn;
@@ -17,6 +16,7 @@ use App\Http\Requests\StorePurchaseReturnRequest;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Workdo\Account\Services\AccountPartyUserOptionsService;
 use App\Models\EmailTemplate;
 
 class PurchaseReturnController extends Controller
@@ -88,7 +88,7 @@ class PurchaseReturnController extends Controller
         $perPage = $request->get('per_page', 10);
         $returns = $query->paginate($perPage);
 
-        $vendors = User::where('type', 'vendor')->select('id', 'name', 'email')->where('created_by', creatorId())->get();
+        $vendors = app(AccountPartyUserOptionsService::class)->vendorUsers(creatorId(), ['id', 'name', 'email']);
         $warehouses = Warehouse::where('is_active', true)->select('id', 'name')->where('created_by', creatorId())->get();
 
             return Inertia::render('PurchaseReturns/Index', [

@@ -58,6 +58,7 @@ use Workdo\Lead\Events\LeadConvertDeal;
 use Workdo\Lead\Models\Source;
 use App\Events\CreateUser;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Workdo\Account\Services\AccountPartyUserOptionsService;
 
 class LeadController extends Controller
 {
@@ -864,10 +865,7 @@ class LeadController extends Controller
     public function getExistingClients()
     {
         if (Auth::user()->can('view-leads')) {
-            $clients = User::where('type', 'client')
-                ->where('created_by', creatorId())
-                ->select('id', 'name', 'email')
-                ->get();
+            $clients = app(AccountPartyUserOptionsService::class)->customerUsers(creatorId(), ['id', 'name', 'email']);
 
             return response()->json($clients);
         }else{
@@ -892,10 +890,9 @@ class LeadController extends Controller
             $creatorId = creatorId();
 
             if ($request->client_check == 'exist') {
-                $client = User::where('type', 'client')
-                    ->where('email', $request->clients)
-                    ->where('created_by', $creatorId)
-                    ->first();
+                $client = app(AccountPartyUserOptionsService::class)
+                    ->customerUsers($creatorId, ['id', 'name', 'email'], $request->clients)
+                    ->firstWhere('email', $request->clients);
 
                 if (!$client) {
                     return back()->with('error', __('The client is not available.'));

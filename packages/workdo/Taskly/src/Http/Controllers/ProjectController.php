@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use App\Models\User;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Workdo\Account\Services\AccountPartyUserOptionsService;
 use Workdo\Taskly\Events\CreateProject;
 use Workdo\Taskly\Events\CreateProjectMilestone;
 use Workdo\Taskly\Events\DestroyProject;
@@ -174,12 +175,11 @@ class ProjectController extends Controller
                 })
                 ->get(['id', 'name']);
 
-            $available_clients = User::where('type', 'client')
-                ->where('created_by', creatorId())
-                ->whereNotIn('id', function ($q) use ($project) {
-                    $q->select('client_id')->from('project_clients')->where('project_id', '=', $project->id);
-                })
-                ->get(['id', 'name']);
+            $assignedClientIds = ProjectClient::where('project_id', $project->id)->pluck('client_id')->all();
+            $available_clients = app(AccountPartyUserOptionsService::class)
+                ->customerUsers(creatorId(), ['id', 'name'])
+                ->reject(fn ($u) => in_array($u->id, $assignedClientIds, true))
+                ->values();
 
             // Get project statistics
             $taskCount = ProjectTask::where('project_id', $project->id)->count();

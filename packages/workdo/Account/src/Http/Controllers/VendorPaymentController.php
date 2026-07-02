@@ -10,7 +10,7 @@ use Workdo\Account\Models\DebitNoteApplication;
 use Workdo\Account\Http\Requests\StoreVendorPaymentRequest;
 use Workdo\Account\Services\JournalService;
 use Workdo\Account\Services\BankTransactionsService;
-use App\Models\User;
+use Workdo\Account\Services\AccountPartyUserOptionsService;
 use App\Models\PurchaseInvoice;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -71,7 +71,7 @@ class VendorPaymentController extends Controller
             $query->orderBy($sortField, $sortDirection);
 
             $payments = $query->paginate($request->get('per_page', 10));
-            $vendors = User::where('type', 'vendor')->where('created_by', creatorId())->get();
+            $vendors = app(AccountPartyUserOptionsService::class)->vendorUsers(creatorId(), ['id', 'name', 'email']);
 
             $bankAccounts = BankAccount::where('is_active', true)->where('created_by', creatorId())->get();
 

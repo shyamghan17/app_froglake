@@ -4,7 +4,6 @@ namespace Workdo\Account\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\PurchaseReturn;
-use App\Models\User;
 use Workdo\Account\Models\DebitNote;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -13,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Workdo\Account\Events\ApproveDebitNote;
 use Workdo\Account\Events\DestroyDebitNote;
 use Workdo\Account\Services\JournalService;
+use Workdo\Account\Services\AccountPartyUserOptionsService;
 use App\Models\EmailTemplate;
 
 class DebitNoteController extends Controller
@@ -79,7 +79,7 @@ class DebitNoteController extends Controller
 
             $debitNotes = $query->paginate($request->per_page ?? 10)->withQueryString();
 
-            $vendors = User::where('type', 'vendor')->where('created_by', creatorId())->get(['id', 'name']);
+            $vendors = app(AccountPartyUserOptionsService::class)->vendorUsers(creatorId(), ['id', 'name']);
             $purchaseReturns = PurchaseReturn::where('created_by', creatorId())->get(['id', 'return_number']);
 
             return Inertia::render('Account/DebitNotes/Index', [

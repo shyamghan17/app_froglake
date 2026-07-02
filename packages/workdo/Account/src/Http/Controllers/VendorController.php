@@ -11,6 +11,8 @@ use Workdo\Account\Http\Requests\UpdateVendorRequest;
 use Workdo\Account\Events\CreateVendor;
 use Workdo\Account\Events\UpdateVendor;
 use Workdo\Account\Events\DestroyVendor;
+use Illuminate\Support\Facades\DB;
+use Workdo\Account\Services\AccountPartyUserProvisioningService;
 use Workdo\Account\Services\UserAccountPartySyncService;
 
 class VendorController extends Controller
@@ -52,21 +54,40 @@ class VendorController extends Controller
         if(Auth::user()->can('create-vendors')){
             $validated = $request->validated();
 
-            $vendor = new Vendor();
-            $vendor->user_id = $validated['user_id'] ?? null;
-            $vendor->company_name = $validated['company_name'];
-            $vendor->contact_person_name = $validated['contact_person_name'];
-            $vendor->contact_person_email = $validated['contact_person_email'] ?? null;
-            $vendor->contact_person_mobile = $validated['contact_person_mobile'] ?? null;
-            $vendor->tax_number = $validated['tax_number'] ?? null;
-            $vendor->payment_terms = $validated['payment_terms'] ?? null;
-            $vendor->billing_address = $validated['billing_address'];
-            $vendor->shipping_address = $validated['same_as_billing'] ? $validated['billing_address'] : $validated['shipping_address'];
-            $vendor->same_as_billing = $validated['same_as_billing'] ?? false;
-            $vendor->notes = $validated['notes'] ?? null;
-            $vendor->creator_id = Auth::id();
-            $vendor->created_by = creatorId();
-            $vendor->save();
+            $vendor = DB::transaction(function () use ($validated) {
+                if (empty($validated['user_id'])) {
+                    $user = app(AccountPartyUserProvisioningService::class)->createLoginDisabledUser(
+                        'vendor',
+                        $validated['company_name'],
+                        $validated['contact_person_email'] ?? null,
+                        $validated['contact_person_mobile'] ?? null
+                    );
+
+                    $validated['user_id'] = $user->id;
+
+                    if (empty($validated['contact_person_email'])) {
+                        $validated['contact_person_email'] = $user->email;
+                    }
+                }
+
+                $vendor = new Vendor();
+                $vendor->user_id = $validated['user_id'] ?? null;
+                $vendor->company_name = $validated['company_name'];
+                $vendor->contact_person_name = $validated['contact_person_name'];
+                $vendor->contact_person_email = $validated['contact_person_email'] ?? null;
+                $vendor->contact_person_mobile = $validated['contact_person_mobile'] ?? null;
+                $vendor->tax_number = $validated['tax_number'] ?? null;
+                $vendor->payment_terms = $validated['payment_terms'] ?? null;
+                $vendor->billing_address = $validated['billing_address'];
+                $vendor->shipping_address = $validated['same_as_billing'] ? $validated['billing_address'] : $validated['shipping_address'];
+                $vendor->same_as_billing = $validated['same_as_billing'] ?? false;
+                $vendor->notes = $validated['notes'] ?? null;
+                $vendor->creator_id = Auth::id();
+                $vendor->created_by = creatorId();
+                $vendor->save();
+
+                return $vendor;
+            });
 
             CreateVendor::dispatch($request, $vendor);
 
