@@ -19,6 +19,15 @@ class UpdatePettyCashRequestRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists('users', 'id')->where(fn ($q) => $q->where('created_by', creatorId())),
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($this->user()?->can('manage-any-petty-cash-requests')) {
+                        return;
+                    }
+
+                    if ((int) $value !== (int) $this->user()?->id) {
+                        $fail(__('You can only assign petty cash requests to yourself.'));
+                    }
+                },
             ],
             'categorie_id' => [
                 'required',

@@ -101,7 +101,7 @@ class PettyCashApprovalService
 
                 $pettyCash = PettyCash::query()
                     ->where('created_by', $tenantId)
-                    ->latest()
+                    ->latest('id')
                     ->lockForUpdate()
                     ->first();
 
@@ -270,7 +270,7 @@ class PettyCashApprovalService
 
                 $pettyCash = PettyCash::query()
                     ->where('created_by', $tenantId)
-                    ->latest()
+                    ->latest('id')
                     ->lockForUpdate()
                     ->first();
 

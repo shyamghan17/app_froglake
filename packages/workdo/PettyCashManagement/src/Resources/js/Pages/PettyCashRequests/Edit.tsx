@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { EditPettyCashRequestProps, EditPettyCashRequestFormData } from './types';
+import { EditPettyCashRequestProps, EditPettyCashRequestFormData, PettyCashCategory } from './types';
 import { usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -16,14 +16,12 @@ import axios from 'axios';
 export default function EditPettyCashRequest({ pettycashrequest, onSuccess }: EditPettyCashRequestProps) {
     const { users, pettycashcategories } = usePage<any>().props;
     const [filteredCategories, setFilteredCategories] = useState(pettycashcategories || []);
-    const [filteredApprovedBies, setFilteredApprovedBies] = useState(users || []);
-    const [filteredCreatedBies, setFilteredCreatedBies] = useState(users || []);
     const [receiptFile, setReceiptFile] = useState<File | null>(null);
     const { t } = useTranslation();
     const { data, setData, post, processing, errors, transform } = useForm<EditPettyCashRequestFormData>({
         user_id: pettycashrequest.user_id?.toString() || '',
         categorie_id: pettycashrequest.categorie_id?.toString() || '',
-        requested_amount: pettycashrequest.requested_amount ?? '',
+        requested_amount: pettycashrequest.requested_amount?.toString() || '',
         remarks: pettycashrequest.remarks ?? '',
         receipt_path: pettycashrequest.receipt_path || '',
     });
@@ -42,19 +40,46 @@ export default function EditPettyCashRequest({ pettycashrequest, onSuccess }: Ed
     });
 
     useEffect(() => {
+        const fallbackCategories: PettyCashCategory[] = pettycashcategories || [];
+
         if (data.user_id) {
+            let isStale = false;
+
             axios.get(route('pettycashmanagement.users.categories', data.user_id))
                 .then(response => {
-                    setFilteredCategories(response.data);
+                    if (isStale) {
+                        return;
+                    }
+
+                    const nextCategories: PettyCashCategory[] = Array.isArray(response.data) ? response.data : [];
+                    setFilteredCategories(nextCategories);
+
+                    if (data.categorie_id && !nextCategories.some((item) => item.id.toString() === data.categorie_id)) {
+                        setData('categorie_id', '');
+                    }
                 })
                 .catch(() => {
-                    setFilteredCategories([]);
+                    if (isStale) {
+                        return;
+                    }
+
+                    setFilteredCategories(fallbackCategories);
+
+                    if (data.categorie_id && !fallbackCategories.some((item) => item.id.toString() === data.categorie_id)) {
+                        setData('categorie_id', '');
+                    }
                 });
+
+            return () => {
+                isStale = true;
+            };
         } else {
-            setFilteredCategories(pettycashcategories || []);
-            setData('categorie_id', '');
+            setFilteredCategories(fallbackCategories);
+            if (data.categorie_id) {
+                setData('categorie_id', '');
+            }
         }
-    }, [data.user_id]);
+    }, [data.user_id, data.categorie_id, pettycashcategories, setData]);
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();

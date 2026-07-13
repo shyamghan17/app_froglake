@@ -23,9 +23,79 @@ use Workdo\PettyCashManagement\Services\PettyCashAuditLogService;
 
 class PettyCashRequestController extends Controller
 {
+    private function assignableUserQuery()
+    {
+        return User::query()
+            ->where('created_by', creatorId())
+            ->whereNotIn('type', ['superadmin', 'company', 'client', 'vendor', 'tenant'])
+            ->select('id', 'name');
+    }
+
+    private function requestAssignableUsers()
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return collect();
+        }
+
+        if ($user->can('manage-any-petty-cash-requests')) {
+            return $this->assignableUserQuery()->get();
+        }
+
+        if (
+            $user->can('manage-own-petty-cash-requests')
+            || $user->can('create-petty-cash-requests')
+            || $user->can('edit-petty-cash-requests')
+        ) {
+            return User::where('id', $user->id)->select('id', 'name')->get();
+        }
+
+        return collect();
+    }
+
+    private function canAccessUserCategoryOptions(User $targetUser): bool
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if (
+            $user->can('view-categories')
+            || $user->can('manage-any-petty-cash-requests')
+            || $user->can('manage-any-reimbursements')
+        ) {
+            return true;
+        }
+
+        return (int) $targetUser->id === (int) $user->id && (
+            $user->can('manage-own-petty-cash-requests')
+            || $user->can('create-petty-cash-requests')
+            || $user->can('edit-petty-cash-requests')
+            || $user->can('manage-own-reimbursements')
+            || $user->can('create-reimbursements')
+            || $user->can('edit-reimbursements')
+        );
+    }
+
+    private function sanitizedSort(): array
+    {
+        $allowedSorts = ['request_number', 'requested_amount', 'approved_amount', 'status', 'created_at'];
+        $sort = request('sort');
+        $direction = request('direction', 'asc');
+
+        return [
+            'sort' => in_array($sort, $allowedSorts, true) ? $sort : null,
+            'direction' => in_array($direction, ['asc', 'desc'], true) ? $direction : 'asc',
+        ];
+    }
+
     public function index()
     {
         if(Auth::user()->can('manage-petty-cash-requests')){
+            $sort = $this->sanitizedSort();
             $pettycashrequests = PettyCashRequest::query()
                 ->with(['user', 'category', 'approver'])
                 ->where(function($q) {
@@ -45,18 +115,11 @@ class PettyCashRequestController extends Controller
                 ->when(request('user_id') && request('user_id') !== '', fn($q) => $q->where('user_id', request('user_id')))
                 ->when(request('categorie_id') && request('categorie_id') !== '', fn($q) => $q->where('categorie_id', request('categorie_id')))
                 ->when(request('status') !== null && request('status') !== '', fn($q) => $q->where('status', request('status')))
-                ->when(request('sort'), fn($q) => $q->orderBy(request('sort'), request('direction', 'asc')), fn($q) => $q->latest())
+                ->when($sort['sort'], fn($q) => $q->orderBy($sort['sort'], $sort['direction']), fn($q) => $q->latest())
                 ->paginate(request('per_page', 10))
                 ->withQueryString();
 
-            // Filter users based on permissions
-            if(Auth::user()->can('manage-any-petty-cash-requests')) {
-                $users = User::where('created_by', creatorId())->emp()->select('id', 'name')->get();
-            } elseif(Auth::user()->can('manage-own-petty-cash-requests')) {
-                $users = User::where('id', Auth::id())->select('id', 'name')->get();
-            } else {
-                $users = collect();
-            }
+            $users = $this->requestAssignableUsers();
 
             $categories = PettyCashCategory::where('created_by', creatorId())->select('id', 'name')->get();
 
@@ -258,17 +321,20 @@ class PettyCashRequestController extends Controller
 
     public function getCategoriesByUser(User $user)
     {
-        if(Auth::user()->can('view-categories')){
+        if($this->canAccessUserCategoryOptions($user)){
             if ((int) $user->created_by !== (int) creatorId()) {
                 return response()->json([], 404);
             }
 
             $categories = PettyCashCategory::query()
                 ->where('created_by', creatorId())
-                ->when(
-                    Schema::hasColumn('petty_cash_categories', 'user_id'),
-                    fn ($q) => $q->where('user_id', $user->id)
-                )
+                ->when(Schema::hasColumn('petty_cash_categories', 'user_id'), function ($q) use ($user) {
+                    // Support both global categories and user-specific categories when older/custom schemas add user_id.
+                    $q->where(function ($categoryQuery) use ($user) {
+                        $categoryQuery->whereNull('user_id')
+                            ->orWhere('user_id', $user->id);
+                    });
+                })
                 ->select('id', 'name')
                 ->get();
 

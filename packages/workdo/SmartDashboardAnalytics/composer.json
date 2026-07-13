@@ -1,0 +1,25 @@
+{
+    "name": "workdo/smart-dashboard-analytics",
+    "description": "Description for smart-dashboard-analytics package",
+    "type": "library",
+    "license": "MIT",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Workdo\\SmartDashboardAnalytics\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "WorkDo",
+            "email": "support@workdo.io"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Workdo\\SmartDashboardAnalytics\\Providers\\SmartDashboardAnalyticsServiceProvider"
+            ]
+        }
+    }
+}

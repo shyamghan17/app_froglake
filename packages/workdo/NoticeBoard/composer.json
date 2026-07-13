@@ -1,0 +1,25 @@
+{
+    "name": "workdo/notice-board",
+    "description": "Description for notice-board package",
+    "type": "library",
+    "license": "MIT",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Workdo\\NoticeBoard\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "WorkDo",
+            "email": "support@workdo.io"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Workdo\\NoticeBoard\\Providers\\NoticeBoardServiceProvider"
+            ]
+        }
+    }
+}

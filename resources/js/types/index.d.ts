@@ -5,6 +5,7 @@ export interface User {
     name: string;
     email: string;
     type: string;
+    timezone?: string | null;
     email_verified_at?: string;
     lang?: string;
     permissions?: string[];
@@ -31,4 +32,5 @@ export type PageProps<
         roles?: string[];
         impersonating?: boolean;
     };
+    appTimezone?: string | null;
 };

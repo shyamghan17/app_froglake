@@ -1,5 +1,5 @@
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useForm } from "@inertiajs/react";
+import { useForm, usePage } from "@inertiajs/react";
 import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,15 +12,37 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Customer, CustomerFormData } from './types';
 import { useFormFields } from '@/hooks/useFormFields';
 import { getCityOptions, getCountryOptions, getStateOptions } from '@/utils/locationOptions';
+import { PageProps } from '@/types';
 interface EditCustomerProps {
     customer: Customer;
     onSuccess: () => void;
 }
 
+const normalizeAddress = (address?: Partial<CustomerFormData['billing_address']>) => ({
+    name: address?.name ?? '',
+    address_line_1: address?.address_line_1 ?? '',
+    address_line_2: address?.address_line_2 ?? '',
+    city: address?.city ?? '',
+    state: address?.state ?? '',
+    country: address?.country ?? '',
+    zip_code: address?.zip_code ?? '',
+});
+
 export default function Edit({ customer, onSuccess }: EditCustomerProps) {
     const { t } = useTranslation();
+    const { auth, appTimezone } = usePage<PageProps>().props;
     const { data, setData, put, processing, errors } = useForm<CustomerFormData>({
-        ...customer,
+        user_id: customer.user_id,
+        company_name: customer.company_name ?? '',
+        contact_person_name: customer.contact_person_name ?? '',
+        contact_person_email: customer.contact_person_email ?? '',
+        contact_person_mobile: customer.contact_person_mobile ?? '',
+        tax_number: customer.tax_number ?? '',
+        payment_terms: customer.payment_terms ?? '',
+        billing_address: normalizeAddress(customer.billing_address),
+        shipping_address: normalizeAddress(customer.shipping_address),
+        same_as_billing: Boolean(customer.same_as_billing),
+        notes: customer.notes ?? '',
     });
 
     const formFields = useFormFields('customerEditFields', data, setData, errors, 'edit');
@@ -89,6 +111,7 @@ export default function Edit({ customer, onSuccess }: EditCustomerProps) {
                         value={data.contact_person_mobile}
                         onChange={(value) => setData('contact_person_mobile', value)}
                         error={errors.contact_person_mobile}
+                        timezone={auth?.user?.timezone ?? appTimezone ?? undefined}
                     />
                 </div>
                 <div className="grid grid-cols-2 gap-4">

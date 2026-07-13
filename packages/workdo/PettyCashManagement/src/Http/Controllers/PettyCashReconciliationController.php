@@ -80,6 +80,7 @@ class PettyCashReconciliationController extends Controller
         } else {
             $previousFund = PettyCash::query()
                 ->where('created_by', $tenantId)
+                ->where('status', 1)
                 ->whereNotNull('date')
                 ->whereDate('date', '<', $periodStart->toDateString())
                 ->orderByDesc('date')
@@ -90,6 +91,7 @@ class PettyCashReconciliationController extends Controller
 
         $additionsTotal = round((float) PettyCash::query()
             ->where('created_by', $tenantId)
+            ->where('status', 1)
             ->whereNotNull('date')
             ->whereBetween('date', [$periodStart->toDateString(), $periodEnd->toDateString()])
             ->sum('added_amount'), 2);

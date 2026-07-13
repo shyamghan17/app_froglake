@@ -17,10 +17,36 @@ use Workdo\Account\Services\UserAccountPartySyncService;
 
 class CustomerController extends Controller
 {
+    private function sanitizedSort(): array
+    {
+        $allowedSorts = ['customer_code', 'company_name', 'contact_person_name', 'created_at'];
+        $sort = request('sort');
+        $direction = request('direction', 'asc');
+
+        return [
+            'sort' => in_array($sort, $allowedSorts, true) ? $sort : null,
+            'direction' => in_array($direction, ['asc', 'desc'], true) ? $direction : 'asc',
+        ];
+    }
+
+    private function canAccessCustomer(Customer $customer): bool
+    {
+        if ((int) $customer->created_by !== (int) creatorId()) {
+            return false;
+        }
+
+        if (Auth::user()->can('manage-any-customers')) {
+            return true;
+        }
+
+        return Auth::user()->can('manage-own-customers') && (int) $customer->creator_id === (int) Auth::id();
+    }
+
     public function index()
     {
         if(Auth::user()->can('manage-customers')){
             app(UserAccountPartySyncService::class)->syncCustomersForTenant(creatorId());
+            $sort = $this->sanitizedSort();
 
             $customers = Customer::query()
                 ->with('user:id,name,avatar,is_disable')
@@ -36,7 +62,7 @@ class CustomerController extends Controller
                 ->when(request('company_name'), fn($q) => $q->where('company_name', 'like', '%' . request('company_name') . '%'))
                 ->when(request('customer_code'), fn($q) => $q->where('customer_code', 'like', '%' . request('customer_code') . '%'))
                 ->when(request('tax_number'), fn($q) => $q->where('tax_number', 'like', '%' . request('tax_number') . '%'))
-                ->when(request('sort'), fn($q) => $q->orderBy(request('sort'), request('direction', 'asc')), fn($q) => $q->latest())
+                ->when($sort['sort'], fn($q) => $q->orderBy($sort['sort'], $sort['direction']), fn($q) => $q->latest())
                 ->paginate(request('per_page', 10))
                 ->withQueryString();
 
@@ -97,6 +123,10 @@ class CustomerController extends Controller
     public function update(UpdateCustomerRequest $request, Customer $customer)
     {
         if(Auth::user()->can('edit-customers')){
+            if (!$this->canAccessCustomer($customer)) {
+                return back()->with('error', __('Permission denied'));
+            }
+
             $validated = $request->validated();
 
             $customer->company_name = $validated['company_name'];
@@ -121,6 +151,10 @@ class CustomerController extends Controller
     public function destroy(Customer $customer)
     {
         if(Auth::user()->can('delete-customers')){
+            if (!$this->canAccessCustomer($customer)) {
+                return back()->with('error', __('Permission denied'));
+            }
+
             DestroyCustomer::dispatch($customer);
             $customer->delete();
             return back()->with('success', __('The customer has been deleted.'));

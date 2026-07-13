@@ -23,9 +23,22 @@ use Workdo\PettyCashManagement\Services\PettyCashAuditLogService;
 
 class ReimbursementController extends Controller
 {
+    private function sanitizedSort(): array
+    {
+        $allowedSorts = ['reimbursement_number', 'amount', 'approved_amount', 'status', 'approved_by', 'created_at'];
+        $sort = request('sort');
+        $direction = request('direction', 'asc');
+
+        return [
+            'sort' => in_array($sort, $allowedSorts, true) ? $sort : null,
+            'direction' => in_array($direction, ['asc', 'desc'], true) ? $direction : 'asc',
+        ];
+    }
+
     public function index()
     {
         if(Auth::user()->can('manage-reimbursements')){
+            $sort = $this->sanitizedSort();
             $reimbursements = PettyCashReimbursement::query()
                 ->with(['user', 'category', 'approver'])
                 ->where(function($q) {
@@ -46,7 +59,7 @@ class ReimbursementController extends Controller
                 ->when(request('category_id') && request('category_id') !== '', fn($q) => $q->where('category_id', request('category_id')))
                 ->when(request('status') !== null && request('status') !== '', fn($q) => $q->where('status', request('status')))
                 ->when(request('approved_by') && request('approved_by') !== '', fn($q) => $q->where('approved_by', request('approved_by')))
-                ->when(request('sort'), fn($q) => $q->orderBy(request('sort'), request('direction', 'asc')), fn($q) => $q->latest())
+                ->when($sort['sort'], fn($q) => $q->orderBy($sort['sort'], $sort['direction']), fn($q) => $q->latest())
                 ->paginate(request('per_page', 10))
                 ->withQueryString();
 
@@ -369,10 +382,12 @@ class ReimbursementController extends Controller
 
             $categories = PettyCashCategory::query()
                 ->where('created_by', creatorId())
-                ->when(
-                    Schema::hasColumn('petty_cash_categories', 'user_id'),
-                    fn ($q) => $q->where('user_id', $user->id)
-                )
+                ->when(Schema::hasColumn('petty_cash_categories', 'user_id'), function ($q) use ($user) {
+                    $q->where(function ($categoryQuery) use ($user) {
+                        $categoryQuery->whereNull('user_id')
+                            ->orWhere('user_id', $user->id);
+                    });
+                })
                 ->select('id', 'name')
                 ->get();
 

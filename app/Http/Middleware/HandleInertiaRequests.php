@@ -80,6 +80,7 @@ class HandleInertiaRequests extends Middleware
             'companyAllSetting' => $request->user() ? getCompanyAllSetting($request->user()->id) : [],
             'imageUrlPrefix' =>  getImageUrlPrefix(),
             'baseUrl' =>  url('/'),
+            'appTimezone' => config('app.timezone'),
             'currencies' => config('default_currency.currencies', []),
             'availableLanguages' => $availableLanguages,
         ];

@@ -15,9 +15,30 @@ use Workdo\PettyCashManagement\Services\PettyCashApprovalService;
 
 class PettyCashController extends Controller
 {
+    private function sanitizedSort(): array
+    {
+        $allowedSorts = ['pettycash_number', 'date', 'opening_balance', 'added_amount', 'total_balance', 'total_expense', 'closing_balance', 'status', 'created_at'];
+        $sort = request('sort');
+        $direction = request('direction', 'asc');
+
+        return [
+            'sort' => in_array($sort, $allowedSorts, true) ? $sort : null,
+            'direction' => in_array($direction, ['asc', 'desc'], true) ? $direction : 'asc',
+        ];
+    }
+
+    private function latestTenantFundId(): ?int
+    {
+        return PettyCash::query()
+            ->where('created_by', creatorId())
+            ->latest('id')
+            ->value('id');
+    }
+
     public function index()
     {
         if(Auth::user()->can('manage-petty-cashes')){
+            $sort = $this->sanitizedSort();
             $pettycashes = PettyCash::query()
                 ->with(['expenses.request.user', 'expenses.request.category', 'expenses.reimbursement.user', 'expenses.reimbursement.category', 'expenses.approver'])
                 ->where(function($q) {
@@ -34,11 +55,11 @@ class PettyCashController extends Controller
                 })
                 ->when(request('status') !== null && request('status') !== '', fn($q) => $q->where('status', request('status')))
 
-                ->when(request('sort'), fn($q) => $q->orderBy(request('sort'), request('direction', 'asc')), fn($q) => $q->latest())
+                ->when($sort['sort'], fn($q) => $q->orderBy($sort['sort'], $sort['direction']), fn($q) => $q->latest())
                 ->paginate(request('per_page', 10))
                 ->withQueryString();
 
-            $latestEntryId = PettyCash::where('created_by', creatorId())->latest()->value('id');
+            $latestEntryId = $this->latestTenantFundId();
 
             return Inertia::render('PettyCashManagement/PettyCashes/Index', [
                 'pettycashes' => $pettycashes,
@@ -70,7 +91,7 @@ class PettyCashController extends Controller
                 return redirect()->route('petty-cash-management.petty-cashes.index')->with('error', __('Please approve all previous petty cash entries before creating a new one.'));
             }
 
-            $previousEntry  = PettyCash::latest()->where('created_by', creatorId())->first();
+            $previousEntry  = PettyCash::query()->where('created_by', creatorId())->latest('id')->first();
             $addedAmount    = $validated['added_amount'] ?? 0;
 
             $openingBalance = $previousEntry ? $previousEntry->closing_balance : 0;
@@ -103,6 +124,14 @@ class PettyCashController extends Controller
         if(Auth::user()->can('edit-petty-cashes')){
             if ((int) $pettycash->created_by !== (int) creatorId()) {
                 return redirect()->back()->with('error', __('Permission denied'));
+            }
+
+            if ((string) $pettycash->status === '1') {
+                return redirect()->back()->with('error', __('Approved petty cash funds cannot be edited.'));
+            }
+
+            if ((int) $pettycash->id !== (int) $this->latestTenantFundId()) {
+                return redirect()->back()->with('error', __('Only the latest petty cash fund can be edited.'));
             }
 
             $validated = $request->validated();
@@ -146,6 +175,14 @@ class PettyCashController extends Controller
                 return redirect()->back()->with('error', __('Permission denied'));
             }
 
+            if ((string) $pettycash->status === '1') {
+                return redirect()->back()->with('error', __('Approved petty cash funds cannot be deleted.'));
+            }
+
+            if ((int) $pettycash->id !== (int) $this->latestTenantFundId()) {
+                return redirect()->back()->with('error', __('Only the latest petty cash fund can be deleted.'));
+            }
+
             DestroyPettyCash::dispatch($pettycash);
 
             $pettycash->delete();
@@ -162,6 +199,10 @@ class PettyCashController extends Controller
         if(Auth::user()->can('approve-petty-cashes')){
             if ($pettycash->created_by != creatorId()) {
                 return redirect()->back()->with('error', __('Permission denied'));
+            }
+
+            if ((int) $pettycash->id !== (int) $this->latestTenantFundId()) {
+                return redirect()->back()->with('error', __('Only the latest petty cash fund can be approved.'));
             }
 
             try {

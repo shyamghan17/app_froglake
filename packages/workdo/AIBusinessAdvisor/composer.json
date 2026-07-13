@@ -1,0 +1,25 @@
+{
+    "name": "workdo/aibusiness-advisor",
+    "description": "Description for aibusiness-advisor package",
+    "type": "library",
+    "license": "MIT",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Workdo\\AIBusinessAdvisor\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "WorkDo",
+            "email": "support@workdo.io"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Workdo\\AIBusinessAdvisor\\Providers\\AIBusinessAdvisorServiceProvider"
+            ]
+        }
+    }
+}

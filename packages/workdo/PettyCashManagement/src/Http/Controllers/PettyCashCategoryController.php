@@ -15,9 +15,22 @@ use Inertia\Inertia;
 
 class PettyCashCategoryController extends Controller
 {
+    private function sanitizedSort(): array
+    {
+        $allowedSorts = ['name', 'created_at'];
+        $sort = request('sort');
+        $direction = request('direction', 'asc');
+
+        return [
+            'sort' => in_array($sort, $allowedSorts, true) ? $sort : null,
+            'direction' => in_array($direction, ['asc', 'desc'], true) ? $direction : 'asc',
+        ];
+    }
+
     public function index()
     {
         if(Auth::user()->can('manage-petty-cash-categories')){
+            $sort = $this->sanitizedSort();
             $pettycashcategories = PettyCashCategory::query()
                 ->where(function($q) {
                     if(Auth::user()->can('manage-any-petty-cash-categories')) {
@@ -31,7 +44,7 @@ class PettyCashCategoryController extends Controller
                 ->when(request('name'), function($q) {
                     $q->where('name', 'like', '%' . request('name') . '%');
                 })
-                ->when(request('sort'), fn($q) => $q->orderBy(request('sort'), request('direction', 'asc')), fn($q) => $q->latest())
+                ->when($sort['sort'], fn($q) => $q->orderBy($sort['sort'], $sort['direction']), fn($q) => $q->latest())
                 ->paginate(request('per_page', 10))
                 ->withQueryString();
 

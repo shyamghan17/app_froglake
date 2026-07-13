@@ -13,9 +13,22 @@ use Workdo\PettyCashManagement\Models\PettyCashReimbursement;
 
 class PettyCashExpenseController extends Controller
 {
+    private function sanitizedSort(): array
+    {
+        $allowedSorts = ['type', 'amount', 'status', 'approved_at', 'created_at'];
+        $sort = request('sort');
+        $direction = request('direction', 'asc');
+
+        return [
+            'sort' => in_array($sort, $allowedSorts, true) ? $sort : null,
+            'direction' => in_array($direction, ['asc', 'desc'], true) ? $direction : 'asc',
+        ];
+    }
+
     public function index()
     {
         if(Auth::user()->can('manage-petty-cash-expenses')){
+            $sort = $this->sanitizedSort();
             $pettycashexpenses = PettyCashExpense::query()
                 ->with(['request.user', 'request.category', 'reimbursement.user', 'reimbursement.category', 'approver', 'pettyCash'])
                 ->where(function($q) {
@@ -39,7 +52,7 @@ class PettyCashExpenseController extends Controller
                 ->when(request('reimbursement_number') && request('reimbursement_number') !== '', fn($q) => $q->whereHas('reimbursement', fn($query) => $query->where('reimbursement_number', request('reimbursement_number'))))
                 ->when(request('pettycash_number') && request('pettycash_number') !== '', fn($q) => $q->whereHas('pettyCash', fn($query) => $query->where('pettycash_number', request('pettycash_number'))))
                 ->when(request('pettycash_id') && request('pettycash_id') !== '', fn($q) => $q->where('pettycash_id', request('pettycash_id')))
-                ->when(request('sort'), fn($q) => $q->orderBy(request('sort'), request('direction', 'asc')), fn($q) => $q->latest())
+                ->when($sort['sort'], fn($q) => $q->orderBy($sort['sort'], $sort['direction']), fn($q) => $q->latest())
                 ->paginate(request('per_page', 10))
                 ->withQueryString();
 

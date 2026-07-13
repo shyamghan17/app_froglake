@@ -106,12 +106,8 @@ export default function Index() {
     const handleApproval = () => {
         if (!approvalItem || !approvedAmount) return;
 
-        const currentDateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
         inertiaRouter.put(route('petty-cash-management.petty-cash-requests.update-status', approvalItem.id), {
             status: '1',
-            approved_at: currentDateTime,
-            approved_by: auth.user?.id,
             approved_amount: approvedAmount
         }, {
             onSuccess: () => {
@@ -126,8 +122,6 @@ export default function Index() {
 
         inertiaRouter.put(route('petty-cash-management.petty-cash-requests.update-status', rejectionItem.id), {
             status: '2',
-            approved_at: null,
-            approved_by: null,
             rejection_reason: rejectionReason
         }, {
             onSuccess: () => {
