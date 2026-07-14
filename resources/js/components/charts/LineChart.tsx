@@ -20,6 +20,7 @@ interface LineChartProps {
   }>;
   customDots?: boolean;
   strokeWidth?: number;
+  yAxisWidth?: number;
 }
 
 export const LineChart: React.FC<LineChartProps> = ({
@@ -35,14 +36,45 @@ export const LineChart: React.FC<LineChartProps> = ({
   height = 350,
   lines = [],
   customDots = false,
-  strokeWidth = 2
+  strokeWidth = 2,
+  yAxisWidth
 }) => {
+  const getMaxValue = () => {
+    let max = 0;
+    data.forEach((item: any) => {
+      if (lines.length > 0) {
+        lines.forEach((line: any) => {
+          const val = parseFloat(item[line.dataKey]) || 0;
+          max = Math.max(max, val);
+        });
+      } else {
+        const val = parseFloat(item[dataKey]) || 0;
+        max = Math.max(max, val);
+      }
+    });
+    return max;
+  };
+
+  const maxValue = getMaxValue();
+  const maxValueStr = maxValue.toLocaleString();
+  
+  // Calculate dynamic width based on actual string length of formatted value
+  // If value string is longer than 6 characters (e.g., "100,000"), add extra space
+  let dynamicYAxisWidth = 30;
+  if (maxValueStr.length > 6) {
+    dynamicYAxisWidth = 15 + (maxValueStr.length - 6) * 5;
+    dynamicYAxisWidth = Math.min(dynamicYAxisWidth, 85);
+  }
+  
+  const finalYAxisWidth = yAxisWidth || dynamicYAxisWidth;
+  const leftMargin = finalYAxisWidth;
+
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <RechartsLineChart data={data} margin={{ left: 12, right: 12 }}>
+      <RechartsLineChart data={data} margin={{ left: leftMargin, right: 20, top: 10, bottom: 10 }}>
         {showGrid && <CartesianGrid vertical={false} />}
-        <XAxis dataKey={xAxisKey} tickLine={false} axisLine={false} tickMargin={8} />
-        <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+        <XAxis dataKey={xAxisKey} tickLine={false} axisLine={false} tickMargin={8} height={45} />
+        <YAxis tickLine={false} axisLine={false} tickMargin={8} width={finalYAxisWidth} />
         {showTooltip && <Tooltip />}
         {showLegend && <Legend />}
         {lines.length > 0 ? lines.map((line) => (

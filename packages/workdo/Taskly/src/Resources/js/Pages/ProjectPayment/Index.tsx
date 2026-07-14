@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import AuthenticatedLayout from '@/layouts/authenticated-layout';
@@ -13,7 +13,7 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useFlashMessages } from '@/hooks/useFlashMessages';
 import { useDeleteHandler } from '@/hooks/useDeleteHandler';
 import { formatCurrency, formatDate } from '@/utils/helpers';
-import { Plus, Receipt, Download, Eye, FileText, Edit, Trash2 } from 'lucide-react';
+import { Plus, Receipt, Download, Eye, FileText, Edit, Trash2, User, BarChart3, Calendar, Clock, CheckCircle2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ListGridToggle } from '@/components/ui/list-grid-toggle';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
@@ -26,6 +26,12 @@ interface IndexProps {
     projects: Array<{ id: number; name: string }>;
     customers: Array<{ id: number; name: string; email: string }>;
     filters: ProjectPaymentFilters;
+    stats: {
+        yearly: number;
+        monthly: number;
+        quarterly: number;
+        today: number;
+    };
     auth: {
         user: {
             permissions?: string[];
@@ -35,7 +41,7 @@ interface IndexProps {
 
 export default function Index() {
     const { t } = useTranslation();
-    const { payments, projects, customers, auth } = usePage<IndexProps>().props;
+    const { payments, projects, customers, auth, stats } = usePage<IndexProps>().props;
     const urlParams = new URLSearchParams(window.location.search);
     useFlashMessages();
 
@@ -50,7 +56,7 @@ export default function Index() {
     const [perPage] = useState(urlParams.get('per_page') || '10');
     const [sortField, setSortField] = useState(urlParams.get('sort') || 'created_at');
     const [sortDirection, setSortDirection] = useState(urlParams.get('direction') || 'desc');
-    const [viewMode, setViewMode] = useState<'list' | 'grid'>(urlParams.get('view') as 'list' | 'grid' || 'list');
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>(urlParams.get('view') as 'list' | 'grid' || 'grid');
     const [showFilters, setShowFilters] = useState(false);
 
     const { deleteState, openDeleteDialog, closeDeleteDialog, confirmDelete } = useDeleteHandler({
@@ -248,7 +254,7 @@ export default function Index() {
                 { label: t('Project'), url: route('project.dashboard.index') },
                 { label: t('Project Payments') },
             ]}
-            pageTitle={t('Project Payments')}
+            pageTitle={t('Manage Project Payments')}
             pageActions={
                 auth.user?.permissions?.includes('create-project-payments') ? (
                     <TooltipProvider>
@@ -267,6 +273,55 @@ export default function Index() {
             }
         >
             <Head title={t('Project Payments')} />
+
+            <div className="space-y-5">
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <Card className="border shadow-sm">
+                        <CardContent className="p-3.5 flex items-center gap-3">
+                            <div className="p-2.5 bg-blue-50 rounded-xl">
+                                <Calendar className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 font-medium">{t('Yearly Payment')}</p>
+                                <p className="text-sm font-bold text-gray-800">{formatCurrency(stats.yearly)}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card className="border shadow-sm">
+                        <CardContent className="p-3.5 flex items-center gap-3">
+                            <div className="p-2.5 bg-emerald-50 rounded-xl">
+                                <BarChart3 className="h-5 w-5 text-emerald-600" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 font-medium">{t('Quarterly Payment')}</p>
+                                <p className="text-sm font-bold text-gray-800">{formatCurrency(stats.quarterly)}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card className="border shadow-sm">
+                        <CardContent className="p-3.5 flex items-center gap-3">
+                            <div className="p-2.5 bg-amber-50 rounded-xl">
+                                <Receipt className="h-5 w-5 text-amber-600" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 font-medium">{t('Monthly Payment')}</p>
+                                <p className="text-sm font-bold text-gray-800">{formatCurrency(stats.monthly)}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card className="border shadow-sm">
+                        <CardContent className="p-3.5 flex items-center gap-3">
+                            <div className="p-2.5 bg-purple-50 rounded-xl">
+                                <Clock className="h-5 w-5 text-purple-600" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 font-medium">{t("Today's Payment")}</p>
+                                <p className="text-sm font-bold text-gray-800">{formatCurrency(stats.today)}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
 
             <Card className="shadow-sm">
                 <CardContent className="p-6 border-b bg-gray-50/50">
@@ -412,7 +467,7 @@ export default function Index() {
                                                     </span>
                                                 </div>
 
-                                                <div className="space-y-3 mb-4">
+                                                <div className="space-y-3 mb-0">
                                                     <div>
                                                         <p className="text-xs font-medium text-gray-600 mb-1">{t('Project')}</p>
                                                         <p className="text-sm text-gray-900 truncate font-medium">{payment.project?.name}</p>
@@ -456,7 +511,7 @@ export default function Index() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center justify-between p-3 border-t bg-gray-50/50">
+                                            <div className="flex items-center justify-between p-3 border-t bg-gray-50/50 mt-0">
                                                 <div className="flex gap-1">
                                                     <TooltipProvider>
                                                         {auth.user?.permissions?.includes('print-project-payments') && (
@@ -547,6 +602,7 @@ export default function Index() {
                     />
                 </CardContent>
             </Card>
+            </div>
 
             <ConfirmationDialog
                 open={deleteState.isOpen}

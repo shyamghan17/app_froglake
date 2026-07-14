@@ -1,7 +1,8 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFlashMessages } from '@/hooks/useFlashMessages';
+import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -9,6 +10,7 @@ import AuthenticatedLayout from '@/layouts/authenticated-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, Plus, Edit, Trash2, X, Package, MoreVertical, Clock } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ModuleCard } from '@/components/ui/module-card';
@@ -50,13 +52,25 @@ interface Props {
     userTrialInfo?: {
         is_trial_done: number;
     };
+    createPackageEnabled: boolean;
+    customDesignPackageEnabled: boolean;
 }
 
-export default function PlansIndex({ plans, canCreate, activeModules, bankTransferEnabled,bankTransferInstructions, userTrialInfo }: Props) {
+export default function PlansIndex({ plans, canCreate, activeModules, bankTransferEnabled,bankTransferInstructions, userTrialInfo, createPackageEnabled, customDesignPackageEnabled }: Props) {
     const { t } = useTranslation();
     const [subscriptionType, setSubscriptionType] = useState<'pre-package' | 'usage'>('pre-package');
     const { auth } = usePage().props as any;
     const isCompanyUser = !auth.user?.roles?.includes('superadmin');
+    const [localCreatePackage, setLocalCreatePackage] = useState(createPackageEnabled);
+    const [localCustomDesignPackage, setLocalCustomDesignPackage] = useState(customDesignPackageEnabled);
+
+    useEffect(() => {
+        if (!localCreatePackage && localCustomDesignPackage) {
+            setSubscriptionType('usage');
+        } else if (localCreatePackage && !localCustomDesignPackage) {
+            setSubscriptionType('pre-package');
+        }
+    }, [localCreatePackage, localCustomDesignPackage]);
 
     useFlashMessages();
     const [editingModule, setEditingModule] = useState<{ module: string; alias: string; } | null>(null);
@@ -240,6 +254,40 @@ export default function PlansIndex({ plans, canCreate, activeModules, bankTransf
         });
     };
 
+    const handleCreatePackageToggle = (checked: boolean) => {
+        if (!checked && !localCustomDesignPackage) {
+            toast.error(t('Both options cannot be disabled at the same time.'));
+            return;
+        }
+        setLocalCreatePackage(checked);
+        router.post(route('plans.package-settings.update'), {
+            create_package_enabled: checked ? 'on' : 'off',
+            custom_design_package_enabled: localCustomDesignPackage ? 'on' : 'off',
+        }, { preserveState: true, preserveScroll: true });
+        if (checked) {
+            setSubscriptionType('pre-package');
+        } else if (subscriptionType === 'pre-package') {
+            setSubscriptionType('usage');
+        }
+    };
+
+    const handleCustomDesignPackageToggle = (checked: boolean) => {
+        if (!checked && !localCreatePackage) {
+            toast.error(t('Both options cannot be disabled at the same time.'));
+            return;
+        }
+        setLocalCustomDesignPackage(checked);
+        router.post(route('plans.package-settings.update'), {
+            create_package_enabled: localCreatePackage ? 'on' : 'off',
+            custom_design_package_enabled: checked ? 'on' : 'off',
+        }, { preserveState: true, preserveScroll: true });
+        if (checked) {
+            setSubscriptionType('usage');
+        } else if (subscriptionType === 'usage') {
+            setSubscriptionType('pre-package');
+        }
+    };
+
     const canStartTrial = (plan: Plan) => {
         return isCompanyUser &&
                plan.trial &&
@@ -264,23 +312,23 @@ export default function PlansIndex({ plans, canCreate, activeModules, bankTransf
             breadcrumbs={[{ label: t('Subscription Setting') }]}
             pageTitle={t('Subscription Setting')}
             pageActions={
-                subscriptionType === 'pre-package' && !isCompanyUser ? (
-                    <TooltipProvider>
-                        {canCreate && (
-                            <Tooltip delayDuration={0}>
-                                <TooltipTrigger asChild>
-                                    <Link href={route('plans.create')}>
-                                        <Button size="sm">
-                                            <Plus className="h-4 w-4" />
-                                        </Button>
-                                    </Link>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{t('Create')}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        )}
-                    </TooltipProvider>
+                !isCompanyUser ? (
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 py-1.5 rounded-lg">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('Create Package')}</span>
+                            <Switch
+                                checked={localCreatePackage}
+                                onCheckedChange={handleCreatePackageToggle}
+                            />
+                        </div>
+                        <div className="flex items-center gap-2 py-1.5 rounded-lg">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('Custom Design Package')}</span>
+                            <Switch
+                                checked={localCustomDesignPackage}
+                                onCheckedChange={handleCustomDesignPackageToggle}
+                            />
+                        </div>
+                    </div>
                 ) : null
             }
         >
@@ -288,55 +336,78 @@ export default function PlansIndex({ plans, canCreate, activeModules, bankTransf
 
             <div className="space-y-6">
                 {/* Subscription Type Toggle */}
-                <div className="flex items-center justify-center space-x-6">
-                    <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-                        <div className="flex items-center">
-                            <button
-                                onClick={() => setSubscriptionType('pre-package')}
-                                className={`px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                                    subscriptionType === 'pre-package'
-                                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                                }`}
-                            >
-                                {t('Pre Package Subscription')}
-                            </button>
-                            <button
-                                onClick={() => setSubscriptionType('usage')}
-                                className={`px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                                    subscriptionType === 'usage'
-                                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                                }`}
-                            >
-                                {t('Usage Subscription')}
-                            </button>
+                <div className="flex items-center">
+                    <div className="flex-1" />
+                    <div className="flex items-center space-x-6">
+                        {localCreatePackage && localCustomDesignPackage && (
+                            <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                                <div className="flex items-center">
+                                    <button
+                                        onClick={() => setSubscriptionType('pre-package')}
+                                        className={`px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                                            subscriptionType === 'pre-package'
+                                                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        {t('Pre Package Subscription')}
+                                    </button>
+                                    <button
+                                        onClick={() => setSubscriptionType('usage')}
+                                        className={`px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                                            subscriptionType === 'usage'
+                                                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        {t('Usage Subscription')}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                            <div className="flex items-center">
+                                <button
+                                    onClick={() => setPricingPeriod('monthly')}
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                                        pricingPeriod === 'monthly'
+                                            ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    {t('Monthly')}
+                                </button>
+                                <button
+                                    onClick={() => setPricingPeriod('yearly')}
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                                        pricingPeriod === 'yearly'
+                                            ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    {t('Yearly')}
+                                </button>
+                            </div>
                         </div>
                     </div>
-
-                    <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-                        <div className="flex items-center">
-                            <button
-                                onClick={() => setPricingPeriod('monthly')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                                    pricingPeriod === 'monthly'
-                                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                                }`}
-                            >
-                                {t('Monthly')}
-                            </button>
-                            <button
-                                onClick={() => setPricingPeriod('yearly')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                                    pricingPeriod === 'yearly'
-                                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                                }`}
-                            >
-                                {t('Yearly')}
-                            </button>
-                        </div>
+                    <div className="flex-1 flex justify-end">
+                        {subscriptionType === 'pre-package' && localCreatePackage && canCreate && (
+                            <TooltipProvider>
+                                <Tooltip delayDuration={0}>
+                                    <TooltipTrigger asChild>
+                                        <Link href={route('plans.create')}>
+                                            <Button size="sm">
+                                                <Plus className="h-4 w-4" />
+                                            </Button>
+                                        </Link>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{t('Create')}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
                     </div>
                 </div>
 

@@ -208,6 +208,9 @@ class PosReportController extends Controller
                 ->groupBy('product_id')
                 ->map(function($items, $productId) use ($returnData) {
                     $product = $items->first()->product;
+                    if (!$product) {
+                        return null;
+                    }
                     $returns = $returnData->get($productId);
                     $returnQuantity = $returns ? (float) $returns->total_return_quantity : 0;
                     $returnAmount = $returns ? (float) $returns->total_return_amount : 0;
@@ -220,6 +223,7 @@ class PosReportController extends Controller
                         'total_orders' => $items->pluck('pos_id')->unique()->count()
                     ];
                 })
+                ->filter()
                 ->sortByDesc('total_revenue')
                 ->values();
 

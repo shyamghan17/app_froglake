@@ -271,7 +271,7 @@ export default function BugKanban() {
                         {auth.user?.permissions?.includes('manage-project-bug') && (
                             <Tooltip delayDuration={0}>
                                 <TooltipTrigger asChild>
-                                    <Button size="sm"
+                                    <Button size="sm" variant="outline"
                                         onClick={() => router.get(route('project.bugs.index', { project_id: project.id }))}
                                     >
                                         <List className="h-4 w-4" />

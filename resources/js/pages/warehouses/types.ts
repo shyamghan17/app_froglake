@@ -1,4 +1,4 @@
-import { PaginatedData, ModalState, AuthContext, CreateProps, EditProps } from '@/types/common';
+import { ModalState, AuthContext, CreateProps, EditProps } from '@/types/common';
 
 export interface Warehouse {
     id: number;
@@ -10,6 +10,19 @@ export interface Warehouse {
     email?: string;
     is_active: boolean;
     created_at: string;
+    updated_at: string;
+    stock_quantity?: number;
+    product_count?: number;
+    stock_value?: number;
+    out_of_stock_count?: number;
+    has_stranded_stock?: boolean;
+    is_never_stocked?: boolean;
+}
+
+export interface WarehouseStats {
+    total: number;
+    active: number;
+    inactive: number;
 }
 
 export interface CreateWarehouseFormData {
@@ -41,17 +54,15 @@ export interface EditWarehouseProps extends EditProps<Warehouse> {
 }
 
 export interface WarehouseFilters {
-    name: string;
-    city: string;
-    is_active: string;
+    search: string;
 }
 
-export type PaginatedWarehouses = PaginatedData<Warehouse>;
 export type WarehouseModalState = ModalState<Warehouse>;
 
 export interface WarehousesIndexProps {
-    warehouses: PaginatedWarehouses;
+    warehouses: Warehouse[];
     auth: AuthContext;
+    stats: WarehouseStats;
     [key: string]: unknown;
 }
 

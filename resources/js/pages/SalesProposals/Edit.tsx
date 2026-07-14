@@ -24,6 +24,7 @@ interface SalesProposal {
     due_date: string;
     customer_id: number;
     warehouse_id?: number;
+    type?: string;
     payment_terms?: string;
     notes?: string;
     items: any[];
@@ -47,6 +48,7 @@ export default function Edit() {
         due_date: proposal.due_date,
         customer_id: proposal.customer_id.toString(),
         warehouse_id: proposal.warehouse_id?.toString() || '',
+        type: proposal.type || 'product',
         payment_terms: proposal.payment_terms || '',
         notes: proposal.notes || '',
         items: (proposal.items || []).map(item => {
@@ -70,8 +72,10 @@ export default function Edit() {
     const customFields = useFormFields('getCustomFields', { ...data, module: 'General', sub_module: 'Proposal', id: proposal.id }, setData, errors, 'edit', t);
 
     useEffect(() => {
-        if (data.warehouse_id) {
+        if (data.type === 'product' && data.warehouse_id) {
             handleWarehouseChange(data.warehouse_id);
+        } else if (data.type === 'service') {
+            loadServices();
         }
     }, []);
 
@@ -88,6 +92,17 @@ export default function Edit() {
                 setAvailableProducts([]);
             }
         } else {
+            setAvailableProducts([]);
+        }
+    };
+
+    const loadServices = async () => {
+        try {
+            const response = await fetch(route('sales-proposals.services'));
+            const services = await response.json();
+            setAvailableProducts(services);
+        } catch (error) {
+            console.error('Failed to fetch services:', error);
             setAvailableProducts([]);
         }
     };
@@ -165,24 +180,26 @@ export default function Edit() {
                                     <InputError message={errors.customer_id} />
                                 </div>
 
-                                <div>
-                                    <Label htmlFor="warehouse_id" required>
-                                        {t('Warehouse')}
-                                    </Label>
-                                    <Select value={data.warehouse_id} onValueChange={handleWarehouseChange}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder={t('Select Warehouse')} />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {warehouses.map((warehouse) => (
-                                                <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
-                                                    {warehouse.name} - {warehouse.address}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError message={errors.warehouse_id} />
-                                </div>
+                                {data.type === 'product' && (
+                                    <div>
+                                        <Label htmlFor="warehouse_id" required>
+                                            {t('Warehouse')}
+                                        </Label>
+                                        <Select value={data.warehouse_id} onValueChange={handleWarehouseChange}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder={t('Select Warehouse')} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {warehouses.map((warehouse) => (
+                                                    <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
+                                                        {warehouse.name} - {warehouse.address}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <InputError message={errors.warehouse_id} />
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -258,6 +275,7 @@ export default function Edit() {
                                 errors={errors}
                                 products={availableProducts}
                                 showAddButton={false}
+                                invoiceType={data.type}
                             />
 
                             <div className="mt-6 flex justify-end">

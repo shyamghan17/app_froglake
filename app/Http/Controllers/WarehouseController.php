@@ -16,7 +16,7 @@ class WarehouseController extends Controller
     public function index()
     {
         if(Auth::user()->can('manage-warehouses')){
-            $warehouses = Warehouse::query()
+            $baseQuery = Warehouse::query()
                 ->where(function($q) {
                     if(Auth::user()->can('manage-any-warehouses')) {
                         $q->where('created_by', creatorId());
@@ -26,15 +26,47 @@ class WarehouseController extends Controller
                         $q->whereRaw('1 = 0');
                     }
                 })
-                ->when(request('name'), fn($q) => $q->where('name', 'like', '%' . request('name') . '%'))
-                ->when(request('city'), fn($q) => $q->where('city', 'like', '%' . request('city') . '%'))
-                ->when(request('is_active') !== null, fn($q) => $q->where('is_active', request('is_active')))
-                ->when(request('sort'), fn($q) => $q->orderBy(request('sort'), request('direction', 'asc')), fn($q) => $q->latest())
-                ->paginate(request('per_page', 10))
-                ->withQueryString();
+                ->when(request('search'), function($q) {
+                    $term = request('search');
+                    $q->where(function($q2) use ($term) {
+                        $q2->where('name', 'like', "%{$term}%")
+                            ->orWhere('city', 'like', "%{$term}%")
+                            ->orWhere('address', 'like', "%{$term}%");
+                    });
+                });
+
+            $neverStockedCutoff = now()->subDays(14);
+
+            $warehouses = (clone $baseQuery)
+                ->withSum(['stocks as stock_quantity'], 'quantity')
+                ->withCount(['stocks as product_count'])
+                ->with(['stocks.product:id,purchase_price'])
+                ->latest()
+                ->get()
+                ->map(function (Warehouse $warehouse) use ($neverStockedCutoff) {
+                    $stockQty = (float) ($warehouse->stock_quantity ?? 0);
+                    $warehouse->stock_quantity = $stockQty;
+                    $warehouse->stock_value = $warehouse->stocks->sum(
+                        fn($stock) => max(0, (float) $stock->quantity) * (float) ($stock->product->purchase_price ?? 0)
+                    );
+                    $warehouse->out_of_stock_count = $warehouse->stocks->where('quantity', '<=', 0)->count();
+                    $warehouse->has_stranded_stock = !$warehouse->is_active && $stockQty > 0;
+                    $warehouse->is_never_stocked = $warehouse->is_active
+                        && $warehouse->created_at <= $neverStockedCutoff
+                        && $stockQty <= 0;
+                    unset($warehouse->stocks);
+                    return $warehouse;
+                });
+
+            $activeCount = $warehouses->where('is_active', true)->count();
 
             return Inertia::render('warehouses/index', [
-                'warehouses' => $warehouses,
+                'warehouses' => $warehouses->values(),
+                'stats' => [
+                    'total' => $warehouses->count(),
+                    'active' => $activeCount,
+                    'inactive' => $warehouses->count() - $activeCount,
+                ],
             ]);
         }
         else{

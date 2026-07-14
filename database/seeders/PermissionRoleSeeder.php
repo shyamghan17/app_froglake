@@ -64,6 +64,8 @@ class PermissionRoleSeeder extends Seeder
             ['name' => 'impersonate-users', 'module' => 'users', 'label' => 'Login As User'],
             ['name' => 'toggle-status-users', 'module' => 'users', 'label' => 'Change Status Users'],
             ['name' => 'view-login-history', 'module' => 'users', 'label' => 'View Login History'],
+            ['name' => 'view-admin-hub', 'module' => 'users', 'label' => 'View Admin Hub'],
+            ['name' => 'view-upgrade-plan', 'module' => 'users', 'label' => 'View Upgrade Plan'],
 
             // Role management
             ['name' => 'manage-roles', 'module' => 'roles', 'label' => 'Manage Roles'],
@@ -278,7 +280,7 @@ class PermissionRoleSeeder extends Seeder
                 'label' => 'Super Admin',
                 'permissions' => [
                     'manage-dashboard',
-                    'manage-users', 'manage-any-users', 'manage-own-users', 'create-users', 'edit-users', 'delete-users', 'change-password-users', 'toggle-status-users', 'impersonate-users', 'view-login-history',
+                    'manage-users', 'manage-any-users', 'manage-own-users', 'create-users', 'edit-users', 'delete-users', 'change-password-users', 'toggle-status-users', 'impersonate-users', 'view-login-history', 'view-admin-hub','view-upgrade-plan',
                     'manage-helpdesk-tickets', 'manage-any-helpdesk-tickets', 'view-helpdesk-tickets', 'create-helpdesk-tickets', 'edit-helpdesk-tickets','delete-helpdesk-tickets',
                     'manage-helpdesk-categories', 'create-helpdesk-categories', 'edit-helpdesk-categories', 'delete-helpdesk-categories',
                     'manage-helpdesk-replies', 'create-helpdesk-replies', 'delete-helpdesk-replies',
@@ -308,7 +310,7 @@ class PermissionRoleSeeder extends Seeder
                     'manage-helpdesk-replies', 'create-helpdesk-replies',
                     'manage-settings', 'edit-settings', 'manage-brand-settings', 'edit-brand-settings', 'manage-company-settings', 'edit-company-settings', 'manage-system-settings', 'edit-system-settings', 'manage-email-settings', 'edit-email-settings', 'test-email','manage-email-notification-settings','manage-ai-agent-settings', 'edit-ai-agent-settings','manage-ai-agent',
                     'manage-currency-settings', 'edit-currency-settings', 'manage-media', 'manage-own-media', 'create-media', 'download-media', 'delete-media', 'manage-media-directories', 'manage-own-media-directories', 'create-media-directories', 'edit-media-directories', 'delete-media-directories',
-                    'manage-plans', 'manage-any-plans', 'manage-own-plans', 'view-plans', 'create-plans', 'edit-plans', 'delete-plans',
+                    'manage-plans', 'manage-any-plans', 'manage-own-plans', 'view-plans',
                     'manage-bank-transfer-requests', 'delete-bank-transfer-requests',
                     'manage-orders', 'view-orders',
                     'manage-profile', 'edit-profile', 'change-password-profile',

@@ -26,17 +26,17 @@ export const projectCompanyMenu = (t: (key: string) => string) => [
                 order: 5,
             },
             {
-                title: t('Projects Report'),
-                href: route('project.report.index'),
-                permission: 'manage-project-report',
-                order: 10,
-            },
-            {
                 title: t('Project Payments'),
                 href: route('project-payments.index'),
                 permission: 'manage-project-payments',
-                order: 12,
+                order: 10,
             },
+            {
+                title: t('Projects Report'),
+                href: route('project.report.index'),
+                permission: 'manage-project-report',
+                order: 12,
+            },     
             {
                 title: t('System Setup'),
                 href: route('project.task-stages.index'),

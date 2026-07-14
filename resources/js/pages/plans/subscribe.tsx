@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useFlashMessages } from '@/hooks/useFlashMessages';
 import AuthenticatedLayout from '@/layouts/authenticated-layout';
 import SubscriptionLayout from './subscription-layout';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 interface Plan {
     id: number;
@@ -69,6 +71,16 @@ export default function Subscribe({ plan, activeModules, userActiveModules, bank
                 { label: t('Subscribe to') + ' ' + plan.name }
             ]}
             pageTitle={t('Subscribe to Plan')}
+            pageActions={
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.visit(route('plans.index'))}
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    {t('Back')}
+                </Button>
+            }
         >
             <Head title={t('Subscribe to') + ' ' + plan.name} />
 

@@ -37,8 +37,6 @@ Route::middleware(['web', 'auth', 'verified', 'PlanModuleCheck:Pos'])->group(fun
     Route::put('/pos/discounts/{pos_discount}', [PosDiscountController::class, 'update'])->name('pos.discounts.update');
     Route::delete('/pos/discounts/{pos_discount}', [PosDiscountController::class, 'destroy'])->name('pos.discounts.destroy');
 
-    // Discount lookup API
-    Route::post('/pos/get-applicable-discount', [PosController::class, 'fetchApplicableDiscount'])->name('pos.get-applicable-discount');
 
     // POS Reports
 

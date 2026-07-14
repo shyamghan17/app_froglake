@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Plus, Calendar, Edit, Trash2, MoreVertical, Users, List, Eye, User } from 'lucide-react';
+import { Plus, Calendar, Edit, Trash2, MoreVertical, BarChart3, List, Eye, User } from 'lucide-react';
 import { getImagePath } from '@/utils/helpers';
 import KanbanBoard, { KanbanTask, KanbanColumn } from '@/components/kanban-board';
 import Create from './Create';
@@ -292,7 +292,33 @@ export default function Kanban() {
                         {auth.user?.permissions?.includes('manage-project-task') && (
                             <Tooltip delayDuration={0}>
                                 <TooltipTrigger asChild>
-                                    <Button size="sm"
+                                    <Button size="sm" variant="outline" onClick={() => router.get(route('project.tasks.calendar', project.id))}>
+                                        <Calendar className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{t('Calendar View')}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
+
+                        {auth.user?.permissions?.includes('manage-project-task') && (
+                            <Tooltip delayDuration={0}>
+                                <TooltipTrigger asChild>
+                                    <Button size="sm" variant="outline" onClick={() => router.get(route('project.gantt', project.id))}>
+                                        <BarChart3 className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{t('Gantt Chart')}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
+                    
+                        {auth.user?.permissions?.includes('manage-project-task') && (
+                            <Tooltip delayDuration={0}>
+                                <TooltipTrigger asChild>
+                                    <Button size="sm" variant="outline"
                                         onClick={() => router.get(route('project.tasks.index', { project_id: project.id }))}
                                     >
                                         <List className="h-4 w-4" />

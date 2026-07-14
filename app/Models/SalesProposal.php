@@ -14,6 +14,7 @@ class SalesProposal extends Model
         'due_date',
         'customer_id',
         'warehouse_id',
+        'type',
         'payment_terms',
         'subtotal',
         'tax_amount',
@@ -34,7 +35,8 @@ class SalesProposal extends Model
         'tax_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
-        'converted_to_invoice' => 'boolean'
+        'converted_to_invoice' => 'boolean',
+        'type' => 'string'
     ];
 
     protected $appends = ['display_status'];

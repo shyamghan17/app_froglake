@@ -186,8 +186,8 @@ export default function CustomersReport({ customerData }: CustomersReportProps) 
                 {/* Data Table */}
                 <Card className="shadow-sm">
                     <CardHeader className="p-6 border-b bg-gray-50/50">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                            <Users className="h-5 w-5 text-blue-600" />
+                        <CardTitle className="text-lg flex items-center gap-2 text-base">
+                            <Users className="h-5 w-5" />
                             {t('Customer Performance Report')}
                         </CardTitle>
                     </CardHeader>

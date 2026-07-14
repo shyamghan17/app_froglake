@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTranslation } from 'react-i18next';
 import { usePage } from '@inertiajs/react';
@@ -10,11 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Trash2, User } from 'lucide-react';
+import { Trash2, User, Image, File, FileText, Video, Music, Download, Eye } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { formatDate, getImagePath } from '@/utils/helpers';
+import { formatDate, getImagePath, downloadFile } from '@/utils/helpers';
 import { useFormFields } from '@/hooks/useFormFields';
+import MediaPicker from "@/components/MediaPicker";
 
 interface ViewBugProps {
     bug: { id: number };
@@ -31,21 +32,22 @@ export default function View({ bug }: ViewBugProps) {
     const canManageComments = auth.user?.permissions?.includes('manage-project-bug-comments');
     const canCreateComments = auth.user?.permissions?.includes('create-project-bug-comments');
     const canDeleteComments = auth.user?.permissions?.includes('delete-project-bug-comments');
+    const canEditBug = auth.user?.permissions?.includes('edit-project-bug');
+
+    const fetchBugData = useCallback(async () => {
+        try {
+            const response = await axios.get(route('project.bugs.show', bug.id));
+            setBugData(response.data.bug);
+        } catch (error) {
+            toast.error(t('Failed to load bug data'));
+        } finally {
+            setLoading(false);
+        }
+    }, [bug.id]);
 
     useEffect(() => {
-        const fetchBugData = async () => {
-            try {
-                const response = await axios.get(route('project.bugs.show', bug.id));
-                setBugData(response.data.bug);
-            } catch (error) {
-                toast.error(t('Failed to load bug data'));
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchBugData();
-    }, [bug.id]);
+    }, [fetchBugData]);
 
     if (loading) {
         return (
@@ -63,6 +65,7 @@ export default function View({ bug }: ViewBugProps) {
     if (!bugData) return null;
 
     const assignedUsers = bugData.assignedUsers || [];
+    const bugFiles = bugData.files || [];
 
     return (
         <DialogContent className="max-w-2xl max-h-[90vh]">
@@ -149,15 +152,20 @@ export default function View({ bug }: ViewBugProps) {
                     </div>
                 )}
 
-                {/* Comments Section */}
-                {(canManageComments || canCreateComments) && (
+                {/* Comments & Files Section */}
+                {(canManageComments || canCreateComments || canEditBug) && (
                     <Tabs defaultValue="comments" className="w-full">
-                        <TabsList className="grid w-full grid-cols-1">
+                        <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="comments">{t('Comments')}</TabsTrigger>
+                            <TabsTrigger value="files">{t('Files')}</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="comments" className="space-y-4">
                             <CommentsTab bugId={bugData.id} canManageComments={canManageComments} canCreateComments={canCreateComments} canDeleteComments={canDeleteComments} />
+                        </TabsContent>
+
+                        <TabsContent value="files" className="space-y-4">
+                            <FilesTab bugId={bugData.id} files={bugFiles} canEditBug={canEditBug} onRefetch={fetchBugData} />
                         </TabsContent>
                     </Tabs>
                 )}
@@ -313,6 +321,175 @@ function CommentsTab({ bugId, canManageComments, canCreateComments, canDeleteCom
                 onConfirm={confirmDelete}
                 variant="destructive"
             />
+        </div>
+    );
+}
+
+function FilesTab({ bugId, files, canEditBug, onRefetch }: { bugId: number; files: any[]; canEditBug: boolean; onRefetch: () => void }) {
+    const { t } = useTranslation();
+    const [uploading, setUploading] = useState(false);
+    const [selectedImages, setSelectedImages] = useState<string[]>([]);
+
+    const getFileIcon = (fileName: string) => {
+        const ext = fileName.split('.').pop()?.toLowerCase();
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '')) {
+            return <Image className="h-5 w-5 text-blue-500" />;
+        } else if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(ext || '')) {
+            return <Video className="h-5 w-5 text-purple-500" />;
+        } else if (['mp3', 'wav', 'flac', 'aac', 'ogg'].includes(ext || '')) {
+            return <Music className="h-5 w-5 text-green-500" />;
+        } else if (['txt', 'doc', 'docx', 'pdf', 'rtf'].includes(ext || '')) {
+            return <FileText className="h-5 w-5 text-red-500" />;
+        } else {
+            return <File className="h-5 w-5 text-gray-500" />;
+        }
+    };
+
+    const isImage = (fileName: string) => {
+        const ext = fileName.split('.').pop()?.toLowerCase();
+        return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '');
+    };
+
+    const handleFileUpload = async (value: string | string[]) => {
+        const items = Array.isArray(value) ? value : [value].filter(Boolean);
+        if (items.length === 0) return;
+
+        setUploading(true);
+        try {
+            const response = await axios.post(route('project.bugs.files.store', bugId), { images: items });
+            toast.success(t(response.data.message || 'Files uploaded successfully.'));
+            setSelectedImages([]);
+            onRefetch();
+        } catch (error: any) {
+            toast.error(error.response?.status === 403 ? t('Permission denied') : t('Failed to upload files'));
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleDeleteFile = async (fileId: number) => {
+        try {
+            const response = await axios.delete(route('project.bugs.files.delete', fileId));
+            toast.success(t(response.data.message || 'The file has been deleted.'));
+            onRefetch();
+        } catch (error: any) {
+            toast.error(error.response?.status === 403 ? t('Permission denied') : t('Failed to delete file'));
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            {canEditBug && (
+                <div>
+                    <MediaPicker
+                        value={selectedImages}
+                        onChange={(value) => {
+                            const items = Array.isArray(value) ? value : [value].filter(Boolean);
+                            setSelectedImages(items);
+                            if (items.length > 0) {
+                                handleFileUpload(items);
+                            }
+                        }}
+                        multiple={true}
+                        placeholder={t('Select files')}
+                        showPreview={false}
+                        label=""
+                    />
+                </div>
+            )}
+
+            {files && files.length > 0 ? (
+                <div className="space-y-2 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
+                    {files.map((file) => {
+                        const imageUrl = getImagePath(file.file_path);
+                        return (
+                            <div key={file.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors group">
+                                <div className="flex-shrink-0">
+                                    {isImage(file.file_path) ? (
+                                        <img
+                                            src={imageUrl}
+                                            alt={file.file_name}
+                                            className="w-10 h-10 object-cover rounded border"
+                                        />
+                                    ) : (
+                                        <div className="w-10 h-10 bg-white rounded border flex items-center justify-center">
+                                            {getFileIcon(file.file_name)}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate" title={file.file_name}>
+                                        {file.file_name}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        {file.file_name.split('.').pop()?.toUpperCase()} file
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <TooltipProvider>
+                                        <Tooltip delayDuration={0}>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => window.open(imageUrl, '_blank')}
+                                                    className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{t('View')}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    <TooltipProvider>
+                                        <Tooltip delayDuration={0}>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => downloadFile(imageUrl)}
+                                                    className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
+                                                >
+                                                    <Download className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{t('Download')}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    {canEditBug && (
+                                        <TooltipProvider>
+                                            <Tooltip delayDuration={0}>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => handleDeleteFile(file.id)}
+                                                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>{t('Delete')}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="text-center py-8 text-gray-500 flex flex-col items-center justify-center">
+                    <File className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">{t('No files uploaded yet')}</p>
+                </div>
+            )}
         </div>
     );
 }

@@ -44,7 +44,7 @@ export const posCompanyMenu = (t: (key: string) => string) => [
                 permission: 'manage-pos-billing-counters',
             },
             {
-                title: t('Pos Discounts'),
+                title: t('Discounts'),
                 href: route('pos.discounts.index'),
                 permission: 'manage-pos-discounts',
             },

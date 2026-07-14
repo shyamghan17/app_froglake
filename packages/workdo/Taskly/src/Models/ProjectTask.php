@@ -64,4 +64,9 @@ class ProjectTask extends Model
     {
         return $this->hasMany(TaskSubtask::class, 'task_id');
     }
+
+    public function files()
+    {
+        return $this->hasMany(ProjectFile::class, 'task_id');
+    }
 }

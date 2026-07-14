@@ -19,6 +19,7 @@ interface BarChartProps {
   }>;
   activeIndex?: number;
   negative?: boolean;
+  yAxisWidth?: number;
 }
 
 export const BarChart: React.FC<BarChartProps> = ({
@@ -34,13 +35,49 @@ export const BarChart: React.FC<BarChartProps> = ({
   height = 350,
   bars = [],
   activeIndex,
-  negative = false
+  negative = false,
+  yAxisWidth
 }) => {
+  const getMaxValue = () => {
+    let max = 0;
+    data.forEach((item: any) => {
+      if (bars.length > 0) {
+        bars.forEach((bar: any) => {
+          const val = parseFloat(item[bar.dataKey]) || 0;
+          max = Math.max(max, val);
+        });
+      } else {
+        const val = parseFloat(item[dataKey]) || 0;
+        max = Math.max(max, val);
+      }
+    });
+    return max;
+  };
+
+  const maxValue = getMaxValue();
+  const maxValueStr = maxValue.toLocaleString();
+  
+  // Calculate dynamic width based on actual string length of formatted value
+  let dynamicYAxisWidth = 40;
+  if (!horizontal && maxValueStr.length > 6) {
+    dynamicYAxisWidth = 25 + (maxValueStr.length - 6) * 5;
+    dynamicYAxisWidth = Math.min(dynamicYAxisWidth, 85);
+  }
+  
+  const finalYAxisWidth = yAxisWidth || dynamicYAxisWidth;
+  
+  let chartMargin: any;
+  if (horizontal) {
+    chartMargin = { left: 80, right: 12, top: 10, bottom: 10 };
+  } else {
+    chartMargin = { left: finalYAxisWidth, right: 12 };
+  }
+
   const layout = horizontal ? { layout: 'horizontal' as const } : {};
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <RechartsBarChart data={data} margin={horizontal ? { left: 80, right: 12 } : { left: 12, right: 12 }} {...layout}>
+      <RechartsBarChart data={data} margin={chartMargin} {...layout}>
         {showGrid && <CartesianGrid vertical={false} />}
         {horizontal ? (
           <>
@@ -49,8 +86,8 @@ export const BarChart: React.FC<BarChartProps> = ({
           </>
         ) : (
           <>
-            <XAxis dataKey={xAxisKey} tickLine={false} axisLine={false} tickMargin={8} />
-            <YAxis domain={negative ? ['dataMin', 'dataMax'] : [0, 'dataMax']} tickLine={false} axisLine={false} tickMargin={8} />
+            <XAxis dataKey={xAxisKey} tickLine={false} axisLine={false} tickMargin={8} height={45} />
+            <YAxis domain={negative ? ['dataMin', 'dataMax'] : [0, 'dataMax']} tickLine={false} axisLine={false} tickMargin={8} width={finalYAxisWidth} />
           </>
         )}
         {showTooltip && <Tooltip />}

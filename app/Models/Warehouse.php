@@ -27,4 +27,9 @@ class Warehouse extends Model
             'is_active' => 'boolean',
         ];
     }
+
+    public function stocks()
+    {
+        return $this->hasMany(\Workdo\ProductService\Models\WarehouseStock::class);
+    }
 }

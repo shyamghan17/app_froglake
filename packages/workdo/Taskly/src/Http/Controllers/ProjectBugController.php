@@ -18,8 +18,10 @@ use Workdo\Taskly\Models\Project;
 use Workdo\Taskly\Models\BugStage;
 use Workdo\Taskly\Models\ProjectBug;
 use Workdo\Taskly\Models\BugComment;
+use Workdo\Taskly\Models\ProjectFile;
 use Workdo\Taskly\Http\Requests\StoreProjectBugRequest;
 use Workdo\Taskly\Http\Requests\UpdateProjectBugRequest;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class ProjectBugController extends Controller
 {
@@ -193,7 +195,7 @@ class ProjectBugController extends Controller
                    in_array((string)Auth::id(), $assignedUserIds);
 
         if (Auth::user()->can('view-project-bug') && $canView) {
-            $bug->load(['project:id,name', 'bugStage:id,name,color']);
+            $bug->load(['project:id,name', 'bugStage:id,name,color', 'files']);
 
             $assignedUsers = [];
             if ($bug->assigned_to) {
@@ -212,6 +214,7 @@ class ProjectBugController extends Controller
                     'project' => $bug->project,
                     'stage' => $bug->bugStage,
                     'assignedUsers' => $assignedUsers,
+                    'files' => $bug->files,
                     'created_at' => $bug->created_at
                 ]
             ]);
@@ -405,5 +408,49 @@ class ProjectBugController extends Controller
         } else {
             return response()->json(['error' => __('Permission denied')], 403);
         }
+    }
+
+    public function storeFile(Request $request, ProjectBug $bug)
+    {
+        $assignedUserIds = $bug->assigned_to ? (is_array($bug->assigned_to) ? $bug->assigned_to : json_decode($bug->assigned_to, true)) : [];
+        $canEdit = Auth::user()->can('edit-project-bug') ||
+                   ($bug->creator_id == Auth::id()) ||
+                   in_array((string)Auth::id(), $assignedUserIds);
+
+        if (Auth::user()->can('edit-project-bug') && $canEdit) {
+            $request->validate([
+                'images' => 'required|array',
+                'images.*' => 'string'
+            ]);
+
+            foreach ($request->images as $imagePath) {
+                $mediaFile = Media::where('file_name', basename($imagePath))->first();
+                ProjectFile::create([
+                    'bug_id' => $bug->id,
+                    'file_name' => $mediaFile ? $mediaFile->name : basename($imagePath),
+                    'file_path' => basename($imagePath),
+                ]);
+            }
+
+            return response()->json(['success' => true, 'message' => __('Files uploaded successfully.')]);
+        }
+        return response()->json(['error' => __('Permission denied')], 403);
+    }
+
+    public function deleteFile(ProjectFile $file)
+    {
+        $bug = ProjectBug::find($file->bug_id);
+        if ($bug) {
+            $assignedUserIds = $bug->assigned_to ? (is_array($bug->assigned_to) ? $bug->assigned_to : json_decode($bug->assigned_to, true)) : [];
+            $canEdit = Auth::user()->can('edit-project-bug') ||
+                       ($bug->creator_id == Auth::id()) ||
+                       in_array((string)Auth::id(), $assignedUserIds);
+
+            if (Auth::user()->can('edit-project-bug') && $canEdit) {
+                $file->delete();
+                return response()->json(['success' => true, 'message' => __('The file has been deleted.')]);
+            }
+        }
+        return response()->json(['error' => __('Permission denied')], 403);
     }
 }

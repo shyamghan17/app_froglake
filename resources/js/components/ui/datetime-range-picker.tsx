@@ -42,7 +42,16 @@ export function DateTimeRangePicker({
   const [startDate, setStartDate] = React.useState<Date | null>(null)
   const [endDate, setEndDate] = React.useState<Date | null>(null)
 
+  // Normalize datetime on mount and when value changes
   React.useEffect(() => {
+    if (value && (value.includes('T') || value.includes('Z'))) {
+      const normalized = normalizeDateTimeValue(value)
+      if (normalized !== value) {
+        onChange(normalized)
+        return
+      }
+    }
+    
     if (value) {
       if (mode === 'single') {
         setStartDate(new Date(value.replace(' ', 'T')))
@@ -57,6 +66,29 @@ export function DateTimeRangePicker({
       setEndDate(null)
     }
   }, [value, mode])
+
+  const normalizeDateTimeValue = (val: string): string => {
+    const normalizeDateTime = (dateTimeStr: string): string => {
+      if (!dateTimeStr) return ''
+      if (dateTimeStr.includes('Z')) {
+        const utcDate = new Date(dateTimeStr)
+        const year = utcDate.getFullYear()
+        const month = String(utcDate.getMonth() + 1).padStart(2, '0')
+        const day = String(utcDate.getDate()).padStart(2, '0')
+        const hours = String(utcDate.getHours()).padStart(2, '0')
+        const minutes = String(utcDate.getMinutes()).padStart(2, '0')
+        return `${year}-${month}-${day} ${hours}:${minutes}`
+      }
+      return dateTimeStr
+    }
+
+    if (mode === 'single') {
+      return normalizeDateTime(val)
+    } else {
+      const [start, end] = val.split(' - ')
+      return `${normalizeDateTime(start)} - ${normalizeDateTime(end)}`
+    }
+  }
 
   const formatValue = (startDate: Date | null, endDate: Date | null) => {
     const options: Intl.DateTimeFormatOptions = {

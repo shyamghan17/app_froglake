@@ -1813,6 +1813,9 @@ class StripeController extends Controller
                             ->with('success', __('Payment completed and membership activated successfully!'));
                     }
                 }
+
+                return redirect()->route('coworking-space.home', ['userSlug' => $userSlug])
+                    ->with('error', __('Payment was cancelled.'));
             }
             return redirect()->route(($paymentType == 'membership') ? 'coworking-space.purchase' : 'coworking-space.booking', ['userSlug' => $userSlug])
                 ->with('error', __('Something went wrong. Please try again.'));

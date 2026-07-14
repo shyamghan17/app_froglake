@@ -6,7 +6,7 @@ import AuthenticatedLayout from '@/layouts/authenticated-layout';
 import { formatCurrency, formatDate } from '@/utils/helpers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { RefreshCw, Download } from 'lucide-react';
+import { RefreshCw, Download, ArrowLeft } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useFormFields } from '@/hooks/useFormFields';
 
@@ -82,6 +82,16 @@ export default function View() {
                 {label: t('Sales Proposal Details')}
             ]}
             pageTitle={`${t('Sales Proposal')} #${proposal.proposal_number}`}
+            pageActions={
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.visit(route('sales-proposals.index'))}
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    {t('Back')}
+                </Button>
+            }
         >
             <Head title={`${t('Sales Proposal')} #${proposal.proposal_number}`} />
 

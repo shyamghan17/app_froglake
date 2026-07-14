@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTranslation } from 'react-i18next';
 import { usePage } from '@inertiajs/react';
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getImagePath } from '@/utils/helpers';
-import { User } from 'lucide-react';
+import { User, Image, File, FileText, Video, Music, Download, Eye, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,9 +18,9 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { ProjectTask, Project, Milestone, TaskStage } from './types';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Trash2 } from 'lucide-react';
-import { formatDate } from '@/utils/helpers';
+import { formatDate, downloadFile } from '@/utils/helpers';
 import { useFormFields } from '@/hooks/useFormFields';
+import MediaPicker from "@/components/MediaPicker";
 
 interface ViewTaskProps {
     task: { id: number } | ProjectTask;
@@ -38,20 +38,24 @@ export default function View({ task, project, milestones = [], teamMembers = [],
     const [loading, setLoading] = useState(true);
     const customFields = useFormFields('getCustomFields', { module: 'Taskly', sub_module: 'Tasks', id: task.id }, () => {}, {}, 'view', t);
 
-    useEffect(() => {
-        const fetchTaskData = async () => {
-            try {
-                const response = await axios.get(route('project.tasks.show', task.id));
-                setTaskData(response.data.task);
-            } catch (error) {
-                toast.error(t('Failed to load task data'));
-            } finally {
-                setLoading(false);
-            }
-        };
+    const canManageComments = auth.user?.permissions?.includes('manage-project-task-comments');
+    const canManageSubtasks = auth.user?.permissions?.includes('manage-project-subtask');
+    const canEditTask = auth.user?.permissions?.includes('edit-project-task');
 
-        fetchTaskData();
+    const fetchTaskData = useCallback(async () => {
+        try {
+            const response = await axios.get(route('project.tasks.show', task.id));
+            setTaskData(response.data.task);
+        } catch (error) {
+            toast.error(t('Failed to load task data'));
+        } finally {
+            setLoading(false);
+        }
     }, [task.id]);
+
+    useEffect(() => {
+        fetchTaskData();
+    }, [fetchTaskData]);
 
     if (loading) {
         return (
@@ -75,6 +79,16 @@ export default function View({ task, project, milestones = [], teamMembers = [],
     const stage = taskStages.find(s => s.id === taskData.stage_id);
 
     const assignedUsers = taskData.assignedUsers || [];
+    const taskFiles = taskData.files || [];
+
+    const visibleTabs = [
+        canManageComments ? 'comments' : null,
+        canManageSubtasks ? 'subtasks' : null,
+        canEditTask ? 'files' : null,
+    ].filter(Boolean) as string[];
+
+    const defaultTab = visibleTabs[0] || 'comments';
+    const tabCount = visibleTabs.length;
 
     return (
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -188,30 +202,39 @@ export default function View({ task, project, milestones = [], teamMembers = [],
                 )}
 
                 {/* Tabs Section */}
-                {(auth.user?.permissions?.includes('manage-project-task-comments') || auth.user?.permissions?.includes('manage-project-subtask')) && (
-                    <Tabs defaultValue={auth.user?.permissions?.includes('manage-project-task-comments') ? 'comments' : 'subtasks'} className="w-full">
+                {tabCount > 0 && (
+                    <Tabs defaultValue={defaultTab} className="w-full">
                         <TabsList className={`grid w-full ${
-                            auth.user?.permissions?.includes('manage-project-task-comments') && auth.user?.permissions?.includes('manage-project-subtask')
-                                ? 'grid-cols-2'
-                                : 'grid-cols-1'
+                            tabCount === 3 ? 'grid-cols-3' :
+                            tabCount === 2 ? 'grid-cols-2' :
+                            'grid-cols-1'
                         }`}>
-                            {auth.user?.permissions?.includes('manage-project-task-comments') && (
+                            {canManageComments && (
                                 <TabsTrigger value="comments">{t('Comments')}</TabsTrigger>
                             )}
-                            {auth.user?.permissions?.includes('manage-project-subtask') && (
+                            {canManageSubtasks && (
                                 <TabsTrigger value="subtasks">{t('Subtasks')}</TabsTrigger>
+                            )}
+                            {canEditTask && (
+                                <TabsTrigger value="files">{t('Files')}</TabsTrigger>
                             )}
                         </TabsList>
 
-                        {auth.user?.permissions?.includes('manage-project-task-comments') && (
+                        {canManageComments && (
                             <TabsContent value="comments" className="space-y-4">
                                 <CommentsTab taskId={taskData.id} />
                             </TabsContent>
                         )}
 
-                        {auth.user?.permissions?.includes('manage-project-subtask') && (
+                        {canManageSubtasks && (
                             <TabsContent value="subtasks" className="space-y-4">
                                 <SubtasksTab taskId={taskData.id} />
+                            </TabsContent>
+                        )}
+
+                        {canEditTask && (
+                            <TabsContent value="files" className="space-y-4">
+                                <FilesTab taskId={taskData.id} files={taskFiles} canEditTask={canEditTask} onRefetch={fetchTaskData} />
                             </TabsContent>
                         )}
                     </Tabs>
@@ -492,6 +515,175 @@ function SubtasksTab({ taskId }: { taskId: number }) {
             ) : (
                 <div className="text-center py-4">
                     <p className="text-sm text-gray-500">{t('No subtasks yet')}</p>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function FilesTab({ taskId, files, canEditTask, onRefetch }: { taskId: number; files: any[]; canEditTask: boolean; onRefetch: () => void }) {
+    const { t } = useTranslation();
+    const [uploading, setUploading] = useState(false);
+    const [selectedImages, setSelectedImages] = useState<string[]>([]);
+
+    const getFileIcon = (fileName: string) => {
+        const ext = fileName.split('.').pop()?.toLowerCase();
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '')) {
+            return <Image className="h-5 w-5 text-blue-500" />;
+        } else if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(ext || '')) {
+            return <Video className="h-5 w-5 text-purple-500" />;
+        } else if (['mp3', 'wav', 'flac', 'aac', 'ogg'].includes(ext || '')) {
+            return <Music className="h-5 w-5 text-green-500" />;
+        } else if (['txt', 'doc', 'docx', 'pdf', 'rtf'].includes(ext || '')) {
+            return <FileText className="h-5 w-5 text-red-500" />;
+        } else {
+            return <File className="h-5 w-5 text-gray-500" />;
+        }
+    };
+
+    const isImage = (fileName: string) => {
+        const ext = fileName.split('.').pop()?.toLowerCase();
+        return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '');
+    };
+
+    const handleFileUpload = async (value: string | string[]) => {
+        const items = Array.isArray(value) ? value : [value].filter(Boolean);
+        if (items.length === 0) return;
+
+        setUploading(true);
+        try {
+            const response = await axios.post(route('project.tasks.files.store', taskId), { images: items });
+            toast.success(t(response.data.message || 'Files uploaded successfully.'));
+            setSelectedImages([]);
+            onRefetch();
+        } catch (error: any) {
+            toast.error(error.response?.status === 403 ? t('Permission denied') : t('Failed to upload files'));
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleDeleteFile = async (fileId: number) => {
+        try {
+            const response = await axios.delete(route('project.tasks.files.delete', fileId));
+            toast.success(t(response.data.message || 'The file has been deleted.'));
+            onRefetch();
+        } catch (error: any) {
+            toast.error(error.response?.status === 403 ? t('Permission denied') : t('Failed to delete file'));
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            {canEditTask && (
+                <div>
+                    <MediaPicker
+                        value={selectedImages}
+                        onChange={(value) => {
+                            const items = Array.isArray(value) ? value : [value].filter(Boolean);
+                            setSelectedImages(items);
+                            if (items.length > 0) {
+                                handleFileUpload(items);
+                            }
+                        }}
+                        multiple={true}
+                        placeholder={t('Select files')}
+                        showPreview={false}
+                        label=""
+                    />
+                </div>
+            )}
+
+            {files && files.length > 0 ? (
+                <div className="space-y-2 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
+                    {files.map((file) => {
+                        const imageUrl = getImagePath(file.file_path);
+                        return (
+                            <div key={file.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors group">
+                                <div className="flex-shrink-0">
+                                    {isImage(file.file_path) ? (
+                                        <img
+                                            src={imageUrl}
+                                            alt={file.file_name}
+                                            className="w-10 h-10 object-cover rounded border"
+                                        />
+                                    ) : (
+                                        <div className="w-10 h-10 bg-white rounded border flex items-center justify-center">
+                                            {getFileIcon(file.file_name)}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate" title={file.file_name}>
+                                        {file.file_name}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        {file.file_name.split('.').pop()?.toUpperCase()} file
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <TooltipProvider>
+                                        <Tooltip delayDuration={0}>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => window.open(imageUrl, '_blank')}
+                                                    className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{t('View')}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    <TooltipProvider>
+                                        <Tooltip delayDuration={0}>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => downloadFile(imageUrl)}
+                                                    className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
+                                                >
+                                                    <Download className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{t('Download')}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    {canEditTask && (
+                                        <TooltipProvider>
+                                            <Tooltip delayDuration={0}>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => handleDeleteFile(file.id)}
+                                                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>{t('Delete')}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="text-center py-8 text-gray-500 flex flex-col items-center justify-center">
+                    <File className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">{t('No files uploaded yet')}</p>
                 </div>
             )}
         </div>

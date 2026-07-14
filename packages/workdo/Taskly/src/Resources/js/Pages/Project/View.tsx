@@ -19,7 +19,7 @@ import { CurrencyInput } from '@/components/ui/currency-input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatCurrency, formatDate, downloadFile } from '@/utils/helpers';
 import { getImagePath } from '@/utils/helpers';
-import { Plus, Trash2, Edit, FolderKanban, Kanban, List, Bug, CheckSquare, Calendar, Activity, Image, File, FileText, Video, Music, Download, Eye } from "lucide-react";
+import { Plus, Trash2, Edit, FolderKanban, Kanban, List, Bug, CheckSquare, Calendar, Activity, Image, File, FileText, Video, Music, Download, Eye, BarChart3 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { DataTable } from "@/components/ui/data-table";
 import NoRecordsFound from '@/components/no-records-found';
@@ -364,6 +364,19 @@ export default function Show() {
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>{t('Calendar View')}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
+
+                        {auth.user?.permissions?.includes('manage-project-task') && (
+                            <Tooltip delayDuration={0}>
+                                <TooltipTrigger asChild>
+                                    <Button size="sm" onClick={() => router.get(route('project.gantt', project.id))}>
+                                        <BarChart3 className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{t('Gantt Chart')}</p>
                                 </TooltipContent>
                             </Tooltip>
                         )}

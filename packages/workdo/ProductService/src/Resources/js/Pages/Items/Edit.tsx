@@ -240,8 +240,7 @@ export default function Edit() {
                                         <Button
                                             type="button"
                                             onClick={nextTab}
-                                            // amazonq-ignore-next-line
-                                            disabled={!validatePricingTab()}
+                                            disabled={!validateDetailsTab()}
                                         >
                                             {t('Next')}
                                         </Button>

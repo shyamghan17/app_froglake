@@ -9,6 +9,10 @@ class DemoTaxSeeder extends Seeder
 {
     public function run($userId): void
     {
+        if (ProductServiceTax::where('created_by', $userId)->exists()) {
+            return;
+        }
+
         if (!empty($userId)) {
             $taxes = [
                 ['tax_name' => 'GST', 'rate' => 18.00],

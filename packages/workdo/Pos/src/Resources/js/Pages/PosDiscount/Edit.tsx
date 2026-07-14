@@ -16,6 +16,7 @@ import AuthenticatedLayout from '@/layouts/authenticated-layout';
 import NoRecordsFound from '@/components/no-records-found';
 import InputError from '@/components/ui/input-error';
 import { PosDiscount } from './types';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Product {
     id: number;
@@ -122,8 +123,10 @@ export default function Edit() {
         >
             <Head title={t('Edit Discount')} />
 
-            <form onSubmit={submit} className="space-y-6">
-                {/* Discount Details Card */}
+            <form onSubmit={submit} className="h-full flex flex-col">
+                <ScrollArea className="flex-1">
+                    <div className="space-y-6 pr-4">
+                        {/* Discount Details Card */}
                 <Card>
                     <CardHeader>
                         <div className="flex items-center justify-between">
@@ -386,16 +389,18 @@ export default function Edit() {
                         </CardContent>
                     </Card>
                 )}
-
-                {/* Action Buttons */}
-                <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => window.history.back()}>
-                        {t('Cancel')}
-                    </Button>
-                    <Button type="submit" disabled={processing}>
-                        {processing ? t('Updating...') : t('Update')}
-                    </Button>
+                    {/* Action Buttons */}
+                    <div className="flex justify-end gap-2">
+                        <Button type="button" variant="outline" onClick={() => window.history.back()}>
+                            {t('Cancel')}
+                        </Button>
+                        <Button type="submit" disabled={processing}>
+                            {processing ? t('Updating...') : t('Update')}
+                        </Button>
+                    </div>
                 </div>
+                </ScrollArea>
+
             </form>
         </AuthenticatedLayout>
     );

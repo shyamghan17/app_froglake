@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import InputError from "@/components/ui/input-error";
 import { CreateHelpdeskCategoryProps, CreateHelpdeskCategoryFormData } from './types';
 
@@ -57,31 +57,29 @@ export default function Create({ onSuccess }: CreateHelpdeskCategoryProps) {
                     <InputError message={errors.description} />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <Label htmlFor="color">{t('Color')}</Label>
-                        <Input
-                            id="color"
-                            type="color"
-                            value={data.color}
-                            onChange={(e) => setData('color', e.target.value)}
+                <div>
+                    <Label htmlFor="color">{t('Color')}</Label>
+                    <Input
+                        id="color"
+                        type="color"
+                        value={data.color}
+                        onChange={(e) => setData('color', e.target.value)}
+                        className="h-10 w-20"
+                    />
+                    <InputError message={errors.color} />
+                </div>
+
+                <div>
+                    <Label htmlFor="is_active">{t('Active')}</Label>
+                    <div className="mt-2">
+                        <Switch
+                            id="is_active"
+                            checked={data.is_active}
+                            onCheckedChange={(checked) => setData('is_active', checked)}
                         />
-                        <InputError message={errors.color} />
-                    </div>
-                    <div>
-                        <Label htmlFor="is_active">{t('Status')}</Label>
-                        <Select value={data.is_active ? "1" : "0"} onValueChange={(value) => setData('is_active', value === "1")}>
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="1">{t('Active')}</SelectItem>
-                                <SelectItem value="0">{t('Inactive')}</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <InputError message={errors.is_active} />
                     </div>
                 </div>
+                <InputError message={errors.is_active} />
 
                 <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={onSuccess}>

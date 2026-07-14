@@ -6,7 +6,7 @@ import AuthenticatedLayout from '@/layouts/authenticated-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Save } from 'lucide-react';
+import { Save, ArrowLeft } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -96,7 +96,16 @@ export default function Edit() {
                         {label: t('Edit Email Template')}
                     ]}
                     pageTitle={`${t('Edit Email Template')} : ${emailTemplate.name}`}
-
+                    pageActions={
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.visit(route('email-templates.index'))}
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                            {t('Back')}
+                        </Button>
+                    }
                 >
 
             <Head title={t('Edit Email Template')} />

@@ -7,7 +7,7 @@ import AuthenticatedLayout from "@/layouts/authenticated-layout";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { Users } from "lucide-react";
+import { Users, ArrowLeft } from "lucide-react";
 import { FilterButton } from '@/components/ui/filter-button';
 import { SearchInput } from "@/components/ui/search-input";
 import NoRecordsFound from '@/components/no-records-found';
@@ -120,7 +120,16 @@ export default function Details() {
                 {label: coupon.name}
             ]}
             pageTitle={t('Coupon Details')}
-
+            pageActions={
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.visit(route('coupons.index'))}
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    {t('Back')}
+                </Button>
+            }
         >
             <Head title={`${t('Coupon Details')} - ${coupon.name}`} />
 
