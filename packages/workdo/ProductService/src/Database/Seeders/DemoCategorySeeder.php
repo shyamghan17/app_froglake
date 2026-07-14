@@ -9,6 +9,10 @@ class DemoCategorySeeder extends Seeder
 {
     public function run($userId): void
     {
+        if (ProductServiceCategory::where('created_by', $userId)->exists()) {
+            return;
+        }
+
         if (!empty($userId)) {
             $categories = [
                 // Item Categories

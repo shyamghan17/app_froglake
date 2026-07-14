@@ -20,10 +20,12 @@ use Workdo\Taskly\Http\Requests\UpdateProjectTaskRequest;
 use Workdo\Taskly\Models\ActivityLog;
 use Workdo\Taskly\Models\TaskComment;
 use Workdo\Taskly\Models\TaskSubtask;
+use Workdo\Taskly\Models\ProjectFile;
 use Workdo\Taskly\Events\CreateTaskSubtask;
 use Workdo\Taskly\Events\DestroyTaskComment;
 use Workdo\Taskly\Events\UpdateProjectTaskStage;
 use App\Models\EmailTemplate;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class ProjectTaskController extends Controller
 {
@@ -412,7 +414,8 @@ class ProjectTaskController extends Controller
             $task->load([
                 'project:id,name',
                 'milestone:id,title',
-                'assignedUser:id,name'
+                'assignedUser:id,name',
+                'files'
             ]);
 
             $stage = TaskStage::select('id', 'name', 'color')->find($task->stage_id);
@@ -450,6 +453,7 @@ class ProjectTaskController extends Controller
                     'milestone' => $task->milestone,
                     'stage' => $stage,
                     'assignedUsers' => $assignedUsers,
+                    'files' => $task->files,
                     'created_at' => $task->created_at
                 ]
             ]);
@@ -584,6 +588,50 @@ class ProjectTaskController extends Controller
                 ->get();
 
             return response()->json($tasks);
+        }
+        return response()->json(['error' => __('Permission denied')], 403);
+    }
+
+    public function storeFile(Request $request, ProjectTask $task)
+    {
+        $assignedUserIds = $task->assigned_to ? (is_array($task->assigned_to) ? $task->assigned_to : json_decode($task->assigned_to, true)) : [];
+        $canEdit = Auth::user()->can('edit-project-task') ||
+                   ($task->creator_id == Auth::id()) ||
+                   in_array((string)Auth::id(), $assignedUserIds);
+
+        if (Auth::user()->can('edit-project-task') && $canEdit) {
+            $request->validate([
+                'images' => 'required|array',
+                'images.*' => 'string'
+            ]);
+
+            foreach ($request->images as $imagePath) {
+                $mediaFile = Media::where('file_name', basename($imagePath))->first();
+                ProjectFile::create([
+                    'task_id' => $task->id,
+                    'file_name' => $mediaFile ? $mediaFile->name : basename($imagePath),
+                    'file_path' => basename($imagePath),
+                ]);
+            }
+
+            return response()->json(['success' => true, 'message' => __('Files uploaded successfully.')]);
+        }
+        return response()->json(['error' => __('Permission denied')], 403);
+    }
+
+    public function deleteFile(ProjectFile $file)
+    {
+        $task = ProjectTask::find($file->task_id);
+        if ($task) {
+            $assignedUserIds = $task->assigned_to ? (is_array($task->assigned_to) ? $task->assigned_to : json_decode($task->assigned_to, true)) : [];
+            $canEdit = Auth::user()->can('edit-project-task') ||
+                       ($task->creator_id == Auth::id()) ||
+                       in_array((string)Auth::id(), $assignedUserIds);
+
+            if (Auth::user()->can('edit-project-task') && $canEdit) {
+                $file->delete();
+                return response()->json(['success' => true, 'message' => __('The file has been deleted.')]);
+            }
         }
         return response()->json(['error' => __('Permission denied')], 403);
     }

@@ -8,8 +8,9 @@ import { formatCurrency, formatDate } from '@/utils/helpers';
 import { getStatusBadgeClasses } from './utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { FileText, Download, CheckCircle } from 'lucide-react';
+import { FileText, Download, CheckCircle, ArrowLeft } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { usePageButtons } from '@/hooks/usePageButtons';
 
 interface ViewProps {
     return: SalesReturn;
@@ -23,6 +24,11 @@ function View() {
 
     useFlashMessages();
 
+    const signatureStatusButtons = usePageButtons('signatureViewBtn', {
+        invoice: salesReturn,
+        invoiceType: 'sales_return'
+    });
+
     const downloadPDF = () => {
         const printUrl = route('sales-returns.print', salesReturn.id) + '?download=pdf';
         window.open(printUrl, '_blank');
@@ -35,6 +41,16 @@ function View() {
                 {label: t('Sales Return Details')}
             ]}
             pageTitle={`${t('Sales Return')} #${salesReturn.return_number}`}
+            pageActions={
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.visit(route('sales-returns.index'))}
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    {t('Back')}
+                </Button>
+            }
         >
             <Head title={`${t('Sales Return')} #${salesReturn.return_number}`} />
 
@@ -141,6 +157,10 @@ function View() {
                                 <span className="text-sm text-muted-foreground ml-2">{salesReturn.notes}</span>
                             </div>
                         )}
+                        {/* Signature Status */}
+                        {signatureStatusButtons.length > 0 && signatureStatusButtons.map((button) => (
+                            <div key={button.id}>{button.component}</div>
+                        ))}
                     </CardContent>
                 </Card>
 

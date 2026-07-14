@@ -538,8 +538,26 @@ class ExecutiveOverviewService
 
     private function getTopEmployees()
     {
-        $createdBy = creatorId();
+        $createdBy = (int) creatorId();
         $currentYearMonth = now()->format('Y-m');
+        $taskAssignmentMatchSql = static function (string $column): string {
+            return sprintf(
+                '(JSON_CONTAINS(%1$s, CAST(employees.user_id AS CHAR), "$") OR JSON_CONTAINS(%1$s, JSON_QUOTE(CAST(employees.user_id AS CHAR)), "$"))',
+                $column
+            );
+        };
+
+        $totalTasksSql = sprintf(
+            '(SELECT COUNT(*) FROM project_tasks WHERE project_tasks.created_by = %d AND %s) as total_tasks',
+            $createdBy,
+            $taskAssignmentMatchSql('project_tasks.assigned_to')
+        );
+
+        $tasksCompletedSql = sprintf(
+            '(SELECT COUNT(*) FROM project_tasks pt JOIN task_stages ts ON pt.stage_id = ts.id AND ts.complete = 1 WHERE pt.created_by = %d AND %s) as tasks_completed',
+            $createdBy,
+            $taskAssignmentMatchSql('pt.assigned_to')
+        );
 
         return DB::table('employees')
             ->join('users', 'employees.user_id', '=', 'users.id')
@@ -554,13 +572,13 @@ class ExecutiveOverviewService
                 'users.name as employee_name',
                 'departments.department_name',
                 'designations.designation_name',
-                DB::raw('(SELECT COUNT(*) FROM project_tasks WHERE JSON_CONTAINS(project_tasks.assigned_to, CAST(employees.user_id AS JSON))) as total_tasks'),
-                DB::raw('(SELECT COUNT(*) FROM project_tasks pt JOIN task_stages ts ON pt.stage_id = ts.id AND ts.complete = 1 WHERE JSON_CONTAINS(pt.assigned_to, CAST(employees.user_id AS JSON))) as tasks_completed'),
-                DB::raw('(SELECT ROUND((COUNT(CASE WHEN status = "present" THEN 1 END) / NULLIF(COUNT(*), 0)) * 100, 2) FROM attendances WHERE employee_id = employees.user_id AND DATE_FORMAT(date, "%Y-%m") = "' . $currentYearMonth . '") as attendance_percentage'),
-                DB::raw('(SELECT COALESCE(SUM(total_hour), 0) FROM attendances WHERE employee_id = employees.user_id AND DATE_FORMAT(date, "%Y-%m") = "' . $currentYearMonth . '") as hours_worked'),
+                DB::raw($totalTasksSql),
+                DB::raw($tasksCompletedSql),
+                DB::raw('(SELECT ROUND((COUNT(CASE WHEN status = "present" THEN 1 END) / NULLIF(COUNT(*), 0)) * 100, 2) FROM attendances WHERE created_by = ' . $createdBy . ' AND employee_id = employees.user_id AND DATE_FORMAT(date, "%Y-%m") = "' . $currentYearMonth . '") as attendance_percentage'),
+                DB::raw('(SELECT COALESCE(SUM(total_hour), 0) FROM attendances WHERE created_by = ' . $createdBy . ' AND employee_id = employees.user_id AND DATE_FORMAT(date, "%Y-%m") = "' . $currentYearMonth . '") as hours_worked'),
                 DB::raw('ROUND(
-                    COALESCE((SELECT (COUNT(CASE WHEN status = "present" THEN 1 END) / NULLIF(COUNT(*), 0)) FROM attendances WHERE employee_id = employees.user_id AND DATE_FORMAT(date, "%Y-%m") = "' . $currentYearMonth . '"), 0) * 40
-                    + COALESCE((SELECT COUNT(*) FROM project_tasks pt JOIN task_stages ts ON pt.stage_id = ts.id AND ts.complete = 1 WHERE JSON_CONTAINS(pt.assigned_to, CAST(employees.user_id AS JSON))), 0) * 5
+                    COALESCE((SELECT (COUNT(CASE WHEN status = "present" THEN 1 END) / NULLIF(COUNT(*), 0)) FROM attendances WHERE created_by = ' . $createdBy . ' AND employee_id = employees.user_id AND DATE_FORMAT(date, "%Y-%m") = "' . $currentYearMonth . '"), 0) * 40
+                    + COALESCE((SELECT COUNT(*) FROM project_tasks pt JOIN task_stages ts ON pt.stage_id = ts.id AND ts.complete = 1 WHERE pt.created_by = ' . $createdBy . ' AND ' . $taskAssignmentMatchSql('pt.assigned_to') . '), 0) * 5
                 , 2) as productivity_score')
             )
             ->orderBy('productivity_score', 'desc')

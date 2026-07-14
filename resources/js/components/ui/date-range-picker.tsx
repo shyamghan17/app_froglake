@@ -34,12 +34,46 @@ export function DateRangePicker({
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false)
 
+  // Normalize dates on mount and when value changes
+  React.useEffect(() => {
+    if (value && (value.includes('T') || value.includes('Z'))) {
+      const normalized = normalizeRangeValue(value)
+      if (normalized !== value) {
+        onChange(normalized)
+      }
+    }
+  }, [value])
+
+  const normalizeRangeValue = (val: string): string => {
+    const [start, end] = val.split(' - ')
+    const normalizeDate = (dateStr: string): string => {
+      if (!dateStr) return ''
+      if (dateStr.includes('T') && dateStr.includes('Z')) {
+        const utcDate = new Date(dateStr)
+        const year = utcDate.getFullYear()
+        const month = String(utcDate.getMonth() + 1).padStart(2, '0')
+        const day = String(utcDate.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+      }
+      return dateStr.split('T')[0]
+    }
+    return `${normalizeDate(start)} - ${normalizeDate(end)}`
+  }
+
   const parseValue = (val?: string): [Date | null, Date | null] => {
     if (!val) return [null, null]
     const [start, end] = val.split(' - ')
+    
+    const parseDate = (dateStr: string): Date | null => {
+      if (!dateStr) return null
+      const datePart = dateStr.split('T')[0]
+      const [year, month, day] = datePart.split('-').map(Number)
+      return new Date(year, month - 1, day, 12, 0, 0)
+    }
+    
     return [
-      start ? new Date(start) : null,
-      end ? new Date(end) : null
+      parseDate(start),
+      parseDate(end)
     ]
   }
 

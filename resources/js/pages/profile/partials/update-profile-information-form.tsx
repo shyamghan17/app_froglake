@@ -114,6 +114,7 @@ export default function UpdateProfileInformation({
                         label={t('Mobile Number')}
                         value={data.mobile_no}
                         onChange={(value) => setData('mobile_no', value)}
+                        placeholder="+1234567890"
                         error={errors.mobile_no}
                     />
                 </div>

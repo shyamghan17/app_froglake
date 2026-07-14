@@ -81,6 +81,18 @@ export default function Index() {
 
     const pageButtons = usePageButtons('purchaseReturnBtn', 'Purchase Return data');
 
+    // Component for signature buttons
+    const SignatureButtons = ({ returnItem }: { returnItem: PurchaseReturn }) => {
+        const signatureButtons = usePageButtons('signatureBtn', { invoice: returnItem });
+        return (
+            <>
+                {signatureButtons.map((button) => (
+                    <div key={button.id}>{button.component}</div>
+                ))}
+            </>
+        );
+    };
+
     const { deleteState, openDeleteDialog, closeDeleteDialog, confirmDelete } = useDeleteHandler({
         routeName: 'purchase-returns.destroy',
         defaultMessage: t('Are you sure you want to delete this purchase return?')
@@ -188,6 +200,7 @@ export default function Index() {
             render: (_: any, returnItem: PurchaseReturn) => (
                 <div className="flex gap-1">
                     <TooltipProvider>
+                        <SignatureButtons returnItem={returnItem} />
                         {returnItem.status === 'draft' && (
                             <>
                             {auth.user?.permissions?.includes('approve-purchase-returns-invoices') && (
@@ -495,6 +508,7 @@ export default function Index() {
                                             <div className="flex items-center justify-between p-3 border-t bg-gray-50/50">
                                                 <div className="flex gap-1">
                                                     <TooltipProvider>
+                                                        <SignatureButtons returnItem={returnItem} />
                                                         {returnItem.status === 'draft' && auth.user?.permissions?.includes('approve-purchase-returns-invoices') && (
                                                             <Tooltip delayDuration={0}>
                                                                 <TooltipTrigger asChild>

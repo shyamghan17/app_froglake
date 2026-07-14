@@ -62,13 +62,17 @@ class PlanController extends Controller
                 ];
             }
 
+            $adminSettings = getAdminAllSetting();
+
             return Inertia::render('plans/index', [
                 'plans' => $plans,
-                'canCreate' => $user->can('create-plans'),
+                'canCreate' => ($user->can('create-plans') && $user->hasRole('superadmin')),
                 'activeModules' => $activeModules,
-                'bankTransferEnabled' => getAdminAllSetting()['bankTransferEnabled'] ?? false,
-                'bankTransferInstructions' => getAdminAllSetting()['instructions'] ?? '',
+                'bankTransferEnabled' => $adminSettings['bankTransferEnabled'] ?? false,
+                'bankTransferInstructions' => $adminSettings['instructions'] ?? '',
                 'userTrialInfo' => $userTrialInfo,
+                'createPackageEnabled' => ($adminSettings['create_package_enabled'] ?? 'on') === 'on',
+                'customDesignPackageEnabled' => ($adminSettings['custom_design_package_enabled'] ?? 'on') === 'on',
             ]);
         } else {
             return back()->with('error', __('Permission denied'));
@@ -77,7 +81,7 @@ class PlanController extends Controller
 
     public function create()
     {
-        if (Auth::user()->can('create-plans')) {
+        if (Auth::user()->can('create-plans') && Auth::user()->hasRole('superadmin')) {
             $user = Auth::user();
 
             // Get all enabled addons
@@ -126,7 +130,7 @@ class PlanController extends Controller
 
     public function store(StorePlanRequest $request)
     {
-        if (Auth::user()->can('create-plans')) {
+        if (Auth::user()->can('create-plans') && Auth::user()->hasRole('superadmin')) {
             $validated = $request->validated();
             $plan = new Plan();
             $plan->name = $validated['name'];
@@ -158,7 +162,7 @@ class PlanController extends Controller
 
     public function edit(Plan $plan)
     {
-        if (Auth::user()->can('edit-plans')) {
+        if (Auth::user()->can('edit-plans') && (Auth::user()->hasRole('superadmin'))) {
             $user = Auth::user();
 
             // Get all enabled addons
@@ -212,7 +216,7 @@ class PlanController extends Controller
 
     public function update(UpdatePlanRequest $request, Plan $plan)
     {
-        if (Auth::user()->can('edit-plans')) {
+        if (Auth::user()->can('edit-plans') && Auth::user()->hasRole('superadmin')) {
             $validated = $request->validated();
 
             if ($plan->custom_plan) {
@@ -246,7 +250,7 @@ class PlanController extends Controller
 
     public function destroy(Plan $plan)
     {
-        if (Auth::user()->can('delete-plans')) {
+        if (Auth::user()->can('delete-plans') && Auth::user()->hasRole('superadmin')) {
             $userPlan = User::where('active_plan', $plan->id)->first();
             if ($userPlan != null) {
                 return redirect()->back()->with('error', __('The company has subscribed to this plan, so it cannot be deleted.'));
@@ -424,6 +428,23 @@ class PlanController extends Controller
             return back()->with('success', __('Free plan has been assigned successfully.'));
         } else {
             return back()->with('error', $result['error'] ?? 'Failed to assign free plan.');
+        }
+    }
+
+    public function updatePackageSettings(Request $request)
+    {
+        if (Auth::user()->can('manage-plans') && Auth::user()->hasRole('superadmin')) {
+            $request->validate([
+                'create_package_enabled' => 'required|string|in:on,off',
+                'custom_design_package_enabled' => 'required|string|in:on,off',
+            ]);
+
+            setSetting('create_package_enabled', $request->input('create_package_enabled'), null, false);
+            setSetting('custom_design_package_enabled', $request->input('custom_design_package_enabled'), null, false);
+
+            return redirect()->back()->with('success', __('Package settings updated successfully.'));
+        } else {
+            return back()->with('error', __('Permission denied'));
         }
     }
 }

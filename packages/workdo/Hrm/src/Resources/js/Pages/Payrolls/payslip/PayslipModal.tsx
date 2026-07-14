@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { formatCurrency, formatDate } from '@/utils/helpers';
 import { User, Calendar, DollarSign, Calculator } from 'lucide-react';
+import { usePageButtons } from '@/hooks/usePageButtons';
 
 interface PayrollEntry {
     id: number;
@@ -63,6 +64,11 @@ interface PayslipModalProps {
 
 export function PayslipModal({ open, onOpenChange, payrollEntry, payroll }: PayslipModalProps) {
     const { t } = useTranslation();
+    
+    const signaturePrintButtons = usePageButtons('signaturePrintBtn', {
+        invoice: payroll,
+        invoiceType: 'payroll'
+    });
 
     if (!payrollEntry) return null;
 
@@ -327,6 +333,11 @@ export function PayslipModal({ open, onOpenChange, payrollEntry, payroll }: Pays
                             </div>
                         </div>
                     </div>
+                    
+                    {/* Signature */}
+                    {signaturePrintButtons.length > 0 && signaturePrintButtons.map((button) => (
+                        <div key={button.id}>{button.component}</div>
+                    ))}
                 </div>
             </DialogContent>
         </Dialog>

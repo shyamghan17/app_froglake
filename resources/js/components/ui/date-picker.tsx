@@ -48,8 +48,51 @@ export function DatePicker({
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false)
 
+  // Normalize the value to YYYY-MM-DD format on mount and when value changes
+  React.useEffect(() => {
+    if (value && (value.includes('T') || value.includes('Z'))) {
+      const normalized = normalizeDate(value)
+      if (normalized !== value) {
+        onChange(normalized)
+      }
+    }
+  }, [value])
+
+  const normalizeDate = (val: string): string => {
+    if (!val) return ''
+    
+    // If it's a UTC timestamp from backend
+    if (val.includes('T') && val.includes('Z')) {
+      const utcDate = new Date(val)
+      const year = utcDate.getFullYear()
+      const month = String(utcDate.getMonth() + 1).padStart(2, '0')
+      const day = String(utcDate.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+    
+    // Already in YYYY-MM-DD format
+    return val.split('T')[0]
+  }
+
   const parseValue = (val?: string): Date | null => {
-    return val ? new Date(val) : null
+    if (!val) return null
+    
+    // If it's a UTC timestamp from backend (contains T and Z)
+    if (val.includes('T') && val.includes('Z')) {
+      // Parse the UTC timestamp and convert to local timezone
+      const utcDate = new Date(val)
+      // Extract local date components (this automatically applies timezone offset)
+      const year = utcDate.getFullYear()
+      const month = utcDate.getMonth()
+      const day = utcDate.getDate()
+      // Create date in local timezone at noon
+      return new Date(year, month, day, 12, 0, 0)
+    }
+    
+    // For plain YYYY-MM-DD strings
+    const dateStr = val.split('T')[0]
+    const [year, month, day] = dateStr.split('-').map(Number)
+    return new Date(year, month - 1, day, 12, 0, 0)
   }
 
   const formatValue = (date: Date | null) => {
@@ -66,6 +109,7 @@ export function DatePicker({
 
   const handleChange = (date: Date | null) => {
     if (date) {
+      // Always use local date parts to avoid timezone issues
       const year = date.getFullYear()
       const month = String(date.getMonth() + 1).padStart(2, '0')
       const day = String(date.getDate()).padStart(2, '0')

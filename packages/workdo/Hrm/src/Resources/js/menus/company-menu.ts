@@ -137,6 +137,11 @@ export const hrmCompanyMenu = (t: (key: string) => string) => [
                 permission: 'manage-events',
             },
             {
+                title: t('Company Policies'),
+                href: route('hrm.company-policies.index'),
+                permission: 'manage-company-policies',
+            },
+            {
                 title: t('System Setup'),
                 href: route('hrm.branches.index'),
                 permission: 'manage-branches',

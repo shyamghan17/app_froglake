@@ -266,9 +266,9 @@ export default function Index() {
             <AuthenticatedLayout
                 breadcrumbs={[
                     { label: t('POS'), url: route('pos.index') },
-                    { label: t('Pos Discounts') },
+                    { label: t('Discounts') },
                 ]}
-                pageTitle={t('Manage Pos Discounts')}
+                pageTitle={t('Manage Discounts')}
                 pageActions={
                     <div className="flex gap-2">
                         <TooltipProvider>
@@ -288,7 +288,7 @@ export default function Index() {
                     </div>
                 }
             >
-                <Head title={t('Pos Discounts')} />
+                <Head title={t('Discounts')} />
 
                 <Card className="shadow-sm">
                     <CardContent className="p-6 border-b bg-gray-50/50">

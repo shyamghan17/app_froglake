@@ -16,6 +16,7 @@ import AuthenticatedLayout from '@/layouts/authenticated-layout';
 import { DataTable } from "@/components/ui/data-table";
 import NoRecordsFound from '@/components/no-records-found';
 import InputError from '@/components/ui/input-error';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Product {
     id: number;
@@ -113,8 +114,10 @@ export default function Create() {
         >
             <Head title={t('Create Discount')} />
 
-            <form onSubmit={submit} className="space-y-6">
-                {/* Discount Details Card */}
+            <form onSubmit={submit} className="h-full flex flex-col">
+                <ScrollArea className="flex-1">
+                    <div className="space-y-6 pr-4">
+                        {/* Discount Details Card */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-lg">
@@ -365,16 +368,18 @@ export default function Create() {
                         </CardContent>
                     </Card>
                 )}
-
-                {/* Action Buttons */}
-                <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => window.history.back()}>
-                        {t('Cancel')}
-                    </Button>
-                    <Button type="submit" disabled={processing}>
-                        {processing ? t('Creating...') : t('Create')}
-                    </Button>
+                    {/* Action Buttons */}
+                    <div className="flex justify-end gap-2">
+                        <Button type="button" variant="outline" onClick={() => window.history.back()}>
+                            {t('Cancel')}
+                        </Button>
+                        <Button type="submit" disabled={processing}>
+                            {processing ? t('Creating...') : t('Create')}
+                        </Button>
+                    </div>
                 </div>
+                </ScrollArea>
+
             </form>
         </AuthenticatedLayout>
     );

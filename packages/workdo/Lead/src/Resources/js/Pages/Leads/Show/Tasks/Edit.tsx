@@ -61,7 +61,7 @@ export default function Edit({ task, onSuccess }: EditTaskProps) {
                         <InputError message={errors.date} />
                     </div>
                     <div>
-                        <Label>{t('Time')}</Label>
+                        <Label required>{t('Time')}</Label>
                         <TimePicker
                             value={data.time}
                             onChange={(time) => setData('time', time)}

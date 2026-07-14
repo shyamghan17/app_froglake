@@ -717,11 +717,11 @@ class SettingController extends Controller
         $providers = [
             'openai'    => [
                 'name'   => 'OpenAI',
-                'models' => ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4-turbo', 'gpt-4']
+                'models' => ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'o3', 'o4-mini']
             ],
             'anthropic' => [
                 'name'   => 'Anthropic (Claude)',
-                'models' => ['claude-opus-4-5', 'claude-sonnet-4-5', 'claude-haiku-4-5', 'claude-3-5-haiku-latest']
+                'models' => ['claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001']
             ],
             'google'    => [
                 'name'   => 'Google (Gemini)',

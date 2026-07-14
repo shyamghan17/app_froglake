@@ -1,7 +1,9 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import AuthenticatedLayout from '@/layouts/authenticated-layout';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 import PlanForm from './form';
 
 interface Module {
@@ -31,6 +33,16 @@ export default function CreatePlan({ activeModules, userSubscriptionInfo }: Prop
                 { label: t('Create Plan') }
             ]}
             pageTitle={t('Create Plan')}
+            pageActions={
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.visit(route('plans.index'))}
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    {t('Back')}
+                </Button>
+            }
         >
             <Head title={t('Create Plan')} />
 

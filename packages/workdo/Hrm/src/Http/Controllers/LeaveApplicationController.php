@@ -84,17 +84,25 @@ class LeaveApplicationController extends Controller
                     ->withErrors(['leave_type_id' => __('Invalid leave type selected.')]);
             }
             // Validate working day, leave, and holiday
-            $date = \Carbon\Carbon::today();
+            $leaveStartDate = \Carbon\Carbon::parse($validated['start_date']);
+            $leaveEndDate = \Carbon\Carbon::parse($validated['end_date']);
 
             $workingDays = getCompanyAllSetting(creatorId())['working_days'] ?? '';
             $workingDaysArray = json_decode($workingDays, true) ?? [];
-            $isWorkingDay = in_array($date->dayOfWeek, $workingDaysArray);
+
+            $isWorkingDay = true;
+            for ($date = $leaveStartDate->copy(); $date->lte($leaveEndDate); $date->addDay()) {
+                if (!in_array($date->dayOfWeek, $workingDaysArray)) {
+                    $isWorkingDay = false;
+                    break;
+                }
+            }
                 
             $isHoliday = Holiday::where('created_by', creatorId())
-                ->where('start_date', '<=', $date)
-                ->where('end_date', '>=', $date)
+                ->where('start_date', '<=', $validated['end_date'])
+                ->where('end_date', '>=', $validated['start_date'])
                 ->exists();
-
+            
             if (!$isWorkingDay) {
                 return redirect()->back()->with('error', __('Leave cannot be created for non-working days.'));
             }
@@ -188,15 +196,23 @@ class LeaveApplicationController extends Controller
                     ->withErrors(['leave_type_id' => __('Invalid leave type selected.')]);
             }
             // Validate working day, leave, and holiday
-            $date = \Carbon\Carbon::today();
+            $leaveStartDate = \Carbon\Carbon::parse($validated['start_date']);
+            $leaveEndDate = \Carbon\Carbon::parse($validated['end_date']);
 
             $workingDays = getCompanyAllSetting(creatorId())['working_days'] ?? '';
             $workingDaysArray = json_decode($workingDays, true) ?? [];
-            $isWorkingDay = in_array($date->dayOfWeek, $workingDaysArray);
+
+            $isWorkingDay = true;
+            for ($date = $leaveStartDate->copy(); $date->lte($leaveEndDate); $date->addDay()) {
+                if (!in_array($date->dayOfWeek, $workingDaysArray)) {
+                    $isWorkingDay = false;
+                    break;
+                }
+            }
                 
             $isHoliday = Holiday::where('created_by', creatorId())
-                ->where('start_date', '<=', $date)
-                ->where('end_date', '>=', $date)
+                ->where('start_date', '<=', $validated['end_date'])
+                ->where('end_date', '>=', $validated['start_date'])
                 ->exists();
 
             if (!$isWorkingDay) {

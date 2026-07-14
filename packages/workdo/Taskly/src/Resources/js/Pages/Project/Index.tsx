@@ -10,14 +10,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Dialog } from "@/components/ui/dialog";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Plus, Edit, Trash2, Package, Eye, Copy } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Eye, Copy, CalendarDays, Users, ArrowRight, AlertTriangle, Bug } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Pagination } from "@/components/ui/pagination";
 import { SearchInput } from "@/components/ui/search-input";
 import { ListGridToggle } from '@/components/ui/list-grid-toggle';
 import { PerPageSelector } from '@/components/ui/per-page-selector';
 import { FilterButton } from '@/components/ui/filter-button';
-import { DatePicker } from '@/components/ui/date-picker';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency, getImagePath, formatDate } from '@/utils/helpers';
@@ -40,6 +40,10 @@ interface ProjectItem {
         avatar?: string;
     }>;
     task_count?: number;
+    bug_count?: number;
+    milestone_count?: number;
+    completed_milestones?: number;
+    milestone_cost?: number;
     created_at: string;
 }
 
@@ -72,13 +76,17 @@ export default function Index() {
     const [filters, setFilters] = useState({
         name: urlParams.get('name') || '',
         status: urlParams.get('status') || '',
-        date: urlParams.get('date') || ''
+        date_range: (() => {
+            const fromDate = urlParams.get('date_from');
+            const toDate = urlParams.get('date_to');
+            return (fromDate && toDate) ? `${fromDate} - ${toDate}` : '';
+        })()
     });
 
     const [perPage] = useState(urlParams.get('per_page') || '10');
     const [sortField, setSortField] = useState(urlParams.get('sort') || '');
     const [sortDirection, setSortDirection] = useState(urlParams.get('direction') || 'asc');
-    const [viewMode, setViewMode] = useState<'list' | 'grid'>(urlParams.get('view') as 'list' | 'grid' || 'list');
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>(urlParams.get('view') as 'list' | 'grid' || 'grid');
     const [showFilters, setShowFilters] = useState(false);
 
     const [modalState, setModalState] = useState<{
@@ -130,7 +138,17 @@ export default function Index() {
     });
 
     const handleFilter = () => {
-        router.get(route('project.index'), {...filters, per_page: perPage, sort: sortField, direction: sortDirection, view: viewMode}, {
+        const filterParams = {...filters};
+
+        // Convert date_range to date_from and date_to for backend
+        if (filters.date_range) {
+            const [fromDate, toDate] = filters.date_range.split(' - ');
+            filterParams.date_from = fromDate;
+            filterParams.date_to = toDate;
+        }
+        delete filterParams.date_range;
+
+        router.get(route('project.index'), {...filterParams, per_page: perPage, sort: sortField, direction: sortDirection, view: viewMode}, {
             preserveState: true,
             replace: true
         });
@@ -147,7 +165,7 @@ export default function Index() {
     };
 
     const clearFilters = () => {
-        setFilters({ name: '', status: '', date: '' });
+        setFilters({ name: '', status: '', date_range: '' });
         router.get(route('project.index'), {per_page: perPage, view: viewMode});
     };
 
@@ -171,7 +189,20 @@ export default function Index() {
         {
             key: 'name',
             header: t('Name'),
-            sortable: true
+            sortable: true,
+            render: (value: string, item: ProjectItem) => {
+                const canView = auth.user?.permissions?.includes('view-project');
+                return canView ? (
+                    <button
+                        className="font-medium text-gray-900 hover:text-primary transition-colors cursor-pointer text-left"
+                        onClick={() => router.get(route('project.show', item.id))}
+                    >
+                        {value}
+                    </button>
+                ) : (
+                    <span className="font-medium text-gray-900">{value}</span>
+                );
+            }
         },
         {
             key: 'user',
@@ -259,6 +290,22 @@ export default function Index() {
                     </span>
                 );
             }
+        },
+        {
+            key: 'task_count',
+            header: t('Tasks / Bugs'),
+            render: (_: any, item: ProjectItem) => (
+                <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full font-medium">
+                        <Package className="h-3 w-3" />
+                        {item.task_count || 0}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded-full font-medium">
+                        <Bug className="h-3 w-3" />
+                        {item.bug_count || 0}
+                    </span>
+                </div>
+            )
         },
         ...(auth.user?.permissions?.some((p: string) => ['view-project', 'edit-project', 'delete-project', 'duplicate-project'].includes(p)) ? [{
             key: 'actions',
@@ -395,7 +442,7 @@ export default function Index() {
                                     onToggle={() => setShowFilters(!showFilters)}
                                 />
                                 {(() => {
-                                    const activeFilters = [filters.status, filters.date].filter(Boolean).length;
+                                    const activeFilters = [filters.status, filters.date_range].filter(Boolean).length;
                                     return activeFilters > 0 && (
                                         <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
                                             {activeFilters}
@@ -409,7 +456,7 @@ export default function Index() {
 
                 {showFilters && (
                     <CardContent className="p-6 bg-blue-50/30 border-b">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">{t('Status')}</label>
                                 <Select value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
@@ -425,10 +472,10 @@ export default function Index() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">{t('Date Range')}</label>
-                                <DatePicker
-                                    value={filters.date}
-                                    onChange={(value) => setFilters({...filters, date: value})}
-                                    placeholder={t('Select date')}
+                                <DateRangePicker
+                                    value={filters.date_range}
+                                    onChange={(value) => setFilters({...filters, date_range: value})}
+                                    placeholder={t('Select date range')}
                                 />
                             </div>
                             <div className="flex items-end gap-2">
@@ -455,7 +502,7 @@ export default function Index() {
                                             icon={Package}
                                             title={t('No projects found')}
                                             description={t('Get started by creating your first project.')}
-                                            hasFilters={!!(filters.name || filters.status || filters.date)}
+                                            hasFilters={!!(filters.name || filters.status || filters.date_range)}
                                             onClearFilters={clearFilters}
                                             createPermission="create-project"
                                             onCreateClick={() => openModal('add')}
@@ -467,164 +514,212 @@ export default function Index() {
                             </div>
                         </div>
                     ) : (
-                        <div className="overflow-auto max-h-[70vh] p-6">
+                        <div className="overflow-auto max-h-[70vh] p-3 sm:p-4 lg:p-6">
                             {items.data.length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                                    {items.data.map((project) => (
-                                        <Card key={project.id} className="p-0 hover:shadow-lg transition-all duration-200 relative overflow-hidden flex flex-col h-full min-w-0">
-                                            {/* Header */}
-                                            <div className="p-4 bg-gradient-to-r from-primary/5 to-transparent border-b flex-shrink-0">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-primary/10 rounded-lg">
-                                                        <Package className="h-5 w-5 text-primary" />
-                                                    </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <h3 className="font-semibold text-sm text-gray-900">{project.name}</h3>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
+                                    {items.data.map((project) => {
+                                        const statusConfig: Record<string, { dot: string; badgeBg: string; badgeText: string }> = {
+                                            'Ongoing':  { dot: 'bg-blue-500',  badgeBg: 'bg-blue-50',  badgeText: 'text-blue-700'  },
+                                            'Onhold':   { dot: 'bg-amber-500', badgeBg: 'bg-amber-50', badgeText: 'text-amber-700' },
+                                            'Finished': { dot: 'bg-green-500', badgeBg: 'bg-green-50', badgeText: 'text-green-700' },
+                                        };
+                                        const cfg = statusConfig[project.status] ?? { dot: 'bg-slate-400', badgeBg: 'bg-slate-50', badgeText: 'text-slate-600' };
+                                        const isOverdue = project.status !== 'Finished' && project.end_date && new Date(project.end_date) < new Date();
+                                        const isCostOverBudget = !!(project.budget && (project.milestone_cost ?? 0) > 0 && project.milestone_cost! > project.budget);
+                                        const canView = auth.user?.permissions?.includes('view-project');
 
-                                            {/* Body */}
-                                            <div className="p-4 flex-1 min-h-0">
-                                                <div className="grid grid-cols-2 gap-4 mb-4">
-                                                    <div className="text-xs min-w-0">
-                                                        <p className="text-muted-foreground mb-1 text-xs uppercase tracking-wide">{t('Budget')}</p>
-                                                        <p className="font-medium text-xs">{project.budget ? formatCurrency(project.budget) : '-'}</p>
-                                                    </div>
-                                                    <div className="text-xs min-w-0">
-                                                        <p className="text-muted-foreground mb-1 text-xs uppercase tracking-wide">{t('Tasks')}</p>
-                                                        <p className="font-medium text-xs">{project.task_count || 0}</p>
-                                                    </div>
-                                                </div>
+                                        return (
+                                            <Card key={project.id} className="group flex flex-col border border-gray-200">
+                                                {/* Card body */}
+                                                <div className="p-3 sm:p-3.5 flex flex-col flex-1 gap-2 sm:gap-2.5">
 
-                                                <div className="grid grid-cols-2 gap-4 mb-4">
-                                                    <div className="text-xs min-w-0">
-                                                        <p className="text-muted-foreground mb-1 text-xs uppercase tracking-wide">{t('Start Date')}</p>
-                                                        <p className="font-medium text-xs">{project.start_date ? formatDate(project.start_date) : '-'}</p>
+                                                    {/* Row 1 — status badge + task + bug counts */}
+                                                    <div className="flex items-center justify-between gap-1">
+                                                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${cfg.badgeBg} ${cfg.badgeText}`}>
+                                                            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot} flex-shrink-0`} />
+                                                            {t(project.status)}
+                                                        </span>
+                                                        <div className="flex items-center gap-1">
+                                                            <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full font-medium">
+                                                                <Package className="h-3 w-3" />
+                                                                {project.task_count || 0}
+                                                            </span>
+                                                            <span className="inline-flex items-center gap-1 text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-full font-medium">
+                                                                <Bug className="h-3 w-3" />
+                                                                {project.bug_count || 0}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <div className="text-xs min-w-0">
-                                                        <p className="text-muted-foreground mb-1 text-xs uppercase tracking-wide">{t('End Date')}</p>
-                                                        <p className={`font-medium text-xs ${
-                                                            project.end_date && new Date(project.end_date) < new Date() ? 'text-red-600' : 'text-gray-900'
-                                                        }`}>{project.end_date ? formatDate(project.end_date) : '-'}</p>
-                                                    </div>
-                                                </div>
 
-                                                <div className="mb-4">
-                                                    <p className="text-muted-foreground mb-2 text-xs uppercase tracking-wide">{t('Team Members')}</p>
-                                                    <div className="flex items-center gap-1">
-                                                        {project.team_members && project.team_members.length > 0 ? (
-                                                            <div className="flex -space-x-1">
-                                                                {project.team_members.slice(0, 4).map((user) => (
-                                                                    <TooltipProvider key={user.id}>
+                                                    {/* Row 2 — name + description */}
+                                                    <div>
+                                                        <h3
+                                                            className={`font-bold text-sm text-gray-900 line-clamp-2 leading-snug mb-0.5 ${canView ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
+                                                            title={project.name}
+                                                            onClick={() => canView && router.get(route('project.show', project.id))}
+                                                        >
+                                                            {project.name}
+                                                        </h3>
+                                                        {project.description && (
+                                                            <p className="text-xs text-gray-400 line-clamp-1 leading-relaxed">{project.description}</p>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Row 3 — Budget + Milestone Cost (2-col) */}
+                                                    {(project.budget || (project.milestone_cost ?? 0) > 0) && (
+                                                        <div className="grid grid-cols-2 gap-1.5">
+                                                            <div className="bg-emerald-50 border border-emerald-100 rounded-md px-2.5 py-2">
+                                                                <p className="text-[10px] text-emerald-600 font-medium uppercase tracking-wide leading-none mb-1">{t('Budget')}</p>
+                                                                <p className="text-xs font-bold text-emerald-800 truncate">
+                                                                    {project.budget ? formatCurrency(project.budget) : '—'}
+                                                                </p>
+                                                            </div>
+                                                            <div className={`rounded-md px-2.5 py-2 border ${isCostOverBudget ? 'bg-amber-50 border-amber-200' : 'bg-violet-50 border-violet-100'}`}>
+                                                                <p className={`text-[10px] font-medium uppercase tracking-wide leading-none mb-1 ${isCostOverBudget ? 'text-amber-600' : 'text-violet-600'}`}>
+                                                                    {t('Milestone Cost')}
+                                                                </p>
+                                                                <div className="flex items-center gap-1">
+                                                                    <p className={`text-xs font-bold truncate ${isCostOverBudget ? 'text-amber-800' : 'text-violet-800'}`}>
+                                                                        {(project.milestone_cost ?? 0) > 0 ? formatCurrency(project.milestone_cost!) : '—'}
+                                                                    </p>
+                                                                    {isCostOverBudget && (
                                                                         <Tooltip delayDuration={0}>
-                                                                            <TooltipTrigger>
-                                                                                <div className="h-6 w-6 rounded-full border-2 border-background overflow-hidden">
-                                                                                    <img
-                                                                                        src={user.avatar ? getImagePath(user.avatar) : getImagePath('avatar.png')}
-                                                                                        alt={user.name}
-                                                                                        className="h-full w-full object-cover"
-                                                                                    />
-                                                                                </div>
+                                                                            <TooltipTrigger asChild>
+                                                                                <AlertTriangle className="h-3 w-3 text-amber-500 flex-shrink-0 cursor-pointer" />
                                                                             </TooltipTrigger>
-                                                                            <TooltipContent>
-                                                                                <p>{user.name}</p>
+                                                                            <TooltipContent side="top">
+                                                                                <p>{t('Milestone cost exceeds budget')}</p>
                                                                             </TooltipContent>
                                                                         </Tooltip>
-                                                                    </TooltipProvider>
-                                                                ))}
-                                                                {project.team_members.length > 4 && (
-                                                                    <div className="h-6 w-6 rounded-full bg-gray-200 border-2 border-background flex items-center justify-center">
-                                                                        <span className="text-xs text-gray-600">+{project.team_members.length - 4}</span>
-                                                                    </div>
-                                                                )}
+                                                                    )}
+                                                                </div>
                                                             </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Row 4 — Milestone progress */}
+                                                    {(project.milestone_count ?? 0) > 0 && (
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-xs text-gray-500 font-medium">{t('Milestones')}</span>
+                                                                <span className="text-xs font-semibold text-gray-700">
+                                                                    {project.completed_milestones ?? 0} / {project.milestone_count} {t('done')}
+                                                                </span>
+                                                            </div>
+                                                            <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                                                <div
+                                                                    className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300"
+                                                                    style={{ width: `${Math.round(((project.completed_milestones ?? 0) / (project.milestone_count ?? 1)) * 100)}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Row 5 — date range */}
+                                                    {(project.start_date || project.end_date) && (
+                                                        <div className="flex items-center gap-1 text-xs">
+                                                            <CalendarDays className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                                                            <span className="text-gray-500">{project.start_date ? formatDate(project.start_date) : '—'}</span>
+                                                            <ArrowRight className="h-3 w-3 text-gray-300 flex-shrink-0" />
+                                                            <span className={isOverdue ? 'text-red-500 font-medium' : 'text-gray-500'}>
+                                                                {project.end_date ? formatDate(project.end_date) : '—'}
+                                                            </span>
+                                                            {isOverdue && <span className="ml-1 text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-semibold">{t('Overdue')}</span>}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Row 6 — team members */}
+                                                    <div className="flex items-center gap-1.5 flex-1 content-end">
+                                                        <Users className="h-3.5 w-3.5 text-gray-300 flex-shrink-0" />
+                                                        {project.team_members && project.team_members.length > 0 ? (
+                                                            <>
+                                                                <div className="flex -space-x-1.5">
+                                                                    {project.team_members.slice(0, 5).map((user) => (
+                                                                        <TooltipProvider key={user.id}>
+                                                                            <Tooltip delayDuration={0}>
+                                                                                <TooltipTrigger>
+                                                                                    <div className="h-7 w-7 sm:h-6 sm:w-6 rounded-full border-2 border-white overflow-hidden shadow-sm">
+                                                                                        <img
+                                                                                            src={user.avatar ? getImagePath(user.avatar) : getImagePath('avatar.png')}
+                                                                                            alt={user.name}
+                                                                                            className="h-full w-full object-cover"
+                                                                                        />
+                                                                                    </div>
+                                                                                </TooltipTrigger>
+                                                                                <TooltipContent><p>{user.name}</p></TooltipContent>
+                                                                            </Tooltip>
+                                                                        </TooltipProvider>
+                                                                    ))}
+                                                                    {project.team_members.length > 5 && (
+                                                                        <div className="h-7 w-7 sm:h-6 sm:w-6 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center shadow-sm">
+                                                                            <span className="text-xs text-gray-600 font-semibold">+{project.team_members.length - 5}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <span className="text-xs text-gray-400">{project.team_members.length} {t('members')}</span>
+                                                            </>
                                                         ) : (
-                                                            <span className="text-xs text-gray-500">-</span>
+                                                            <span className="text-xs text-gray-400 italic">{t('No members')}</span>
                                                         )}
                                                     </div>
                                                 </div>
 
-                                                <div className="text-xs min-w-0">
-                                                    <p className="text-muted-foreground mb-1 text-xs uppercase tracking-wide">{t('Status')}</p>
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
-                                                        project.status === 'Ongoing' ? 'bg-blue-100 text-blue-800' :
-                                                        project.status === 'Onhold' ? 'bg-yellow-100 text-yellow-800' :
-                                                        'bg-green-100 text-green-800'
-                                                    }`}>
-                                                        {t(project.status)}
-                                                    </span>
+                                                {/* Actions footer */}
+                                                <div className="flex items-center justify-end gap-0.5 px-2 sm:px-2.5 py-1.5 border-t border-gray-100 bg-gray-50/50 flex-shrink-0">
+                                                    <TooltipProvider>
+                                                        {renderGridTemplateButtons(project)}
+                                                        {auth.user?.permissions?.includes('duplicate-project') && (
+                                                            <Tooltip delayDuration={300}>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button variant="ghost" size="sm" onClick={() => setDuplicateModalState({ isOpen: true, project })} className="h-8 w-8 sm:h-7 sm:w-7 p-0 text-purple-600 hover:text-purple-700">
+                                                                        <Copy className="h-3.5 w-3.5" />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent><p>{t('Duplicate')}</p></TooltipContent>
+                                                            </Tooltip>
+                                                        )}
+                                                        {auth.user?.permissions?.includes('view-project') && (
+                                                            <Tooltip delayDuration={300}>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button variant="ghost" size="sm" onClick={() => router.get(route('project.show', project.id))} className="h-8 w-8 sm:h-7 sm:w-7 p-0 text-green-600 hover:text-green-700">
+                                                                        <Eye className="h-3.5 w-3.5" />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent><p>{t('View')}</p></TooltipContent>
+                                                            </Tooltip>
+                                                        )}
+                                                        {auth.user?.permissions?.includes('edit-project') && (
+                                                            <Tooltip delayDuration={300}>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button variant="ghost" size="sm" onClick={() => openModal('edit', project)} className="h-8 w-8 sm:h-7 sm:w-7 p-0 text-blue-600 hover:text-blue-700">
+                                                                        <Edit className="h-3.5 w-3.5" />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent><p>{t('Edit')}</p></TooltipContent>
+                                                            </Tooltip>
+                                                        )}
+                                                        {auth.user?.permissions?.includes('delete-project') && (
+                                                            <Tooltip delayDuration={300}>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(project.id)} className="h-8 w-8 sm:h-7 sm:w-7 p-0 text-destructive hover:text-destructive">
+                                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent><p>{t('Delete')}</p></TooltipContent>
+                                                            </Tooltip>
+                                                        )}
+                                                    </TooltipProvider>
                                                 </div>
-                                            </div>
-
-                                            {/* Actions Footer */}
-                                            <div className="flex justify-end gap-2 p-3 border-t bg-gray-50/50 flex-shrink-0 mt-auto">
-                                                <TooltipProvider>
-                                                    {renderGridTemplateButtons(project)}
-                                                    {auth.user?.permissions?.includes('duplicate-project') && (
-                                                        <Tooltip delayDuration={300}>
-                                                            <TooltipTrigger asChild>
-                                                                <Button variant="ghost" size="sm" onClick={() => setDuplicateModalState({ isOpen: true, project })} className="h-9 w-9 p-0 text-purple-600 hover:text-purple-700">
-                                                                    <Copy className="h-4 w-4" />
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                <p>{t('Duplicate')}</p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    )}
-                                                    {auth.user?.permissions?.includes('view-project') && (
-                                                        <Tooltip delayDuration={300}>
-                                                            <TooltipTrigger asChild>
-                                                                <Button variant="ghost" size="sm" onClick={() => router.get(route('project.show', project.id))} className="h-9 w-9 p-0 text-green-600 hover:text-green-700">
-                                                                    <Eye className="h-4 w-4" />
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                <p>{t('View')}</p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    )}
-                                                    {auth.user?.permissions?.includes('edit-project') && (
-                                                        <Tooltip delayDuration={300}>
-                                                            <TooltipTrigger asChild>
-                                                                <Button variant="ghost" size="sm" onClick={() => openModal('edit', project)} className="h-9 w-9 p-0 text-blue-600 hover:text-blue-700">
-                                                                    <Edit className="h-4 w-4" />
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                <p>{t('Edit')}</p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    )}
-                                                    {auth.user?.permissions?.includes('delete-project') && (
-                                                        <Tooltip delayDuration={300}>
-                                                            <TooltipTrigger asChild>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    onClick={() => openDeleteDialog(project.id)}
-                                                                    className="h-9 w-9 p-0 text-red-600 hover:text-red-700"
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                <p>{t('Delete')}</p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    )}
-                                                </TooltipProvider>
-                                            </div>
-                                        </Card>
-                                    ))}
+                                            </Card>
+                                        );
+                                    })}
                                 </div>
                             ) : (
                                 <NoRecordsFound
                                     icon={Package}
                                     title={t('No projects found')}
                                     description={t('Get started by creating your first project.')}
-                                    hasFilters={!!(filters.name || filters.status || filters.date)}
+                                    hasFilters={!!(filters.name || filters.status || filters.date_range)}
                                     onClearFilters={clearFilters}
                                     createPermission="create-project"
                                     onCreateClick={() => openModal('add')}

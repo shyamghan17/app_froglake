@@ -41,7 +41,7 @@ export default function Index() {
     const [sortDirection, setSortDirection] = useState(urlParams.get('direction') || 'asc');
 
 
-    const [viewMode, setViewMode] = useState<'list' | 'grid'>(urlParams.get('view') as 'list' | 'grid' || 'list');
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>(urlParams.get('view') as 'list' | 'grid' || 'grid');
     const [showFilters, setShowFilters] = useState(false);
 
     const googleDriveButtons = usePageButtons('googleDriveBtn', { module: 'Products', settingKey: 'GoogleDrive Products' });
@@ -165,11 +165,18 @@ export default function Index() {
             key: 'type',
             header: t('Type'),
             sortable: true,
-            render: (value: string) => (
-                <span className="px-2 py-1 rounded-full text-sm bg-green-100 text-green-800 capitalize">
-                    {t(value.replace(/_/g, ' '))}
-                </span>
-            )
+            render: (value: string) => {
+                const typeBadge =
+                    value === 'product' ? 'bg-blue-100 text-blue-700' :
+                    value === 'service' ? 'bg-violet-100 text-violet-700' :
+                    value === 'part'    ? 'bg-amber-100 text-amber-700' :
+                                         'bg-gray-100 text-gray-700';
+                return (
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${typeBadge}`}>
+                        {t(value.replace(/_/g, ' '))}
+                    </span>
+                );
+            }
         },
         ...(auth.user?.permissions?.some((p: string) => ['view-product-service-item', 'edit-product-service-item', 'delete-product-service-item'].includes(p)) ? [{
             key: 'actions',
@@ -389,125 +396,152 @@ export default function Index() {
                             </div>
                         </div>
                     ) : (
-                        <div className="overflow-auto max-h-[70vh] p-6">
+                        <div className="overflow-auto max-h-[70vh] p-3 sm:p-4 lg:p-6">
                             {items.data.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                                    {items.data.map((item) => (
-                                        <Card key={item.id} className="border border-gray-200 h-full flex flex-col">
-                                            <div className="p-4 flex flex-col flex-1">
-                                                <div className="flex items-center gap-3 mb-3">
-                                                {item.image ? (
-                                                    <div className="relative w-12 h-12">
-                                                        <img
-                                                            src={getImagePath(item.image)}
-                                                            alt={item.name}
-                                                            className="w-12 h-12 object-cover rounded cursor-pointer hover:scale-110 transition-transform"
-                                                            onClick={() => window.open(getImagePath(item.image), '_blank')}
-                                                            onError={(e) => {
-                                                                const target = e.target as HTMLImageElement;
-                                                                target.style.display = 'none';
-                                                                const fallback = target.nextElementSibling as HTMLElement;
-                                                                if (fallback) fallback.classList.remove('hidden');
-                                                            }}
-                                                        />
-                                                        <div className="hidden w-12 h-12 bg-gray-100 rounded-md border flex items-center justify-center">
-                                                            <Image className="w-6 h-6 text-gray-400" />
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-12 h-12 bg-gray-100 rounded-md border flex items-center justify-center">
-                                                        <Image className="w-6 h-6 text-gray-400" />
-                                                    </div>
-                                                )}
-                                                    <div className="flex-1">
-                                                        <h3 className="font-semibold text-base text-gray-900">{item.name}</h3>
-                                                    </div>
-                                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-5">
+                                    {items.data.map((item) => {
+                                        const typeBadge: Record<string, string> = {
+                                            product: 'bg-blue-500/90 text-white',
+                                            service: 'bg-violet-500/90 text-white',
+                                            part:    'bg-amber-500/90 text-white',
+                                        };
+                                        const badgeClass = typeBadge[item.type ?? ''] ?? 'bg-slate-500/90 text-white';
+                                        const canView = auth.user?.permissions?.includes('view-product-service-item');
 
-                                                <div className="space-y-2 mb-3 flex-1">
-                                                    {item.sku && (
-                                                        <div className="flex justify-between">
-                                                            <span className="text-sm text-gray-600">{t('SKU')}</span>
-                                                            <span className="text-sm font-medium">{item.sku}</span>
+                                        return (
+                                            <Card key={item.id} className="group border border-gray-200 flex flex-col overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+                                                {/* Image area */}
+                                                <div
+                                                    className={`relative w-full h-32 flex-shrink-0 overflow-hidden bg-gray-100 ${canView ? 'cursor-pointer' : ''}`}
+                                                    onClick={() => canView && router.visit(route('product-service.items.show', item.id))}
+                                                >
+                                                    {item.image ? (
+                                                        <>
+                                                            <img
+                                                                src={getImagePath(item.image)}
+                                                                alt={item.name}
+                                                                className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+                                                                onError={(e) => {
+                                                                    const target = e.target as HTMLImageElement;
+                                                                    target.style.display = 'none';
+                                                                    const fallback = target.nextElementSibling as HTMLElement;
+                                                                    if (fallback) fallback.classList.remove('hidden');
+                                                                }}
+                                                            />
+                                                            <div className="hidden w-full h-32 bg-gray-100 flex items-center justify-center">
+                                                                <Image className="w-8 h-8 text-gray-300" />
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="w-full h-32 bg-gray-100 flex items-center justify-center">
+                                                            <Image className="w-8 h-8 text-gray-300" />
                                                         </div>
                                                     )}
-                                                    {item.sale_price && (
-                                                        <div className="flex justify-between">
-                                                            <span className="text-sm text-gray-600">{t('Sale Price')}</span>
-                                                            <span className="text-sm font-medium">{formatCurrency(item.sale_price)}</span>
-                                                        </div>
-                                                    )}
-                                                    {item.purchase_price && (
-                                                        <div className="flex justify-between">
-                                                            <span className="text-sm text-gray-600">{t('Purchase Price')}</span>
-                                                            <span className="text-sm font-medium">{formatCurrency(item.purchase_price)}</span>
-                                                        </div>
-                                                    )}
-                                                    <div className="flex justify-between">
-                                                        <span className="text-sm text-gray-600">{t('Quantity')}</span>
-                                                        <span className="text-sm font-medium">{Math.floor(item.total_quantity) || 0}</span>
-                                                    </div>
-                                                    {item.category && (
-                                                        <div className="flex justify-between">
-                                                            <span className="text-sm text-gray-600">{t('Category')}</span>
-                                                            <span className="text-sm font-medium">{item.category.name}</span>
-                                                        </div>
-                                                    )}
-                                                    {item.unit_relation && (
-                                                        <div className="flex justify-between">
-                                                            <span className="text-sm text-gray-600">{t('Unit')}</span>
-                                                            <span className="text-sm font-medium">{item.unit_relation.unit_name}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
 
-                                                <div className="flex items-center justify-between pt-3 border-t">
-                                                    <span className="px-2 py-1 rounded-full text-sm bg-green-100 text-green-800 capitalize">
-                                                        {t(item.type.replace(/_/g, ' '))}
+                                                    {/* Bottom gradient for readability */}
+                                                    <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/25 to-transparent pointer-events-none" />
+
+                                                    {/* Type badge — top left */}
+                                                    <span className={`absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize backdrop-blur-sm shadow-sm ${badgeClass}`}>
+                                                        {t(item.type?.replace(/_/g, ' ') ?? '')}
                                                     </span>
-                                                    <div className="flex gap-1">
-                                                <TooltipProvider>
-                                                    {auth.user?.permissions?.includes('view-product-service-item') && (
-                                                        <Tooltip delayDuration={300}>
-                                                            <TooltipTrigger asChild>
-                                                                <Button variant="ghost" size="sm" onClick={() => router.visit(route('product-service.items.show', item.id))} className="h-9 w-9 p-0 text-green-600 hover:text-green-700 hover:bg-green-50">
-                                                                    <Eye className="h-4 w-4" />
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent><p>{t('View')}</p></TooltipContent>
-                                                        </Tooltip>
+
+                                                    {/* Quantity badge — top right */}
+                                                    <span className="absolute top-1.5 right-1.5 bg-white/90 backdrop-blur-sm text-gray-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border border-white/60 shadow-sm">
+                                                        {Math.floor(item.total_quantity) || 0} {t('in stock')}
+                                                    </span>
+                                                </div>
+
+                                                {/* Card body */}
+                                                <div className="p-2.5 flex flex-col flex-1">
+                                                    {/* Name + SKU */}
+                                                    <h3 className="font-semibold text-sm text-gray-900 truncate leading-snug" title={item.name}>
+                                                        {item.name}
+                                                    </h3>
+                                                    {item.sku && (
+                                                        <p className="text-[11px] text-gray-400 mt-0.5 mb-1.5 font-mono">{item.sku}</p>
                                                     )}
-                                                    {auth.user?.permissions?.includes('edit-product-service-item') && (
-                                                        <Tooltip delayDuration={300}>
-                                                            <TooltipTrigger asChild>
-                                                                <Button variant="ghost" size="sm" onClick={() => router.visit(route('product-service.items.edit', item.id))} className="h-9 w-9 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-                                                                    <Edit className="h-4 w-4" />
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent><p>{t('Edit')}</p></TooltipContent>
-                                                        </Tooltip>
+
+                                                    {/* Description preview */}
+                                                    {item.description && (
+                                                        <p className="text-[11px] text-gray-500 mb-1.5 line-clamp-1 leading-relaxed">
+                                                            {item.description}
+                                                        </p>
                                                     )}
-                                                    {auth.user?.permissions?.includes('delete-product-service-item') && (
-                                                        <Tooltip delayDuration={300}>
-                                                            <TooltipTrigger asChild>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    onClick={() => openDeleteDialog(item.id)}
-                                                                    className="h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent><p>{t('Delete')}</p></TooltipContent>
-                                                        </Tooltip>
+
+                                                    {/* Prices */}
+                                                    {(item.sale_price || item.purchase_price) && (
+                                                        <div className="flex gap-1 mb-2">
+                                                            {item.sale_price ? (
+                                                                <div className="flex-1 bg-emerald-50 border border-emerald-100 rounded-md px-2 py-1 min-w-0">
+                                                                    <p className="text-[10px] text-emerald-600 font-medium leading-none">{t('Sale')}</p>
+                                                                    <p className="text-[11px] font-bold text-emerald-800 mt-0.5 truncate">{formatCurrency(item.sale_price)}</p>
+                                                                </div>
+                                                            ) : null}
+                                                            {item.purchase_price ? (
+                                                                <div className="flex-1 bg-sky-50 border border-sky-100 rounded-md px-2 py-1 min-w-0">
+                                                                    <p className="text-[10px] text-sky-600 font-medium leading-none">{t('Purchase')}</p>
+                                                                    <p className="text-[11px] font-bold text-sky-800 mt-0.5 truncate">{formatCurrency(item.purchase_price)}</p>
+                                                                </div>
+                                                            ) : null}
+                                                        </div>
                                                     )}
+
+                                                    {/* Category & Unit tags */}
+                                                    <div className="flex flex-wrap gap-1 flex-1 content-start mb-2">
+                                                        {item.category && (
+                                                            <span className="inline-flex items-center gap-1 text-[10px] text-gray-600 bg-gray-100 rounded px-1.5 py-0.5 truncate max-w-full" title={item.category.name}>
+                                                                <span className="text-gray-400">📁</span>
+                                                                {item.category.name}
+                                                            </span>
+                                                        )}
+                                                        {item.unit_relation && (
+                                                            <span className="inline-flex items-center gap-1 text-[10px] text-gray-600 bg-gray-100 rounded px-1.5 py-0.5">
+                                                                <span className="text-gray-400">⚖️</span>
+                                                                {item.unit_relation.unit_name}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Actions */}
+                                                    <div className="flex items-center justify-end gap-0.5 pt-1.5 border-t border-gray-100">
+                                                        <TooltipProvider>
+                                                            {auth.user?.permissions?.includes('view-product-service-item') && (
+                                                                <Tooltip delayDuration={300}>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Button variant="ghost" size="sm" onClick={() => router.visit(route('product-service.items.show', item.id))} className="h-7 w-7 p-0 text-green-600 hover:text-green-700">
+                                                                            <Eye className="h-3.5 w-3.5" />
+                                                                        </Button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent><p>{t('View')}</p></TooltipContent>
+                                                                </Tooltip>
+                                                            )}
+                                                            {auth.user?.permissions?.includes('edit-product-service-item') && (
+                                                                <Tooltip delayDuration={300}>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Button variant="ghost" size="sm" onClick={() => router.visit(route('product-service.items.edit', item.id))} className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700">
+                                                                            <Edit className="h-3.5 w-3.5" />
+                                                                        </Button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent><p>{t('Edit')}</p></TooltipContent>
+                                                                </Tooltip>
+                                                            )}
+                                                            {auth.user?.permissions?.includes('delete-product-service-item') && (
+                                                                <Tooltip delayDuration={300}>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(item.id)} className="h-7 w-7 p-0 text-destructive hover:text-destructive">
+                                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                                        </Button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent><p>{t('Delete')}</p></TooltipContent>
+                                                                </Tooltip>
+                                                            )}
                                                         </TooltipProvider>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </Card>
-                                    ))}
+                                            </Card>
+                                        );
+                                    })}
                                 </div>
                             ) : (
                                 <NoRecordsFound

@@ -10,6 +10,8 @@ export interface PurchaseReturn {
     total_amount: number;
     status: 'draft' | 'approved' | 'completed' | 'cancelled';
     notes?: string;
+    company_signature?: string;
+    vendor_signature?: string;
     created_at: string;
     updated_at: string;
     vendor?: User;

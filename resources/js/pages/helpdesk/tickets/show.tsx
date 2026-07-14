@@ -5,7 +5,9 @@ import { useFlashMessages } from '@/hooks/useFlashMessages';
 import AuthenticatedLayout from "@/layouts/authenticated-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { ArrowLeft } from "lucide-react";
 import ChatMessage from '../components/ChatMessage';
 import ReplyForm from '../components/ReplyForm';
 import { formatDate } from '@/utils/helpers';
@@ -97,6 +99,16 @@ export default function Show() {
                 {label: `${ticket.title}`}
             ]}
             pageTitle={`Ticket #${ticket.ticket_id}`}
+            pageActions={
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.visit(route('helpdesk-tickets.index'))}
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    {t('Back')}
+                </Button>
+            }
         >
             <Head title={`Ticket #${ticket.ticket_id} - ${ticket.title}`} />
 

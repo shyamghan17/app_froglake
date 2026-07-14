@@ -157,6 +157,16 @@ export default function LoginHistory() {
                 {label: t('Login History')}
             ]}
             pageTitle={t('User Login History')}
+            pageActions={
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.visit(route('users.index'))}
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    {t('Back')}
+                </Button>
+            }
         >
             <Head title={t('User Login History')} />
 

@@ -181,8 +181,8 @@ export default function ProductsReport({ productData }: ProductsReportProps) {
                 {/* Data Table */}
                 <Card className="shadow-sm">
                     <CardHeader className="p-6 border-b bg-gray-50/50">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                            <Package className="h-5 w-5 text-blue-600" />
+                        <CardTitle className="text-lg flex items-center gap-2 text-base">
+                            <Package className="h-5 w-5" />
                             {t('Product Performance Report')}
                         </CardTitle>
                     </CardHeader>

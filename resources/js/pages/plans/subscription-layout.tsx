@@ -734,7 +734,7 @@ function SubscriptionLayout({ plan, allModules, pricingPeriod, onSubscribe, bank
 
                     {(paymentButtons.length === 0) && (
                         <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                            {t('No payment methods available')}
+                            {t('Payment methods will be available once the Super Admin configures the payment gateway credentials.')}
                         </p>
                     )}
 

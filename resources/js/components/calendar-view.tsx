@@ -30,18 +30,30 @@ export default function CalendarView({ events, onEventClick, onDateClick, onMont
 
   const calendarEvents = useMemo(() => {
     return events.map(event => {
-      const startDate = new Date(event.startDate);
-      const endDate = new Date(event.endDate);
+      // Normalize dates from UTC to local timezone
+      const normalizeDate = (dateStr: string): string => {
+        if (dateStr.includes('T') && dateStr.includes('Z')) {
+          const utcDate = new Date(dateStr)
+          const year = utcDate.getFullYear()
+          const month = String(utcDate.getMonth() + 1).padStart(2, '0')
+          const day = String(utcDate.getDate()).padStart(2, '0')
+          return `${year}-${month}-${day}`
+        }
+        return dateStr.split('T')[0]
+      }
+
+      const startDate = normalizeDate(event.startDate)
+      const endDate = normalizeDate(event.endDate)
       
       // For FullCalendar, end date should be the day after the last day for proper spanning
-      const calendarEndDate = event.startDate !== event.endDate ? 
-        new Date(endDate.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
+      const calendarEndDate = startDate !== endDate ? 
+        new Date(new Date(endDate).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
         undefined;
       
       return {
         id: event.id.toString(),
         title: event.title,
-        start: event.startDate,
+        start: startDate,
         end: calendarEndDate,
         allDay: true,
         backgroundColor: event.color,

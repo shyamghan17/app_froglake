@@ -58,6 +58,23 @@ export interface UserFilters {
     is_enable_login: string;
 }
 
+export interface AdminHubCompany {
+    id: number;
+    name: string;
+    email: string;
+    mobile_no?: string | null;
+    avatar?: string | null;
+}
+
+export interface AdminHubProps {
+    company: AdminHubCompany;
+    companyUsers: User[];
+    totalActiveUsers: number;
+    totalInactiveUsers: number;
+    auth: AuthContext;
+    [key: string]: unknown;
+}
+
 export type PaginatedUsers = PaginatedData<User>;
 export interface UserModalState {
     isOpen: boolean;

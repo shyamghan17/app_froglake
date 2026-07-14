@@ -3389,6 +3389,7 @@ class PaypalController extends Controller
                             $booking->gender = $bookingData['gender'];
                             $booking->payment_method = 'Paypal';
                             $booking->payment_status = 'paid';
+                            $booking->booking_status = 'completed';
                             $booking->created_by = $user->id;
                             $booking->creator_id = $user->id;
                             $booking->save();
@@ -3415,6 +3416,7 @@ class PaypalController extends Controller
                             $membership->special_request = $bookingData['notes'];
                             $membership->payment_method = 'Paypal';
                             $membership->payment_status = 'paid';
+                            $membership->membership_status = 'approved';
                             $membership->created_by = $user->id;
                             $membership->creator_id = $user->id;
                             $membership->save();

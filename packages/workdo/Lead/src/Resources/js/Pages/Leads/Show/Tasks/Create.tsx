@@ -65,7 +65,7 @@ export default function Create({ leadId, onSuccess }: CreateTaskProps) {
                         <InputError message={errors.date} />
                     </div>
                     <div>
-                        <Label>{t('Time')}</Label>
+                        <Label required>{t('Time')}</Label>
                         <TimePicker
                             value={data.time}
                             onChange={(time) => setData('time', time)}

@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Head, usePage } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import html2pdf from 'html2pdf.js';
-import { formatCurrency, formatDate, getCompanySetting , getImagePath} from '@/utils/helpers';
+import { formatCurrency, formatDate, getCompanySetting, getImagePath } from '@/utils/helpers';
+import { usePageButtons } from '@/hooks/usePageButtons';
 
 interface PayrollEntry {
     id: number;
@@ -58,6 +59,12 @@ export default function Payslip() {
     const { t } = useTranslation();
     const { payrollEntry } = usePage<PayslipProps>().props;
     const [isDownloading, setIsDownloading] = useState(false);
+    
+    // signature
+    const signaturePrintButtons = usePageButtons('signaturePrintBtn', {
+        invoice: payrollEntry.payroll,
+        invoiceType: 'payroll'
+    });
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -178,7 +185,7 @@ export default function Payslip() {
                                         <span>{t('Basic Salary')}</span>
                                         <span>{formatCurrency(payrollEntry.basic_salary)}</span>
                                     </div>
-                                    
+
                                     {/* Allowances Section */}
                                     {Object.keys(payrollEntry.allowances_breakdown || {}).length > 0 && (
                                         <>
@@ -191,7 +198,7 @@ export default function Payslip() {
                                             ))}
                                         </>
                                     )}
-                                    
+
                                     {/* Manual Overtime Section */}
                                     {Object.keys(payrollEntry.manual_overtimes_breakdown || {}).length > 0 && (
                                         <>
@@ -204,7 +211,7 @@ export default function Payslip() {
                                             ))}
                                         </>
                                     )}
-                                    
+
                                     {/* Attendance Overtime Section */}
                                     {payrollEntry.attendance_overtime_amount > 0 && (
                                         <>
@@ -215,7 +222,7 @@ export default function Payslip() {
                                             </div>
                                         </>
                                     )}
-                                    
+
                                 </div>
                             </div>
 
@@ -249,7 +256,7 @@ export default function Payslip() {
                                             )}
                                         </>
                                     )}
-                                    
+
                                     {/* Other Deductions Section */}
                                     {Object.keys(payrollEntry.deductions_breakdown || {}).length > 0 && (
                                         <>
@@ -262,7 +269,7 @@ export default function Payslip() {
                                             ))}
                                         </>
                                     )}
-                                    
+
                                     {/* Loans Section */}
                                     {Object.keys(payrollEntry.loans_breakdown || {}).length > 0 && (
                                         <>
@@ -275,7 +282,7 @@ export default function Payslip() {
                                             ))}
                                         </>
                                     )}
-                                    
+
                                 </div>
                             </div>
                         </div>
@@ -310,6 +317,11 @@ export default function Payslip() {
                         <p className="text-xs text-gray-600">{t('This is a computer generated payslip and does not require signature.')}</p>
                     </div>
                     <div className="text-right text-sm text-gray-600 max-w-xs">
+                        
+                        {/* Signature */}
+                        {signaturePrintButtons.length > 0 && signaturePrintButtons.map((button) => (
+                            <div key={button.id}>{button.component}</div>
+                        ))}
                         <div className="font-semibold">{getCompanySetting('company_name') || 'YOUR COMPANY'}</div>
                         {getCompanySetting('company_address') && <div>{getCompanySetting('company_address')}</div>}
                         {(getCompanySetting('company_city') || getCompanySetting('company_state') || getCompanySetting('company_zipcode')) && (

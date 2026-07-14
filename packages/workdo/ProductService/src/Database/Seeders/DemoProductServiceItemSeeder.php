@@ -14,6 +14,10 @@ class DemoProductServiceItemSeeder extends Seeder
 {
     public function run($userId): void
     {
+        if (ProductServiceItem::where('created_by', $userId)->exists()) {
+            return;
+        }
+
         if (!empty($userId)) {
             // Get only Item type categories
             $itemCategories = ProductServiceCategory::where('created_by', $userId)->pluck('id', 'name')->toArray();

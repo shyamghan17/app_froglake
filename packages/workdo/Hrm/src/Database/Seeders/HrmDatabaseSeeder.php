@@ -64,6 +64,7 @@ class HrmDatabaseSeeder extends Seeder
             (new DemoOvertimeSeeder())->run($userId);
             (new DemoPayrollSeeder())->run($userId);
             (new DemoIpRestrictSeeder())->run($userId);
+            (new DemoCompanyPolicySeeder())->run($userId);
         }
     }
 }

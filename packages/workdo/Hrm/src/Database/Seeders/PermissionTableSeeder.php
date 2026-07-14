@@ -386,7 +386,14 @@ class PermissionTableSeeder extends Seeder
             ['name' => 'manage-working-days', 'module' => 'working-days', 'label' => 'Manage Working Days'],
             ['name' => 'edit-working-days', 'module' => 'working-days', 'label' => 'Edit Working Days'],
 
-
+            // CompanyPolicy management
+            ['name' => 'manage-company-policies', 'module' => 'company-policies', 'label' => 'Manage Company Policies'],
+            ['name' => 'manage-any-company-policies', 'module' => 'company-policies', 'label' => 'Manage All Company Policies'],
+            ['name' => 'manage-own-company-policies', 'module' => 'company-policies', 'label' => 'Manage Own Company Policies'],
+            ['name' => 'view-company-policies', 'module' => 'company-policies', 'label' => 'View Company Policies'],
+            ['name' => 'create-company-policies', 'module' => 'company-policies', 'label' => 'Create Company Policies'],
+            ['name' => 'edit-company-policies', 'module' => 'company-policies', 'label' => 'Edit Company Policies'],
+            ['name' => 'delete-company-policies', 'module' => 'company-policies', 'label' => 'Delete Company Policies'],
 
             // IpRestrict management
             ['name' => 'manage-ip-restricts', 'module' => 'ip-restricts', 'label' => 'Manage Ip Restricts'],

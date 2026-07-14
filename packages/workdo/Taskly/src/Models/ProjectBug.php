@@ -52,4 +52,9 @@ class ProjectBug extends Model
     {
         return $this->hasMany(BugComment::class, 'bug_id');
     }
+
+    public function files()
+    {
+        return $this->hasMany(ProjectFile::class, 'bug_id');
+    }
 }

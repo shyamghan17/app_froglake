@@ -8,8 +8,9 @@ import { formatCurrency, formatDate } from '@/utils/helpers';
 import { getStatusBadgeClasses } from './utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, Download, CheckCircle } from 'lucide-react';
+import { FileText, Download, CheckCircle, ArrowLeft } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { usePageButtons } from '@/hooks/usePageButtons';
 
 interface ViewProps {
     return: PurchaseReturn;
@@ -23,6 +24,11 @@ function View() {
 
     useFlashMessages();
 
+    const signatureStatusButtons = usePageButtons('signatureViewBtn', {
+        invoice: purchaseReturn,
+        invoiceType: 'purchase_return'
+    });
+
     const downloadPDF = () => {
         const printUrl = route('purchase-returns.print', purchaseReturn.id) + '?download=pdf';
         window.open(printUrl, '_blank');
@@ -35,6 +41,16 @@ function View() {
                 {label: t('Purchase Return Details')}
             ]}
             pageTitle={`${t('Purchase Return')} #${purchaseReturn.return_number}`}
+            pageActions={
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.visit(route('purchase-returns.index'))}
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    {t('Back')}
+                </Button>
+            }
         >
             <Head title={`${t('Purchase Return')} #${purchaseReturn.return_number}`} />
 
@@ -141,6 +157,10 @@ function View() {
                                 <span className="text-sm text-muted-foreground ml-2">{purchaseReturn.notes}</span>
                             </div>
                         )}
+                        {/* Signature Status */}
+                        {signatureStatusButtons.length > 0 && signatureStatusButtons.map((button) => (
+                            <div key={button.id}>{button.component}</div>
+                        ))}
                     </CardContent>
                 </Card>
 

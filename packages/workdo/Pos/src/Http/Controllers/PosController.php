@@ -109,11 +109,29 @@ class PosController extends Controller
                 ->select('id', 'name', 'code', 'bank_account_id')
                 ->get();
 
+            $discounts = PosDiscount::active()
+                ->forWorkspace()
+                ->with('products:id')
+                ->select('id', 'name', 'discount_type', 'discount_value', 'min_quantity', 'start_date', 'end_date', 'category_id')
+                ->get()
+                ->map(fn($d) => [
+                    'id'             => $d->id,
+                    'name'           => $d->name,
+                    'discount_type'  => $d->discount_type,
+                    'discount_value' => (float) $d->discount_value,
+                    'min_quantity'   => $d->min_quantity,
+                    'start_date'     => $d->start_date->toDateString(),
+                    'end_date'       => $d->end_date->toDateString(),
+                    'category_id'    => $d->category_id,
+                    'product_ids'    => $d->products->pluck('id')->toArray(),
+                ]);
+
             return Inertia::render('Pos/Pos/Create', [
                 'customers' => $customers,
                 'warehouses' => $warehouses,
                 'categories' => $categories,
-                'counters' => $counters,
+                'counters'   => $counters,
+                'discounts'  => $discounts,
             ]);
         }else{
             return redirect()->route('pos.index')->with('error', __('Permission denied'));
@@ -163,14 +181,15 @@ class PosController extends Controller
                 }
 
                 return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'sku' => $product->sku,
-                    'price' => $product->sale_price,
-                    'stock' => $warehouseStock ? $warehouseStock->quantity : 0,
-                    'category' => $product->category ? $product->category->name : null,
-                    'image' => $product->image, 
-                    'taxes' => $taxes
+                    'id'          => $product->id,
+                    'name'        => $product->name,
+                    'sku'         => $product->sku,
+                    'price'       => $product->sale_price,
+                    'stock'       => $warehouseStock ? $warehouseStock->quantity : 0,
+                    'category'    => $product->category ? $product->category->name : null,
+                    'category_id' => $product->category_id,
+                    'image'       => $product->image,
+                    'taxes'       => $taxes
                 ];
             });
 
@@ -392,35 +411,6 @@ class PosController extends Controller
     {
         return response()->json([
             'pos_number' => Pos::generateSaleNumber()
-        ]);
-    }
-
-    public function fetchApplicableDiscount(Request $request)
-    {
-        $productId = $request->product_id;
-        $quantity = $request->quantity ?? 1;
-
-        $product = ProductServiceItem::find($productId);
-        if (!$product) {
-            return response()->json(['discount' => false]);
-        }
-
-        $bestDiscount = $this->getApplicableDiscount($productId, $quantity, $product->category_id);
-
-        if (!$bestDiscount) {
-            return response()->json(['discount' => false]);
-        }
-
-        $discountAmount = $this->calculateDiscountAmount($product->sale_price, $bestDiscount) * $quantity;
-        $subtotal = $product->sale_price * $quantity;
-        $discountAmount = min($discountAmount, $subtotal);
-
-        return response()->json([
-            'discount'       => true,
-            'discount_id'    => $bestDiscount->id,
-            'discount_type'  => $bestDiscount->discount_type,
-            'discount_value' => $bestDiscount->discount_value,
-            'discount_amount'=> $discountAmount,
         ]);
     }
 }

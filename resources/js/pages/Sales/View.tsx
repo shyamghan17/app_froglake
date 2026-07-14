@@ -8,7 +8,7 @@ import { formatCurrency, formatDate } from '@/utils/helpers';
 import { getStatusBadgeClasses } from './utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { FileText, Download } from 'lucide-react';
+import { FileText, Download, ArrowLeft } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePageButtons } from '@/hooks/usePageButtons';
 import { useFormFields } from '@/hooks/useFormFields';
@@ -45,6 +45,16 @@ export default function View() {
                 {label: t('Sales Invoice Details')}
             ]}
             pageTitle={`${t('Sales Invoice')} #${invoice.invoice_number}`}
+            pageActions={
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.visit(route('sales-invoices.index'))}
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    {t('Back')}
+                </Button>
+            }
         >
             <Head title={`${t('Sales Invoice')} #${invoice.invoice_number}`} />
 
@@ -178,7 +188,7 @@ export default function View() {
 
                         {/* Signature Status */}
                         {signatureStatusButtons.length > 0 && signatureStatusButtons.map((button) => (
-                                <div key={button.id} className="mt-4 pt-4 border-t">{button.component}</div>
+                                <div key={button.id}>{button.component}</div>
                         ))}
                         {/* Custom Fields */}
                         {customFields.length > 0 && (

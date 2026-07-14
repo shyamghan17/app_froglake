@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import { useFlashMessages } from '@/hooks/useFlashMessages';
@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { InputError } from '@/components/ui/input-error';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Separator } from '@/components/ui/separator';
 import { CalendarDays, Package } from 'lucide-react';
@@ -36,6 +37,7 @@ export default function Create() {
         due_date: '',
         customer_id: '',
         warehouse_id: '',
+        type: 'product',
         payment_terms: '',
         notes: '',
         items: [{
@@ -82,6 +84,36 @@ export default function Create() {
         }]);
     };
 
+    const handleTypeChange = async (type: string) => {
+        setData('type', type);
+
+        if (type === 'service') {
+            try {
+                const response = await fetch(route('sales-proposals.services'));
+                const services = await response.json();
+                setAvailableProducts(services);
+            } catch (error) {
+                console.error('Failed to fetch services:', error);
+                setAvailableProducts([]);
+            }
+        } else {
+            setAvailableProducts([]);
+            setData('warehouse_id', '');
+        }
+
+        // Reset items when type changes
+        setData('items', [{
+            product_id: 0,
+            quantity: 1,
+            unit_price: 0,
+            discount_percentage: 0,
+            discount_amount: 0,
+            tax_percentage: 0,
+            tax_amount: 0,
+            total_amount: 0
+        }]);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post(route('sales-proposals.store'));
@@ -103,10 +135,24 @@ export default function Create() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                                <CalendarDays className="h-5 w-5" />
-                                {t('Sales Proposal Details')}
-                            </CardTitle>
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="flex items-center gap-2 text-lg">
+                                    <CalendarDays className="h-5 w-5" />
+                                    {t('Sales Proposal Details')}
+                                </CardTitle>
+                                <div className="flex items-center gap-2">
+                                    <RadioGroup value={data.type} onValueChange={handleTypeChange} className="flex gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <RadioGroupItem value="product" id="type-product" />
+                                            <Label htmlFor="type-product" className="cursor-pointer font-normal">{t('Product Wise')}</Label>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <RadioGroupItem value="service" id="type-service" />
+                                            <Label htmlFor="type-service" className="cursor-pointer font-normal">{t('Service Wise')}</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -155,24 +201,26 @@ export default function Create() {
                                     <InputError message={errors.customer_id} />
                                 </div>
 
-                                <div>
-                                    <Label htmlFor="warehouse_id" required>
-                                        {t('Warehouse')}
-                                    </Label>
-                                    <Select value={data.warehouse_id} onValueChange={handleWarehouseChange}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder={t('Select Warehouse')} />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {warehouses?.map((warehouse) => (
-                                                <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
-                                                    {warehouse.name} - {warehouse.address}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError message={errors.warehouse_id} />
-                                </div>
+                                {data.type === 'product' && (
+                                    <div>
+                                        <Label htmlFor="warehouse_id" required>
+                                            {t('Warehouse')}
+                                        </Label>
+                                        <Select value={data.warehouse_id} onValueChange={handleWarehouseChange}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder={t('Select Warehouse')} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {warehouses?.map((warehouse) => (
+                                                    <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
+                                                        {warehouse.name} - {warehouse.address}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <InputError message={errors.warehouse_id} />
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -247,6 +295,7 @@ export default function Create() {
                                 errors={errors}
                                 products={availableProducts}
                                 showAddButton={false}
+                                invoiceType={data.type}
                             />
 
                             <div className="mt-6 flex justify-end">

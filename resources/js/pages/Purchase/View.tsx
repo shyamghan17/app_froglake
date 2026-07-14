@@ -48,7 +48,16 @@ export default function View() {
                 {label: t('Purchase Invoice Details')}
             ]}
             pageTitle={`${t('Purchase Invoice')} #${invoice.invoice_number}`}
-
+            pageActions={
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.visit(route('purchase-invoices.index'))}
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    {t('Back')}
+                </Button>
+            }
         >
             <Head title={`${t('Purchase Invoice')} #${invoice.invoice_number}`} />
 
@@ -176,9 +185,9 @@ export default function View() {
                                 <span className="text-sm text-muted-foreground ml-2">{invoice.notes}</span>
                             </div>
                         )}
-                         {/* Signature Status */}
+                        {/* Signature Status */}
                         {signatureStatusButtons.length > 0 && signatureStatusButtons.map((button) => (
-                          <div key={button.id} className="mt-4 pt-4 border-t">{button.component}</div>
+                            <div key={button.id}>{button.component}</div>
                         ))}
                         {/* Custom Fields */}
                         {customFields.length > 0 && (

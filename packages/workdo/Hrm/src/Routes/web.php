@@ -9,6 +9,7 @@ use Workdo\Hrm\Http\Controllers\DeductionController;
 use Workdo\Hrm\Http\Controllers\LoanController;
 use Workdo\Hrm\Http\Controllers\AttendanceController;
 use Workdo\Hrm\Http\Controllers\ShiftController;
+use Workdo\Hrm\Http\Controllers\CompanyPolicyController;
 use Workdo\Hrm\Http\Controllers\LeaveApplicationController;
 use Workdo\Hrm\Http\Controllers\LeaveTypeController;
 use Workdo\Hrm\Http\Controllers\EventController;
@@ -263,6 +264,13 @@ Route::middleware(['web', 'auth', 'verified', 'PlanModuleCheck:Hrm'])->group(fun
 
     Route::prefix('hrm/leave-balance')->name('hrm.leave-balance.')->group(function () {
         Route::get('/', [LeaveBalanceController::class, 'index'])->name('index');
+    });
+
+    Route::prefix('hrm/company-policies')->name('hrm.company-policies.')->group(function () {
+        Route::get('/', [CompanyPolicyController::class, 'index'])->name('index');
+        Route::post('/', [CompanyPolicyController::class, 'store'])->name('store');
+        Route::put('/{companyPolicy}', [CompanyPolicyController::class, 'update'])->name('update');
+        Route::delete('/{companyPolicy}', [CompanyPolicyController::class, 'destroy'])->name('destroy');
     });
 
     // Dependent dropdown routes

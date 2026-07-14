@@ -51,6 +51,18 @@ export default function Index() {
 
     const [showFilters, setShowFilters] = useState(false);
 
+    // signature
+    const SignatureButtons = ({ payroll }: { payroll: Payroll }) => {
+        const signatureButtons = usePageButtons('signatureBtn', { invoice: payroll });
+
+        return (
+            <>
+                {signatureButtons.map((button) => (
+                    <div key={button.id}>{button.component}</div>
+                ))}
+            </>
+        );
+    };
 
 
     useFlashMessages();
@@ -192,6 +204,7 @@ export default function Index() {
             render: (_: any, payroll: Payroll) => (
                 <div className="flex gap-1">
                     <TooltipProvider>
+                        <SignatureButtons payroll={payroll} />
                         {auth.user?.permissions?.includes('run-payrolls') && payroll.is_payroll_paid !== 'paid' && (
                             <Tooltip delayDuration={0}>
                                 <TooltipTrigger asChild>
@@ -478,6 +491,7 @@ export default function Index() {
                                             <div className="flex justify-end items-center gap-2 p-3 border-t bg-gray-50/50 flex-shrink-0 mt-auto">
                                                 <div className="flex gap-1">
                                                     <TooltipProvider>
+                                                        <SignatureButtons payroll={payroll} />
                                                         {auth.user?.permissions?.includes('run-payrolls') && payroll.is_payroll_paid !== 'paid' && (
                                                             <Tooltip delayDuration={300}>
                                                                 <TooltipTrigger asChild>

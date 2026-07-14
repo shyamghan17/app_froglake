@@ -1,9 +1,11 @@
 import AuthenticatedLayout from "@/layouts/authenticated-layout";
 import UpdatePasswordForm from "@/pages/profile/partials/update-password-form";
 import UpdateProfileInformationForm from "@/pages/profile/partials/update-profile-information-form";
-import { Head, usePage } from "@inertiajs/react";
+import { Head, usePage, router } from "@inertiajs/react";
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import { useFlashMessages } from '@/hooks/useFlashMessages';
 import { useFormFields } from '@/hooks/useFormFields';
 import { PageProps } from '@/types';
@@ -23,6 +25,16 @@ export default function Edit({
         <AuthenticatedLayout
             breadcrumbs={[{label: t('Profile')}]}
             pageTitle={t('Profile Settings')}
+            pageActions={
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.visit(route('dashboard'))}
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    {t('Back')}
+                </Button>
+            }
         >
             <Head title={t('Profile')} />
 

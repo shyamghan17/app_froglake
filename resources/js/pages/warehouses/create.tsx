@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import InputError from "@/components/ui/input-error";
 import { PhoneInputComponent } from "@/components/ui/phone-input";
+import { Switch } from "@/components/ui/switch";
 import { useFormFields } from '@/hooks/useFormFields';
 
 import { CreateWarehouseProps, CreateWarehouseFormData } from './types';
@@ -118,17 +118,13 @@ export default function Create({ onSuccess }: CreateWarehouseProps) {
                         <InputError message={errors.email} />
                     </div>
                 </div>
-                <div>
-                    <Label htmlFor="is_active">{t('Status')}</Label>
-                    <Select value={data.is_active ? "1" : "0"} onValueChange={(value) => setData('is_active', value === "1")}>
-                        <SelectTrigger>
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="1">{t('Active')}</SelectItem>
-                            <SelectItem value="0">{t('Inactive')}</SelectItem>
-                        </SelectContent>
-                    </Select>
+                <div className="flex items-center space-x-2">
+                    <Switch
+                        id="is_active"
+                        checked={data.is_active || false}
+                        onCheckedChange={(checked) => setData('is_active', !!checked)}
+                    />
+                    <Label htmlFor="is_active" className="cursor-pointer">{t('Is Active')}</Label>
                     <InputError message={errors.is_active} />
                 </div>
                 {customFields.length > 0 && (

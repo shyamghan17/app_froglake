@@ -59,6 +59,18 @@ export default function Index() {
 
     const pageButtons = usePageButtons('salesReturnBtn', 'Sales Return data');
 
+    // Component for signature buttons
+    const SignatureButtons = ({ returnItem }: { returnItem: SalesReturn }) => {
+        const signatureButtons = usePageButtons('signatureBtn', { invoice: returnItem });
+        return (
+            <>
+                {signatureButtons.map((button) => (
+                    <div key={button.id}>{button.component}</div>
+                ))}
+            </>
+        );
+    };
+
     const { deleteState, openDeleteDialog, closeDeleteDialog, confirmDelete } = useDeleteHandler({
         routeName: 'sales-returns.destroy',
         defaultMessage: t('Are you sure you want to delete this sales return?')
@@ -155,6 +167,7 @@ export default function Index() {
             render: (_: any, returnItem: SalesReturn) => (
                 <div className="flex gap-1">
                     <TooltipProvider>
+                        <SignatureButtons returnItem={returnItem} />
                         {returnItem.status === 'draft' && (
                             <>
                             {auth.user?.permissions?.includes('approve-sales-returns-invoices') && (
@@ -461,6 +474,7 @@ export default function Index() {
                                             <div className="flex items-center justify-between p-3 border-t bg-gray-50/50">
                                                 <div className="flex gap-1">
                                                     <TooltipProvider>
+                                                        <SignatureButtons returnItem={returnItem} />
                                                         {returnItem.status === 'draft' && auth.user?.permissions?.includes('approve-sales-returns-invoices') && (
                                                             <Tooltip delayDuration={0}>
                                                                 <TooltipTrigger asChild>

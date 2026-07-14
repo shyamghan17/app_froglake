@@ -1,17 +1,21 @@
 import { useState, useMemo } from 'react';
 import { Head, usePage, router } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
+import { differenceInDays } from 'date-fns';
 import { useFlashMessages } from '@/hooks/useFlashMessages';
 import { useDeleteHandler } from '@/hooks/useDeleteHandler';
-import { formatDate, formatCurrency } from '@/utils/helpers';
+import { formatDate, formatCurrency, getImagePath } from '@/utils/helpers';
 import AuthenticatedLayout from "@/layouts/authenticated-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, FileText, Eye, Trash2, RefreshCw, Edit as EditIcon, Download, Send, Check, X, Receipt } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+    Plus, FileText, Eye, Trash2, RefreshCw, Edit as EditIcon, Download, Send, Check, X, Receipt,
+    List, Columns3, FilePlus2, CheckCircle2, XCircle, AlertTriangle, Package, CreditCard, CalendarDays, Lightbulb, Clock
+} from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DataTable } from "@/components/ui/data-table";
 import { SearchInput } from "@/components/ui/search-input";
-import { ListGridToggle } from "@/components/ui/list-grid-toggle";
 import { PerPageSelector } from "@/components/ui/per-page-selector";
 import { FilterButton } from '@/components/ui/filter-button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,22 +24,26 @@ import NoRecordsFound from '@/components/no-records-found';
 import { Pagination } from "@/components/ui/pagination";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { usePageButtons } from '@/hooks/usePageButtons';
+import { cn } from '@/lib/utils';
 
 interface SalesProposal {
     id: number;
     proposal_number: string;
     proposal_date: string;
     due_date: string;
-    customer: { id: number; name: string; email: string };
+    customer: { id: number; name: string; email: string; avatar?: string | null };
     subtotal: number;
     tax_amount: number;
     discount_amount: number;
     total_amount: number;
+    payment_terms?: string | null;
+    items?: { id: number }[];
     status: string;
     display_status: string;
     converted_to_invoice: boolean;
     invoice_id?: number;
     created_at: string;
+    updated_at: string;
 }
 
 interface ProposalFilters {
@@ -47,14 +55,36 @@ interface ProposalFilters {
     date_to?: string;
 }
 
+interface ProposalStats {
+    total_count: number;
+    total_value: number;
+    overdue_count: number;
+    draft_count: number;
+    draft_value: number;
+    sent_count: number;
+    sent_value: number;
+    accepted_count: number;
+    accepted_value: number;
+    accepted_active_count: number;
+    rejected_count: number;
+    rejected_value: number;
+}
 
+const STATUS_COLUMNS = [
+    { key: 'draft', label: 'Draft', chip: 'bg-gray-100 text-gray-700', dot: 'bg-gray-400' },
+    { key: 'sent', label: 'Sent', chip: 'bg-blue-100 text-blue-700', dot: 'bg-blue-400' },
+    { key: 'accepted', label: 'Accepted', chip: 'bg-green-100 text-green-700', dot: 'bg-green-400' },
+    { key: 'rejected', label: 'Rejected', chip: 'bg-red-100 text-red-700', dot: 'bg-red-400' },
+] as const;
 
 export default function Index() {
     const { t } = useTranslation();
-    const { proposals, auth, customers } = usePage<{
+    const { proposals, auth, customers, stats, boardData } = usePage<{
         proposals: { data: SalesProposal[]; [key: string]: any };
         auth: { user: { permissions: string[] } };
         customers: { id: number; name: string; email: string }[];
+        stats: ProposalStats;
+        boardData: Record<string, SalesProposal[]> | null;
     }>().props;
 
     const urlParams = useMemo(() => new URLSearchParams(window.location.search), []);
@@ -73,11 +103,9 @@ export default function Index() {
     const [perPage] = useState(urlParams.get('per_page') || '10');
     const [sortField, setSortField] = useState(urlParams.get('sort') || '');
     const [sortDirection, setSortDirection] = useState(urlParams.get('direction') || 'desc');
-    const [viewMode, setViewMode] = useState<'list' | 'grid'>(urlParams.get('view') as 'list' | 'grid' || 'list');
+    const [viewMode, setViewMode] = useState<'board' | 'list'>(urlParams.get('view') as 'board' | 'list' || 'board');
     const [showFilters, setShowFilters] = useState(false);
     const [convertState, setConvertState] = useState({ isOpen: false, proposalId: null as number | null });
-
-
 
     useFlashMessages();
     const googleDriveButtons = usePageButtons('googleDriveBtn', { module: 'Proposal', settingKey: 'GoogleDrive Proposal' });
@@ -100,38 +128,60 @@ export default function Index() {
         }
     };
 
+    const navigate = (params: Record<string, any>) => {
+        router.get(route('sales-proposals.index'), params, {
+            preserveState: false,
+            replace: true
+        });
+    };
+
     const handleFilter = () => {
-        const filterParams = { ...filters };
+        const filterParams: Record<string, any> = { ...filters };
 
         if (filters.date_range) {
             const [fromDate, toDate] = filters.date_range.split(' - ');
             filterParams.date_from = fromDate;
             filterParams.date_to = toDate;
         }
-        delete (filterParams as any).date_range;
+        delete filterParams.date_range;
 
-        router.get(route('sales-proposals.index'), {...filterParams, per_page: perPage, sort: sortField, direction: sortDirection, view: viewMode}, {
-            preserveState: true,
-            replace: true
-        });
+        navigate({ ...filterParams, per_page: perPage, sort: sortField, direction: sortDirection, view: viewMode });
     };
 
     const handleSort = (field: string) => {
         const direction = sortField === field && sortDirection === 'asc' ? 'desc' : 'asc';
         setSortField(field);
         setSortDirection(direction);
-        router.get(route('sales-proposals.index'), {...filters, per_page: perPage, sort: field, direction, view: viewMode}, {
-            preserveState: true,
-            replace: true
-        });
+        navigate({ ...filters, per_page: perPage, sort: field, direction, view: viewMode });
     };
 
     const clearFilters = () => {
         setFilters({ search: '', status: '', customer_id: '', date_range: '' });
-        router.get(route('sales-proposals.index'), {per_page: perPage, view: viewMode});
+        navigate({ per_page: perPage, view: viewMode });
     };
 
+    const handleViewChange = (view: 'board' | 'list') => {
+        setViewMode(view);
+        if (view === 'board') {
+            setFilters({ search: '', status: '', customer_id: '', date_range: '' });
+            setShowFilters(false);
+            navigate({});
+        } else {
+            navigate({ ...filters, per_page: perPage, view });
+        }
+    };
 
+    const filterByStatus = (status: string) => {
+        setFilters({ ...filters, status });
+        setViewMode('list');
+        navigate({ ...filters, status, per_page: perPage, view: 'list' });
+    };
+
+    const showAllProposals = () => {
+        setFilters({ search: '', status: '', customer_id: '', date_range: '' });
+        setViewMode('list');
+        navigate({ per_page: perPage, view: 'list' });
+    };
 
     const openConvertDialog = (proposalId: number) => {
         setConvertState({ isOpen: true, proposalId });
@@ -147,6 +197,111 @@ export default function Index() {
             closeConvertDialog();
         }
     };
+
+    const canSeeActions = auth.user?.permissions?.some((p: string) => ['print-sales-proposals', 'sent-sales-proposals', 'accept-sales-proposals', 'reject-sales-proposals', 'view-sales-proposals', 'edit-sales-proposals', 'delete-sales-proposals', 'convert-sales-proposals'].includes(p));
+
+    const renderActions = (item: SalesProposal) => (
+        <TooltipProvider>
+            {auth.user?.permissions?.includes('print-sales-proposals') && (
+                <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="sm" onClick={() => window.open(route('sales-proposals.print', item.id) + '?download=pdf', '_blank')} className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700">
+                            <Download className="h-4 w-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>{t('Download PDF')}</p></TooltipContent>
+                </Tooltip>
+            )}
+
+            {auth.user?.permissions?.includes('sent-sales-proposals') && item.status === 'draft' && (
+                <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="sm" onClick={() => router.post(route('sales-proposals.sent', item.id))} className="h-8 w-8 p-0 text-indigo-600 hover:text-indigo-700">
+                            <Send className="h-4 w-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>{t('Send Proposal')}</p></TooltipContent>
+                </Tooltip>
+            )}
+
+            {auth.user?.permissions?.includes('accept-sales-proposals') && item.status === 'sent' && (
+                <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="sm" onClick={() => router.post(route('sales-proposals.accept', item.id))} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
+                            <Check className="h-4 w-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>{t('Accept Proposal')}</p></TooltipContent>
+                </Tooltip>
+            )}
+
+            {auth.user?.permissions?.includes('reject-sales-proposals') && item.status === 'sent' && (
+                <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="sm" onClick={() => router.post(route('sales-proposals.reject', item.id))} className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>{t('Reject Proposal')}</p></TooltipContent>
+                </Tooltip>
+            )}
+
+            {item.converted_to_invoice ? (
+                <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="sm" onClick={() => router.get(route('sales-invoices.show', item.invoice_id))} className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700">
+                            <Receipt className="h-4 w-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>{t('View Invoice')}</p></TooltipContent>
+                </Tooltip>
+            ) : (
+                auth.user?.permissions?.includes('convert-sales-proposals') && item.status === 'accepted' && (
+                    <Tooltip delayDuration={0}>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="sm" onClick={() => openConvertDialog(item.id)} className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700">
+                                <RefreshCw className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>{t('Convert to Invoice')}</p></TooltipContent>
+                    </Tooltip>
+                )
+            )}
+
+            {auth.user?.permissions?.includes('view-sales-proposals') && (
+                <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="sm" onClick={() => router.get(route('sales-proposals.show', item.id))} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
+                            <Eye className="h-4 w-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>{t('View')}</p></TooltipContent>
+                </Tooltip>
+            )}
+
+            {item.status === 'draft' && auth.user?.permissions?.includes('edit-sales-proposals') && (
+                <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="sm" onClick={() => router.visit(route('sales-proposals.edit', item.id))} className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700">
+                            <EditIcon className="h-4 w-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>{t('Edit')}</p></TooltipContent>
+                </Tooltip>
+            )}
+
+            {item.status === 'draft' && auth.user?.permissions?.includes('delete-sales-proposals') && !item.converted_to_invoice && (
+                <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(item.id)} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>{t('Delete')}</p></TooltipContent>
+                </Tooltip>
+            )}
+        </TooltipProvider>
+    );
 
     const tableColumns = [
         {
@@ -193,28 +348,10 @@ export default function Index() {
             }
         },
         {
-            key: 'subtotal',
-            header: t('Subtotal'),
-            sortable: true,
-            render: (value: number) => formatCurrency(value)
-        },
-        {
-            key: 'tax_amount',
-            header: t('Tax'),
-            sortable: true,
-            render: (value: number) => formatCurrency(value)
-        },
-        {
             key: 'total_amount',
             header: t('Total Amount'),
             sortable: true,
             render: (value: number) => formatCurrency(value)
-        },
-        {
-            key: 'balance',
-            header: t('Balance'),
-            sortable: true,
-            render: (_: any, item: SalesProposal) => formatCurrency(item.total_amount)
         },
         {
             key: 'status',
@@ -226,120 +363,25 @@ export default function Index() {
                 </span>
             )
         },
-        ...(auth.user?.permissions?.some((p: string) => ['print-sales-proposals','sent-sales-proposals','accept-sales-proposals','view-sales-proposals', 'edit-sales-proposals', 'delete-sales-proposals', 'convert-sales-proposals'].includes(p)) ? [{
+        ...(canSeeActions ? [{
             key: 'actions',
             header: t('Actions'),
             render: (_: any, item: SalesProposal) => (
-                <div className="flex gap-1">
-                    <TooltipProvider>
-                        {auth.user?.permissions?.includes('print-sales-proposals') && (
-                            <Tooltip delayDuration={0}>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" onClick={() => window.open(route('sales-proposals.print', item.id) + '?download=pdf', '_blank')} className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700">
-                                        <Download className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>{t('Download PDF')}</p></TooltipContent>
-                            </Tooltip>
-                        )}
-
-                        {auth.user?.permissions?.includes('sent-sales-proposals') && item.status === 'draft' && (
-                            <Tooltip delayDuration={0}>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" onClick={() => router.post(route('sales-proposals.sent', item.id))} className="h-8 w-8 p-0 text-indigo-600 hover:text-indigo-700">
-                                        <Send className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>{t('Send Proposal')}</p></TooltipContent>
-                            </Tooltip>
-                        )}
-
-                        {auth.user?.permissions?.includes('accept-sales-proposals') && item.status === 'sent' && (
-                            <Tooltip delayDuration={0}>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" onClick={() => router.post(route('sales-proposals.accept', item.id))} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
-                                        <Check className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>{t('Accept Proposal')}</p></TooltipContent>
-                            </Tooltip>
-                        )}
-
-                        {auth.user?.permissions?.includes('reject-sales-proposals') && item.status === 'sent' && (
-                            <Tooltip delayDuration={0}>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" onClick={() => router.post(route('sales-proposals.reject', item.id))} className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>{t('Reject Proposal')}</p></TooltipContent>
-                            </Tooltip>
-                        )}
-
-                        {item.converted_to_invoice ? (
-                            <Tooltip delayDuration={0}>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" onClick={() => router.get(route('sales-invoices.show', item.invoice_id))} className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700">
-                                        <Receipt className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>{t('View Invoice')}</p></TooltipContent>
-                            </Tooltip>
-                        ) : (
-                            auth.user?.permissions?.includes('convert-sales-proposals') && item.status === 'accepted' && (
-                                <Tooltip delayDuration={0}>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="sm" onClick={() => openConvertDialog(item.id)} className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700">
-                                            <RefreshCw className="h-4 w-4" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>{t('Convert to Invoice')}</p></TooltipContent>
-                                </Tooltip>
-                            )
-                        )}
-
-                        {auth.user?.permissions?.includes('view-sales-proposals') && (
-                            <Tooltip delayDuration={0}>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" onClick={() => router.get(route('sales-proposals.show', item.id))} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
-                                        <Eye className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>{t('View')}</p></TooltipContent>
-                            </Tooltip>
-                        )}
-
-                        {item.status === 'draft' && auth.user?.permissions?.includes('edit-sales-proposals') && (
-                            <Tooltip delayDuration={0}>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" onClick={() => router.visit(route('sales-proposals.edit', item.id))} className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700">
-                                        <EditIcon className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>{t('Edit')}</p></TooltipContent>
-                            </Tooltip>
-                        )}
-
-                        {item.status === 'draft' && auth.user?.permissions?.includes('delete-sales-proposals') && !item.converted_to_invoice && (
-                            <Tooltip delayDuration={0}>
-                                <TooltipTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => openDeleteDialog(item.id)}
-                                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>{t('Delete')}</p></TooltipContent>
-                            </Tooltip>
-                        )}
-                    </TooltipProvider>
-                </div>
+                <div className="flex gap-1">{renderActions(item)}</div>
             )
         }] : [])
     ];
+
+    const statCards = [
+        { key: '', label: t('Total Proposals'), value: stats?.total_count ?? 0, sub: formatCurrency(stats?.total_value ?? 0), icon: FileText, iconClass: 'text-primary bg-primary/10' },
+        { key: 'draft', label: t('Draft'), value: stats?.draft_count ?? 0, sub: formatCurrency(stats?.draft_value ?? 0), icon: FilePlus2, iconClass: 'text-gray-600 bg-gray-100' },
+        { key: 'sent', label: t('Sent'), value: stats?.sent_count ?? 0, sub: formatCurrency(stats?.sent_value ?? 0), icon: Send, iconClass: 'text-blue-600 bg-blue-100' },
+        { key: 'accepted', label: t('Accepted'), value: stats?.accepted_count ?? 0, sub: formatCurrency(stats?.accepted_value ?? 0), icon: CheckCircle2, iconClass: 'text-green-600 bg-green-100' },
+        { key: 'rejected', label: t('Rejected'), value: stats?.rejected_count ?? 0, sub: formatCurrency(stats?.rejected_value ?? 0), icon: XCircle, iconClass: 'text-red-600 bg-red-100' },
+        { key: 'expired', label: t('Overdue'), value: stats?.overdue_count ?? 0, sub: t('Past due date'), icon: AlertTriangle, iconClass: 'text-orange-600 bg-orange-100' },
+    ];
+
+    const hasActiveFilters = !!(filters.search || filters.status || filters.customer_id || filters.date_range);
 
     return (
         <TooltipProvider>
@@ -377,6 +419,39 @@ export default function Index() {
         >
             <Head title="Sales Proposals" />
 
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+                {statCards.map((card) => {
+                    const Icon = card.icon;
+                    const isActive = card.key !== '' && filters.status === card.key;
+                    return (
+                        <button
+                            key={card.label}
+                            type="button"
+                            onClick={() => card.key ? filterByStatus(card.key) : showAllProposals()}
+                            className={cn(
+                                'group text-left rounded-lg border bg-white p-3 transition-shadow hover:shadow-md',
+                                isActive ? 'border-primary ring-1 ring-primary' : 'border-gray-200'
+                            )}
+                        >
+                            <div className="flex items-center justify-between">
+                                <span className={cn(
+                                    'relative h-8 w-8 rounded-md flex items-center justify-center transition-transform duration-200 group-hover:scale-110',
+                                    card.iconClass
+                                )}>
+                                    {card.key === 'expired' && card.value > 0 && (
+                                        <span className="absolute inset-0 rounded-md bg-orange-400/40 animate-ping" />
+                                    )}
+                                    <Icon className={cn('h-4 w-4 relative', card.key === 'expired' && card.value > 0 && 'animate-pulse')} />
+                                </span>
+                                <span className="text-xl font-bold text-gray-900">{card.value}</span>
+                            </div>
+                            <p className="text-xs font-medium text-gray-600 mt-2">{card.label}</p>
+                            <p className="text-xs text-gray-400 truncate">{card.sub}</p>
+                        </button>
+                    );
+                })}
+            </div>
+
             <Card className="shadow-sm">
                 <CardContent className="p-6 border-b bg-gray-50/50">
                     <div className="flex items-center justify-between gap-4">
@@ -389,34 +464,51 @@ export default function Index() {
                             />
                         </div>
                         <div className="flex items-center gap-3">
-                            <ListGridToggle
-                                currentView={viewMode}
-                                routeName="sales-proposals.index"
-                                filters={{...filters, per_page: perPage}}
-                            />
-                            <PerPageSelector
-                                routeName="sales-proposals.index"
-                                filters={{...filters, view: viewMode}}
-                            />
-                            <div className="relative">
-                                <FilterButton
-                                    showFilters={showFilters}
-                                    onToggle={() => setShowFilters(!showFilters)}
-                                />
-                                {(() => {
-                                    const activeFilters = [filters.customer_id, filters.date_range, filters.status].filter(Boolean).length;
-                                    return activeFilters > 0 ? (
-                                        <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                            {activeFilters}
-                                        </span>
-                                    ) : null;
-                                })()}
+                            <div className="flex flex-row items-center border rounded-md">
+                                <Button
+                                    variant={viewMode === 'board' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => handleViewChange('board')}
+                                    className="rounded-r-none"
+                                >
+                                    <Columns3 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant={viewMode === 'list' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => handleViewChange('list')}
+                                    className="rounded-l-none"
+                                >
+                                    <List className="h-4 w-4" />
+                                </Button>
                             </div>
+                            {viewMode === 'list' && (
+                                <>
+                                    <PerPageSelector
+                                        routeName="sales-proposals.index"
+                                        filters={{...filters, view: viewMode}}
+                                    />
+                                    <div className="relative">
+                                        <FilterButton
+                                            showFilters={showFilters}
+                                            onToggle={() => setShowFilters(!showFilters)}
+                                        />
+                                        {(() => {
+                                            const activeFilters = [filters.customer_id, filters.date_range, filters.status].filter(Boolean).length;
+                                            return activeFilters > 0 ? (
+                                                <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                                    {activeFilters}
+                                                </span>
+                                            ) : null;
+                                        })()}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </CardContent>
 
-                {showFilters && (
+                {viewMode === 'list' && showFilters && (
                     <CardContent className="p-6 bg-blue-50/30 border-b">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:grid-cols-4">
                             <div>
@@ -481,7 +573,7 @@ export default function Index() {
                                             icon={FileText}
                                             title="No sales proposals found"
                                             description="Get started by creating your first sales proposal."
-                                            hasFilters={!!(filters.search || filters.status || filters.customer_id || filters.date_range)}
+                                            hasFilters={hasActiveFilters}
                                             onClearFilters={clearFilters}
                                             createPermission="create-sales-proposals"
                                             onCreateClick={() => router.visit(route('sales-proposals.create'))}
@@ -493,175 +585,168 @@ export default function Index() {
                             </div>
                         </div>
                     ) : (
-                        <div className="overflow-auto max-h-[70vh] p-4">
-                            {proposals?.data?.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                                    {proposals.data.map((proposal) => (
-                                        <Card key={proposal.id} className="border border-gray-200 flex flex-col">
-                                            <div className="p-4 flex-1">
-                                                <div className="flex items-center justify-between mb-3">
-                                                    {auth.user?.permissions?.includes('view-sales-proposals') ? (
-                                                        <h3 className="font-semibold text-base text-blue-600 hover:text-blue-700 cursor-pointer" onClick={() => router.get(route('sales-proposals.show', proposal.id))}>{proposal.proposal_number}</h3>
-                                                    ) : (
-                                                        <h3 className="font-semibold text-base text-gray-900">{proposal.proposal_number}</h3>
+                        <div className="p-4">
+                            {(stats?.total_count ?? 0) > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    {STATUS_COLUMNS.map((column) => {
+                                        const items = boardData?.[column.key] || [];
+                                        const statKey = column.key === 'accepted' ? 'accepted_active_count' : `${column.key}_count`;
+                                        const totalForColumn = (stats as any)?.[statKey] ?? items.length;
+                                        const hasMore = totalForColumn > items.length;
+                                        return (
+                                            <div key={column.key} className="bg-gray-50/60 border border-gray-200 rounded-lg">
+                                                <div className="flex items-center justify-between px-3 py-2.5 border-b border-gray-200">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={cn('h-2 w-2 rounded-full', column.dot)} />
+                                                        <h3 className="text-sm font-semibold text-gray-800">{t(column.label)}</h3>
+                                                        <span className={cn('text-xs px-1.5 py-0.5 rounded-full font-medium', column.chip)}>
+                                                            {totalForColumn}
+                                                        </span>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => filterByStatus(column.key)}
+                                                        className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                                    >
+                                                        {t('View all')}
+                                                    </button>
+                                                </div>
+                                                {hasMore && (
+                                                    <p className="text-xs text-gray-400 px-3 pt-2">
+                                                        {t('Showing latest')} {items.length} {t('of')} {totalForColumn}
+                                                    </p>
+                                                )}
+                                                <div className="space-y-2 p-2 min-h-[100px] max-h-[calc(100vh-380px)] overflow-y-auto">
+                                                    {items.map((proposal) => {
+                                                        const initial = (proposal.customer?.name || '?').charAt(0).toUpperCase();
+                                                        return (
+                                                            <Card key={proposal.id} className="border border-gray-200 rounded-lg bg-white hover:shadow-md hover:border-gray-300 transition-all">
+                                                                <div className="p-3">
+                                                                    <div className="flex items-start justify-between gap-2">
+                                                                        {auth.user?.permissions?.includes('view-sales-proposals') ? (
+                                                                            <h4 className="font-semibold text-sm text-blue-600 hover:text-blue-700 cursor-pointer truncate" onClick={() => router.get(route('sales-proposals.show', proposal.id))}>
+                                                                                {proposal.proposal_number}
+                                                                            </h4>
+                                                                        ) : (
+                                                                            <h4 className="font-semibold text-sm text-gray-900 truncate">{proposal.proposal_number}</h4>
+                                                                        )}
+                                                                        <span className="text-sm font-bold text-gray-900 shrink-0">{formatCurrency(proposal.total_amount)}</span>
+                                                                    </div>
+
+                                                                    <div className="flex items-center gap-1.5 mt-2.5">
+                                                                        <Avatar className="h-5 w-5 shrink-0">
+                                                                            {proposal.customer?.avatar && (
+                                                                                <AvatarImage src={getImagePath(proposal.customer.avatar)} alt={proposal.customer.name} />
+                                                                            )}
+                                                                            <AvatarFallback className="bg-gray-100 text-gray-600 text-[10px] font-semibold">
+                                                                                {initial}
+                                                                            </AvatarFallback>
+                                                                        </Avatar>
+                                                                        <span className="text-xs text-gray-600 truncate" title={proposal.customer?.email || ''}>{proposal.customer?.name || '-'}</span>
+                                                                    </div>
+
+                                                                    <div className="flex items-center gap-3 flex-wrap mt-2 text-[11px] text-gray-500">
+                                                                        <span className="flex items-center gap-1">
+                                                                            <CalendarDays className="h-3 w-3" /> {formatDate(proposal.proposal_date)}
+                                                                        </span>
+                                                                        {!!proposal.items?.length && (
+                                                                            <span className="flex items-center gap-1">
+                                                                                <Package className="h-3 w-3" /> {proposal.items.length} {proposal.items.length === 1 ? t('item') : t('items')}
+                                                                            </span>
+                                                                        )}
+                                                                        {proposal.payment_terms && (
+                                                                            <span className="flex items-center gap-1 truncate">
+                                                                                <CreditCard className="h-3 w-3" /> {proposal.payment_terms}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+
+                                                                    <div className="flex items-center justify-between mt-2">
+                                                                        <span className="text-xs text-gray-400">{t('Due')} {formatDate(proposal.due_date)}</span>
+                                                                        <div className="flex items-center gap-1">
+                                                                            {proposal.display_status === 'overdue' && (
+                                                                                <span className="flex items-center gap-1 text-[10px] font-medium text-red-600">
+                                                                                    <AlertTriangle className="h-3 w-3" /> {t('Overdue')}
+                                                                                </span>
+                                                                            )}
+                                                                            {proposal.converted_to_invoice && (
+                                                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium">
+                                                                                    {t('Invoiced')}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {proposal.status === 'draft' && (() => {
+                                                                        const daysSinceCreated = differenceInDays(new Date(), new Date(proposal.created_at));
+                                                                        if (daysSinceCreated < 3) return null;
+                                                                        return (
+                                                                            <div className="flex items-center justify-between gap-2 mt-2.5 px-2 py-1.5 rounded-md bg-amber-50 border border-amber-200">
+                                                                                <span className="flex items-center gap-1 text-[11px] text-amber-700">
+                                                                                    <Lightbulb className="h-3 w-3 shrink-0" />
+                                                                                    {t('Drafted')} {daysSinceCreated}{t('d ago')} — {t('send it?')}
+                                                                                </span>
+                                                                                {auth.user?.permissions?.includes('sent-sales-proposals') && (
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => router.post(route('sales-proposals.sent', proposal.id))}
+                                                                                        className="text-[11px] font-semibold text-amber-700 hover:text-amber-900 underline shrink-0"
+                                                                                    >
+                                                                                        {t('Send now')}
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+                                                                        );
+                                                                    })()}
+
+                                                                    {proposal.status === 'accepted' && !proposal.converted_to_invoice && (() => {
+                                                                        const daysSinceAccepted = differenceInDays(new Date(), new Date(proposal.updated_at));
+                                                                        if (daysSinceAccepted < 2) return null;
+                                                                        return (
+                                                                            <div className="flex items-center justify-between gap-2 mt-2.5 px-2 py-1.5 rounded-md bg-green-50 border border-green-200">
+                                                                                <span className="flex items-center gap-1 text-[11px] text-green-700">
+                                                                                    <Clock className="h-3 w-3 shrink-0" />
+                                                                                    {t('Accepted')} {daysSinceAccepted}{t('d ago')} — {t('convert to invoice?')}
+                                                                                </span>
+                                                                                {auth.user?.permissions?.includes('convert-sales-proposals') && (
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => openConvertDialog(proposal.id)}
+                                                                                        className="text-[11px] font-semibold text-green-700 hover:text-green-900 underline shrink-0"
+                                                                                    >
+                                                                                        {t('Convert now')}
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+                                                                        );
+                                                                    })()}
+
+                                                                    {canSeeActions && (
+                                                                        <div className="flex items-center justify-end gap-0.5 mt-2.5 pt-2.5 border-t border-gray-100">
+                                                                            {renderActions(proposal)}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </Card>
+                                                        );
+                                                    })}
+
+                                                    {items.length === 0 && (
+                                                        <div className="text-center py-8 text-gray-400 border border-dashed rounded-lg">
+                                                            <p className="text-xs">{t('No proposals')}</p>
+                                                        </div>
                                                     )}
-                                                    <span className={`px-2 py-1 rounded-full text-sm capitalize ${getProposalStatusColor(proposal.status)}`}>
-                                                        {proposal.status?.charAt(0).toUpperCase() + proposal.status?.slice(1)}
-                                                    </span>
-                                                </div>
-
-                                                <div className="space-y-3 mb-4">
-                                                    <div>
-                                                        <p className="text-xs font-medium text-gray-600 mb-1">{t('Customer')}</p>
-                                                        <p className="text-sm text-gray-900 truncate font-medium">{proposal.customer?.name}</p>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <div>
-                                                            <p className="text-xs font-medium text-gray-600 mb-1">{t('Proposal Date')}</p>
-                                                            <p className="text-xs text-gray-900">{formatDate(proposal.proposal_date)}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs font-medium text-gray-600 mb-1">{t('Due Date')}</p>
-                                                            <p className={`text-xs ${proposal.display_status === 'overdue' ? 'text-red-600 font-medium' : 'text-gray-900'}`}>
-                                                                {formatDate(proposal.due_date)}
-                                                                {proposal.display_status === 'overdue' && (
-                                                                    <span className="block text-red-600 font-medium">{t('Overdue')}</span>
-                                                                )}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="bg-gray-50 rounded-lg p-3">
-                                                        <div className="grid grid-cols-2 gap-2 text-xs">
-                                                            <div className="flex justify-between">
-                                                                <span className="text-gray-600">{t('Subtotal')}:</span>
-                                                                <span className="font-medium">{formatCurrency(proposal.subtotal)}</span>
-                                                            </div>
-                                                            <div className="flex justify-between">
-                                                                <span className="text-gray-600">{t('Tax')}:</span>
-                                                                <span className="font-medium">{formatCurrency(proposal.tax_amount)}</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="border-t mt-2 pt-2">
-                                                            <div className="flex justify-between items-center">
-                                                                <span className="text-sm font-semibold text-gray-900">{t('Total Amount')}</span>
-                                                                <span className="text-lg font-bold text-gray-900">{formatCurrency(proposal.total_amount)}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                            </div>
-                                            <div className="flex items-center justify-between p-3 border-t bg-gray-50/50">
-                                             <div className="flex gap-1">
-                                                    <TooltipProvider>
-                                                        {auth.user?.permissions?.includes('print-sales-proposals') && (
-                                                            <Tooltip delayDuration={0}>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button variant="ghost" size="sm" onClick={() => window.open(route('sales-proposals.print', proposal.id) + '?download=pdf', '_blank')} className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700">
-                                                                        <Download className="h-4 w-4" />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent><p>{t('Download PDF')}</p></TooltipContent>
-                                                            </Tooltip>
-                                                        )}
-                                                        {auth.user?.permissions?.includes('view-sales-proposals') && (
-                                                            <Tooltip delayDuration={0}>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button variant="ghost" size="sm" onClick={() => router.get(route('sales-proposals.show', proposal.id))} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
-                                                                        <Eye className="h-4 w-4" />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent><p>{t('View')}</p></TooltipContent>
-                                                            </Tooltip>
-                                                        )}
-                                                    </TooltipProvider>
-                                                </div>
-                                                <div className="flex gap-1">
-                                                    <TooltipProvider>
-                                                        {auth.user?.permissions?.includes('sent-sales-proposals') && proposal.status === 'draft' && (
-                                                            <Tooltip delayDuration={0}>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button variant="ghost" size="sm" onClick={() => router.post(route('sales-proposals.sent', proposal.id))} className="h-8 w-8 p-0 text-indigo-600 hover:text-indigo-700">
-                                                                        <Send className="h-4 w-4" />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent><p>{t('Send Proposal')}</p></TooltipContent>
-                                                            </Tooltip>
-                                                        )}
-                                                        {auth.user?.permissions?.includes('accept-sales-proposals') && proposal.status === 'sent' && (
-                                                            <Tooltip delayDuration={0}>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button variant="ghost" size="sm" onClick={() => router.post(route('sales-proposals.accept', proposal.id))} className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
-                                                                        <Check className="h-4 w-4" />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent><p>{t('Accept Proposal')}</p></TooltipContent>
-                                                            </Tooltip>
-                                                        )}
-                                                        {auth.user?.permissions?.includes('reject-sales-proposals') && proposal.status === 'sent' && (
-                                                            <Tooltip delayDuration={0}>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button variant="ghost" size="sm" onClick={() => router.post(route('sales-proposals.reject', proposal.id))} className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
-                                                                        <X className="h-4 w-4" />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent><p>{t('Reject Proposal')}</p></TooltipContent>
-                                                            </Tooltip>
-                                                        )}
-                                                        {proposal.converted_to_invoice ? (
-                                                            <Tooltip delayDuration={0}>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button variant="ghost" size="sm" onClick={() => router.get(route('sales-invoices.show', proposal.invoice_id))} className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700">
-                                                                        <Receipt className="h-4 w-4" />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent><p>{t('View Invoice')}</p></TooltipContent>
-                                                            </Tooltip>
-                                                        ) : (
-                                                            auth.user?.permissions?.includes('convert-sales-proposals') && proposal.status === 'accepted' && (
-                                                                <Tooltip delayDuration={0}>
-                                                                    <TooltipTrigger asChild>
-                                                                        <Button variant="ghost" size="sm" onClick={() => openConvertDialog(proposal.id)} className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700">
-                                                                            <RefreshCw className="h-4 w-4" />
-                                                                        </Button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent><p>{t('Convert to Invoice')}</p></TooltipContent>
-                                                                </Tooltip>
-                                                            )
-                                                        )}
-                                                        {proposal.status === 'draft' && auth.user?.permissions?.includes('edit-sales-proposals') && (
-                                                            <Tooltip delayDuration={0}>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button variant="ghost" size="sm" onClick={() => router.visit(route('sales-proposals.edit', proposal.id))} className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700">
-                                                                        <EditIcon className="h-4 w-4" />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent><p>{t('Edit')}</p></TooltipContent>
-                                                            </Tooltip>
-                                                        )}
-                                                        {proposal.status === 'draft' && auth.user?.permissions?.includes('delete-sales-proposals') && !proposal.converted_to_invoice && (
-                                                            <Tooltip delayDuration={0}>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(proposal.id)} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
-                                                                        <Trash2 className="h-4 w-4" />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent><p>{t('Delete')}</p></TooltipContent>
-                                                            </Tooltip>
-                                                        )}
-                                                    </TooltipProvider>
                                                 </div>
                                             </div>
-                                        </Card>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             ) : (
                                 <NoRecordsFound
                                     icon={FileText}
                                     title="No sales proposals found"
                                     description="Get started by creating your first sales proposal."
-                                    hasFilters={!!(filters.search || filters.status || filters.customer_id || filters.date_range)}
+                                    hasFilters={hasActiveFilters}
                                     onClearFilters={clearFilters}
                                     createPermission="create-sales-proposals"
                                     onCreateClick={() => router.visit(route('sales-proposals.create'))}
@@ -672,13 +757,15 @@ export default function Index() {
                     )}
                 </CardContent>
 
-                <CardContent className="px-4 py-2 border-t bg-gray-50/30">
-                    <Pagination
-                        data={{...proposals, ...proposals.meta}}
-                        routeName="sales-proposals.index"
-                        filters={{...filters, per_page: perPage, view: viewMode}}
-                    />
-                </CardContent>
+                {viewMode === 'list' && (
+                    <CardContent className="px-4 py-2 border-t bg-gray-50/30">
+                        <Pagination
+                            data={{...proposals, ...proposals.meta}}
+                            routeName="sales-proposals.index"
+                            filters={{...filters, per_page: perPage, view: viewMode}}
+                        />
+                    </CardContent>
+                )}
             </Card>
 
                 <ConfirmationDialog
@@ -699,8 +786,6 @@ export default function Index() {
                     confirmText={t('Convert')}
                     onConfirm={confirmConvert}
                 />
-
-
 
             </AuthenticatedLayout>
         </TooltipProvider>

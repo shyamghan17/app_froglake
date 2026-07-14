@@ -122,7 +122,7 @@ class HomeController extends Controller
             'stats' => [
                 'order_payments' => Order::sum('price') ?? 0,
                 'total_orders' => Order::count(),
-                'total_plans' => Plan::count(),
+                'total_plans' => Plan::where('custom_plan', false)->count(),
                 'total_companies' => User::where('type', 'company')->count(),
             ],
             'chartData' => $chartData,

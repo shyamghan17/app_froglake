@@ -361,7 +361,7 @@ export default function Show() {
                 <Card className="shadow-sm">
                     <CardHeader>
                         <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center gap-2">
+                            <CardTitle className="flex items-center gap-2 text-lg">
                                 <DollarSign className="h-5 w-5 text-green-600" />
                                 {t('Allowances')}
                             </CardTitle>
@@ -470,7 +470,7 @@ export default function Show() {
                 <Card className="shadow-sm">
                     <CardHeader>
                         <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center gap-2">
+                            <CardTitle className="flex items-center gap-2 text-lg">
                                 <DollarSign className="h-5 w-5 text-red-600" />
                                 {t('Deductions')}
                             </CardTitle>
@@ -579,7 +579,7 @@ export default function Show() {
                 <Card className="shadow-sm">
                     <CardHeader>
                         <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center gap-2">
+                            <CardTitle className="flex items-center gap-2 text-lg">
                                 <DollarSign className="h-5 w-5 text-blue-600" />
                                 {t('Loans')}
                             </CardTitle>
@@ -709,7 +709,7 @@ export default function Show() {
                 <Card className="shadow-sm">
                     <CardHeader>
                         <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center gap-2">
+                            <CardTitle className="flex items-center gap-2 text-lg">
                                 <DollarSign className="h-5 w-5 text-orange-600" />
                                 {t('Overtimes')}
                             </CardTitle>
